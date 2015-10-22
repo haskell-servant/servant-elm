@@ -1,13 +1,18 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Servant.JS.Elm where
+module Servant.JS.Elm
+  ( elmJS
+  , elmJSWith
+  , camelCase
+  ) where
 
 import           Control.Lens        (view, (^.), (^..))
+import qualified Data.Char           as C
 import           Data.Monoid         ((<>))
 import           Data.Text           (Text)
 import qualified Data.Text           as T
-import           Servant.Foreign     (ArgType (Flag, List, Normal), QueryArg,
-                                      Segment (Segment),
+import           Servant.Foreign     (ArgType (Flag, List, Normal),
+                                      FunctionName, QueryArg, Segment (Segment),
                                       SegmentType (Static, Cap), argName,
                                       argType, captureArg, funcName,
                                       headerArgName, isCapture, path, queryStr,
@@ -15,7 +20,7 @@ import           Servant.Foreign     (ArgType (Flag, List, Normal), QueryArg,
 import           Servant.JS.Internal (AjaxReq, CommonGeneratorOptions,
                                       JavaScriptGenerator,
                                       defCommonGeneratorOptions,
-                                      functionNameBuilder, jsParams, moduleName,
+                                      functionNameBuilder, moduleName,
                                       requestBody, toValidFunctionName,
                                       urlPrefix)
 
@@ -26,7 +31,7 @@ elmJSWith :: CommonGeneratorOptions -> JavaScriptGenerator
 elmJSWith opts reqs =
   let funcs = mconcat . map (generateElmJSWith opts) $ reqs
   in
-      "module " <> (moduleName opts) <> " (..) where\n"
+      "module " <> moduleName opts <> " (..) where\n"
       <> "import Http exposing (Error, empty, fromJson, send, defaultSettings, uriEncode, string)\n"
       <> "import Json.Decode\n"
       <> "import String\n"
@@ -64,7 +69,7 @@ generateElmJSWith opts req = "\n"
                 ++ map stringType body
                 ++ map stringType hs
 
-        stringType a = "-> String"
+        stringType _ = "-> String"
         queryArgToType qarg =
           case qarg ^. argType of
             Normal -> "-> Maybe String"
@@ -79,9 +84,7 @@ generateElmJSWith opts req = "\n"
 
         queryparams = req ^.. reqUrl.queryStr.traverse
 
-        body = if req ^. reqBody
-                 then [requestBody opts]
-                 else []
+        body = [requestBody opts | req ^. reqBody]
 
         dataBody =
           if req ^. reqBody
@@ -148,3 +151,10 @@ paramToStr qarg notTheEnd =
            <> name <> ")"
            <> if notTheEnd then " ++ \"" else ""
   where name = qarg ^. argName
+
+camelCase :: FunctionName -> T.Text
+camelCase = camelCase' . map (T.replace "-" "")
+  where camelCase' []     = ""
+        camelCase' (p:ps) = T.concat $ p : map capitalize ps
+        capitalize ""   = ""
+        capitalize name = C.toUpper (T.head name) `T.cons` T.tail name
