@@ -6,10 +6,15 @@ resolver: lts-3.8
 # Local packages, usually specified by relative directory name
 packages:
 - '.'
-- '../servant/servant'
-- '../servant/servant-foreign'
-- '../servant/servant-js'
-- '../servant/servant-server'
+- location:
+    # Use fork until servant#261 and servant#262 are merged
+    git: https://github.com/mattjbray/servant.git
+    commit: 662de08b27c23dff7f48960029a77b202dd09f1c
+  subdirs:
+  - servant
+  - servant-foreign
+  - servant-js
+  - servant-server
 
 # Packages to be pulled from upstream that are not in the resolver (e.g., acme-missiles-0.3)
 extra-deps:

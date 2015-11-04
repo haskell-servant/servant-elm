@@ -84,7 +84,7 @@ fetchCounter model =
 
 incCounter : Model -> (Model, Effects Action)
 incCounter model =
-  let task = Api.postCounter decodeCounter
+  let task = Api.postCounterInc decodeCounter
       effect = toSetCounterEffect task
   in ({ model | counter <- model.counter + 1 }, effect)
 

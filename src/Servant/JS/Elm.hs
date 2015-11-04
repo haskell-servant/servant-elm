@@ -3,7 +3,6 @@
 module Servant.JS.Elm
   ( elmJS
   , elmJSWith
-  , camelCase
   ) where
 
 import           Control.Lens        (view, (^.), (^..))
@@ -151,10 +150,3 @@ paramToStr qarg notTheEnd =
            <> name <> ")"
            <> if notTheEnd then " ++ \"" else ""
   where name = qarg ^. argName
-
-camelCase :: FunctionName -> T.Text
-camelCase = camelCase' . map (T.replace "-" "")
-  where camelCase' []     = ""
-        camelCase' (p:ps) = T.concat $ p : map capitalize ps
-        capitalize ""   = ""
-        capitalize name = C.toUpper (T.head name) `T.cons` T.tail name
