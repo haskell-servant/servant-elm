@@ -6,12 +6,11 @@ module Servant.JS.Elm
   ) where
 
 import           Control.Lens        (view, (^.), (^..))
-import qualified Data.Char           as C
 import           Data.Monoid         ((<>))
 import           Data.Text           (Text)
 import qualified Data.Text           as T
-import           Servant.Foreign     (ArgType (Flag, List, Normal),
-                                      FunctionName, QueryArg, Segment (Segment),
+import           Servant.Foreign     (ArgType (Flag, List, Normal), QueryArg,
+                                      Segment (Segment),
                                       SegmentType (Static, Cap), argName,
                                       argType, captureArg, funcName,
                                       headerArgName, isCapture, path, queryStr,
