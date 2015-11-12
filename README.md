@@ -8,4 +8,4 @@ $ stack build
 
 ## Example
 
-See `examples/README.md`.
+See `examples/README.md`, or take a look at https://github.com/mattjbray/servant-elm-example-app.
