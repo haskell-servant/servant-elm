@@ -15,13 +15,17 @@ cabal-version:       >=1.10
 
 library
   hs-source-dirs:      src
-  exposed-modules:     Servant.JS.Elm
+  exposed-modules:     Servant.Elm
+  other-modules:       Servant.Elm.Client
+                     , Servant.Elm.Generate
+                     , Servant.Elm.Request
   build-depends:       base >= 4.7 && < 5
                      , lens
                      , servant         == 0.5.*
                      , servant-foreign == 0.5.*
                      , servant-js      == 0.5.*
                      , text
+                     , elm-export
   default-language:    Haskell2010
 
 test-suite servant-elm-test
