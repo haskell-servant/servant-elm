@@ -2,45 +2,72 @@
 
 module Servant.Elm.Request where
 
-import           Servant.API ((:<|>) ((:<|>)))
+import           Servant.API     ((:<|>) ((:<|>)))
+import           Servant.Foreign (QueryArg, Segment)
 
 
 -- TODO: rename Result -> Request
 
 
 data Result = Result
-  { types       :: [String]
-  , decoders    :: [String]
+  { typeDefs    :: [String]
+  , decoderDefs :: [String]
+  , decoder     :: String
   , fnName      :: [String]
   , fnSignature :: [String]
+  , urlSegments :: [Segment]
+  , urlQueryStr :: [QueryArg]
   , httpMethod  :: String
+  , argNames    :: [String]
   } deriving (Show)
 
 
 defResult :: Result
 defResult = Result
-  { types = []
-  , decoders = []
+  { typeDefs = []
+  , decoderDefs = []
+  , decoder = ""
   , fnName = []
   , fnSignature = []
   , httpMethod = "GET"
+  , urlSegments = []
+  , urlQueryStr = []
+  , argNames = []
   }
 
 
-addElmType :: String -> Result -> Result
-addElmType elmType result = result { types = elmType : types result }
+addTypeDef :: Maybe String -> Result -> Result
+addTypeDef (Just elmType) result = result { typeDefs = elmType : typeDefs result }
+addTypeDef _ result = result
 
 
 addFnName :: String -> Result -> Result
 addFnName name result = result { fnName = name : fnName result }
 
 
+addUrlSegment :: Segment -> Result -> Result
+addUrlSegment segment result = result { urlSegments = segment : urlSegments result }
+
+
+addUrlQueryStr :: QueryArg -> Result -> Result
+addUrlQueryStr arg result = result { urlQueryStr = arg : urlQueryStr result }
+
+
 addFnSignature :: String -> Result -> Result
 addFnSignature name result = result { fnSignature = name : fnSignature result }
 
 
-addDecoder :: String -> Result -> Result
-addDecoder decoder result = result { decoders = decoder : decoders result }
+setDecoder :: String -> Result -> Result
+setDecoder dec result = result { decoder = dec  }
+
+
+addDecoderDef :: Maybe String -> Result -> Result
+addDecoderDef (Just decoderDef) result = result { decoderDefs = decoderDef : decoderDefs result }
+addDecoderDef _ result = result
+
+
+addArgName :: String -> Result -> Result
+addArgName name result = result { argNames = name : argNames result }
 
 
 setHttpMethod :: String -> Result -> Result

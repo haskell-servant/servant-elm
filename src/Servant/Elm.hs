@@ -1,5 +1,11 @@
-module Servant.ElmExport
+module Servant.Elm
        ( generateElmForAPI
+       , generateElmForAPIWith
+       , ElmOptions(..)
+       , defElmOptions
+       , defElmImports
        ) where
 
-import           Servant.Elm.Generate (generateElmForAPI)
+import           Servant.Elm.Generate (ElmOptions (..), defElmImports,
+                                       defElmOptions, generateElmForAPI,
+                                       generateElmForAPIWith)
