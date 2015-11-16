@@ -7,19 +7,19 @@ module Servant.Elm.Client where
 
 import           Data.Proxy          (Proxy (Proxy))
 import qualified Data.Text           as T
-import           Elm                 (ToElmType, maybeToElmTypeSource,
-                                      maybeToElmDecoderSource, toElmTypeName, toElmDecoderName)
+import           Elm                 (ToElmType, maybeToElmDecoderSource,
+                                      maybeToElmTypeSource, toElmDecoderName,
+                                      toElmTypeName)
 import           GHC.TypeLits        (KnownSymbol, symbolVal)
 import           Servant.API         ((:<|>), (:>), Capture, Get, Post,
                                       QueryFlag, QueryParam, QueryParams)
 import           Servant.Foreign     (ArgType (..), QueryArg (..), Segment (..),
                                       SegmentType (..))
 
-import           Servant.Elm.Request (Request (..), addArgName, setDecoder,
-                                      addDecoderDef,
-                                      addTypeDef, addFnName, addFnSignature,
+import           Servant.Elm.Request (Request (..), addArgName, addDecoderDef,
+                                      addFnName, addFnSignature, addTypeDef,
                                       addUrlQueryStr, addUrlSegment, defRequest,
-                                      setHttpMethod)
+                                      setDecoder, setHttpMethod)
 
 {-
 TODO:
