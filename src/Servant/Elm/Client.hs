@@ -1,7 +1,6 @@
 {-# LANGUAGE DataKinds           #-}
 {-# LANGUAGE FlexibleInstances   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeFamilies        #-}
 {-# LANGUAGE TypeOperators       #-}
 
 module Servant.Elm.Client where
@@ -11,7 +10,7 @@ import qualified Data.Text           as T
 import           Elm                 (ToElmType, maybeToElmTypeSource,
                                       maybeToElmDecoderSource, toElmTypeName, toElmDecoderName)
 import           GHC.TypeLits        (KnownSymbol, symbolVal)
-import           Servant.API         ((:<|>) ((:<|>)), (:>), Capture, Get, Post,
+import           Servant.API         ((:<|>), (:>), Capture, Get, Post,
                                       QueryFlag, QueryParam, QueryParams)
 import           Servant.Foreign     (ArgType (..), QueryArg (..), Segment (..),
                                       SegmentType (..))
@@ -40,26 +39,33 @@ Servant API coverage
 
 
 elmClient :: (HasElmClient layout)
-          => Proxy layout -> ElmClient layout
+          => Proxy layout -> [Request]
 elmClient p = elmClientWithRoute p defRequest
 
 
 class HasElmClient layout where
-  type ElmClient layout :: *
-  elmClientWithRoute :: Proxy layout -> Request -> ElmClient layout
+  elmClientWithRoute :: Proxy layout -> Request -> [Request]
 
 
+-- a :<|> b
 instance (HasElmClient a, HasElmClient b) => HasElmClient (a :<|> b) where
-  type ElmClient (a :<|> b) = ElmClient a :<|> ElmClient b
   elmClientWithRoute Proxy result =
-    elmClientWithRoute (Proxy :: Proxy a) result :<|>
+    elmClientWithRoute (Proxy :: Proxy a) result ++
     elmClientWithRoute (Proxy :: Proxy b) result
 
 
--- Capture name ArgType
+-- path :> rest
+instance (KnownSymbol path, HasElmClient sublayout) => HasElmClient (path :> sublayout) where
+  elmClientWithRoute Proxy result =
+    elmClientWithRoute (Proxy :: Proxy sublayout)
+                       ((addFnName p . addUrlSegment segment) result)
+    where p = symbolVal (Proxy :: Proxy path)
+          segment = Segment (Static (T.pack p))
+
+
+-- Capture name ArgType :> rest
 instance (KnownSymbol capture, ToElmType a, HasElmClient sublayout)
       => HasElmClient (Capture capture a :> sublayout) where
-  type ElmClient (Capture capture a :> sublayout) = ElmClient sublayout
   elmClientWithRoute Proxy result =
     elmClientWithRoute (Proxy :: Proxy sublayout)
                        ((addTypeDef (maybeToElmTypeSource argProxy)
@@ -71,10 +77,9 @@ instance (KnownSymbol capture, ToElmType a, HasElmClient sublayout)
             argName = symbolVal (Proxy :: Proxy capture)
 
 
--- QueryFlag name
+-- QueryFlag name :> rest
 instance (KnownSymbol sym, HasElmClient sublayout)
       => HasElmClient (QueryFlag sym :> sublayout) where
-  type ElmClient (QueryFlag sym :> sublayout) = ElmClient sublayout
   elmClientWithRoute Proxy result =
     elmClientWithRoute (Proxy :: Proxy sublayout)
                        ((addArgName argName
@@ -83,10 +88,9 @@ instance (KnownSymbol sym, HasElmClient sublayout)
       where argName = symbolVal (Proxy :: Proxy sym)
 
 
--- QueryParam name ArgType
+-- QueryParam name ArgType :> rest
 instance (KnownSymbol sym, ToElmType a, HasElmClient sublayout)
       => HasElmClient (QueryParams sym a :> sublayout) where
-  type ElmClient (QueryParams sym a :> sublayout) = ElmClient sublayout
   elmClientWithRoute Proxy result =
     elmClientWithRoute (Proxy :: Proxy sublayout)
                        ((addArgName argName
@@ -96,10 +100,9 @@ instance (KnownSymbol sym, ToElmType a, HasElmClient sublayout)
       where argName = symbolVal (Proxy :: Proxy sym)
 
 
--- QueryParams name ArgType
+-- QueryParams name ArgType :> rest
 instance (KnownSymbol sym, ToElmType a, HasElmClient sublayout)
       => HasElmClient (QueryParam sym a :> sublayout) where
-  type ElmClient (QueryParam sym a :> sublayout) = ElmClient sublayout
   elmClientWithRoute Proxy result =
     elmClientWithRoute (Proxy :: Proxy sublayout)
                        ((addArgName argName
@@ -109,57 +112,43 @@ instance (KnownSymbol sym, ToElmType a, HasElmClient sublayout)
       where argName = symbolVal (Proxy :: Proxy sym)
 
 
--- Get '[cts] RequestType
+-- Get '[cts] RequestType :> rest
 instance {-# OVERLAPPABLE #-} (ToElmType apiRequest) => HasElmClient (Get (ct ': cts) apiRequest) where
-  type ElmClient (Get (ct ': cts) apiRequest) = Request
-  elmClientWithRoute Proxy =
-    setHttpMethod "GET"
-    . addFnSignature elmTypeName
-    . addTypeDef (maybeToElmTypeSource apiRequestProxy)
-    . addDecoderDef (maybeToElmDecoderSource apiRequestProxy)
-    . setDecoder (toElmDecoderName apiRequestProxy)
+  elmClientWithRoute Proxy request =
+    [(setHttpMethod "GET"
+      . addFnSignature elmTypeName
+      . addTypeDef (maybeToElmTypeSource apiRequestProxy)
+      . addDecoderDef (maybeToElmDecoderSource apiRequestProxy)
+      . setDecoder (toElmDecoderName apiRequestProxy)) request]
     where
       apiRequestProxy = Proxy :: Proxy apiRequest
       elmTypeName = toElmTypeName apiRequestProxy
 
 
--- Get '[cts] ()
+-- Get '[cts] () :> rest
 instance {-# OVERLAPPING #-} HasElmClient (Get (ct ': cts) ()) where
-  type ElmClient (Get (ct ': cts) ()) = Request
-  elmClientWithRoute Proxy =
-    setHttpMethod "GET"
-    . addFnSignature "()"
-    . setDecoder "(succeed ())"
+  elmClientWithRoute Proxy request =
+    [(setHttpMethod "GET"
+      . addFnSignature "()"
+      . setDecoder "(succeed ())") request]
 
 
--- Post '[cts] RequestType
+-- Post '[cts] RequestType :> rest
 instance {-# OVERLAPPABLE #-} (ToElmType apiRequest) => HasElmClient (Post (ct ': cts) apiRequest) where
-  type ElmClient (Post (ct ': cts) apiRequest) = Request
-  elmClientWithRoute Proxy =
-    setHttpMethod "POST"
-    . addFnSignature elmTypeName
-    . addTypeDef (maybeToElmTypeSource apiRequestProxy)
-    . addDecoderDef (maybeToElmDecoderSource apiRequestProxy)
-    . setDecoder (toElmDecoderName apiRequestProxy)
+  elmClientWithRoute Proxy request =
+    [(setHttpMethod "POST"
+      . addFnSignature elmTypeName
+      . addTypeDef (maybeToElmTypeSource apiRequestProxy)
+      . addDecoderDef (maybeToElmDecoderSource apiRequestProxy)
+      . setDecoder (toElmDecoderName apiRequestProxy)) request]
     where
       apiRequestProxy = Proxy :: Proxy apiRequest
       elmTypeName = toElmTypeName apiRequestProxy
 
 
--- Post '[cts] ()
+-- Post '[cts] () :> rest
 instance {-# OVERLAPPING #-} HasElmClient (Post (ct ': cts) ()) where
-  type ElmClient (Post (ct ': cts) ()) = Request
-  elmClientWithRoute Proxy =
-    setHttpMethod "POST"
-    . addFnSignature "()"
-    . setDecoder "(succeed ())"
-
-
--- path :> rest
-instance (KnownSymbol path, HasElmClient sublayout) => HasElmClient (path :> sublayout) where
-  type ElmClient (path :> sublayout) = ElmClient sublayout
-  elmClientWithRoute Proxy result =
-    elmClientWithRoute (Proxy :: Proxy sublayout)
-                       ((addFnName p . addUrlSegment segment) result)
-    where p = symbolVal (Proxy :: Proxy path)
-          segment = Segment (Static (T.pack p))
+  elmClientWithRoute Proxy request =
+    [(setHttpMethod "POST"
+      . addFnSignature "()"
+      . setDecoder "(succeed ())") request]

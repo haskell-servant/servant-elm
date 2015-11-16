@@ -69,15 +69,3 @@ addArgName name result = result { argNames = name : argNames result }
 
 setHttpMethod :: String -> Request -> Request
 setHttpMethod method result = result { httpMethod = method }
-
-
-class MakeRequestsList results where
-  makeRequestsList :: results -> [Request]
-
-
-instance MakeRequestsList Request where
-  makeRequestsList r = [r]
-
-
-instance (MakeRequestsList start, MakeRequestsList rest) => MakeRequestsList (start :<|> rest) where
-  makeRequestsList (start :<|> rest) = makeRequestsList start ++ makeRequestsList rest

@@ -6,10 +6,10 @@ import           Data.Char           (toLower)
 import           Data.List           (nub)
 import           Data.Proxy          (Proxy)
 import qualified Data.Text           as T
-import           Servant.Elm.Client (HasElmClient, ElmClient, elmClient)
-import           Servant.Elm.Request (MakeRequestsList, Request (..),
-                                      makeRequestsList)
-import           Servant.Foreign     (camelCase, Segment(..), SegmentType(..), QueryArg(..), ArgType(..))
+import           Servant.Elm.Client  (HasElmClient, elmClient)
+import           Servant.Elm.Request (Request (..))
+import           Servant.Foreign     (ArgType (..), QueryArg (..), Segment (..),
+                                      SegmentType (..), camelCase)
 
 
 data ElmOptions = ElmOptions
@@ -32,14 +32,14 @@ defElmImports =
     ]
 
 
-generateElmForAPI :: (HasElmClient layout, MakeRequestsList (ElmClient layout))
+generateElmForAPI :: (HasElmClient layout)
                   => Proxy layout -> [String]
 generateElmForAPI = generateElmForAPIWith defElmOptions
 
 
-generateElmForAPIWith :: (HasElmClient layout, MakeRequestsList (ElmClient layout))
+generateElmForAPIWith :: (HasElmClient layout)
                       => ElmOptions -> Proxy layout -> [String]
-generateElmForAPIWith opts = nub . concatMap (generateElmForRequest opts) . makeRequestsList . elmClient
+generateElmForAPIWith opts = nub . concatMap (generateElmForRequest opts) . elmClient
 
 
 -- TODO: headers, query args, body, content type?, encoders?
