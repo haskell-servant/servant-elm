@@ -6,10 +6,7 @@ import           Servant.API     ((:<|>) ((:<|>)))
 import           Servant.Foreign (QueryArg, Segment)
 
 
--- TODO: rename Result -> Request
-
-
-data Result = Result
+data Request = Request
   { typeDefs    :: [String]
   , decoderDefs :: [String]
   , decoder     :: String
@@ -22,8 +19,8 @@ data Result = Result
   } deriving (Show)
 
 
-defResult :: Result
-defResult = Result
+defRequest :: Request
+defRequest = Request
   { typeDefs = []
   , decoderDefs = []
   , decoder = ""
@@ -36,51 +33,51 @@ defResult = Result
   }
 
 
-addTypeDef :: Maybe String -> Result -> Result
+addTypeDef :: Maybe String -> Request -> Request
 addTypeDef (Just elmType) result = result { typeDefs = elmType : typeDefs result }
 addTypeDef _ result = result
 
 
-addFnName :: String -> Result -> Result
+addFnName :: String -> Request -> Request
 addFnName name result = result { fnName = name : fnName result }
 
 
-addUrlSegment :: Segment -> Result -> Result
+addUrlSegment :: Segment -> Request -> Request
 addUrlSegment segment result = result { urlSegments = segment : urlSegments result }
 
 
-addUrlQueryStr :: QueryArg -> Result -> Result
+addUrlQueryStr :: QueryArg -> Request -> Request
 addUrlQueryStr arg result = result { urlQueryStr = arg : urlQueryStr result }
 
 
-addFnSignature :: String -> Result -> Result
+addFnSignature :: String -> Request -> Request
 addFnSignature name result = result { fnSignature = name : fnSignature result }
 
 
-setDecoder :: String -> Result -> Result
+setDecoder :: String -> Request -> Request
 setDecoder dec result = result { decoder = dec  }
 
 
-addDecoderDef :: Maybe String -> Result -> Result
+addDecoderDef :: Maybe String -> Request -> Request
 addDecoderDef (Just decoderDef) result = result { decoderDefs = decoderDef : decoderDefs result }
 addDecoderDef _ result = result
 
 
-addArgName :: String -> Result -> Result
+addArgName :: String -> Request -> Request
 addArgName name result = result { argNames = name : argNames result }
 
 
-setHttpMethod :: String -> Result -> Result
+setHttpMethod :: String -> Request -> Request
 setHttpMethod method result = result { httpMethod = method }
 
 
-class MakeResultsList results where
-  makeResultsList :: results -> [Result]
+class MakeRequestsList results where
+  makeRequestsList :: results -> [Request]
 
 
-instance MakeResultsList Result where
-  makeResultsList r = [r]
+instance MakeRequestsList Request where
+  makeRequestsList r = [r]
 
 
-instance (MakeResultsList start, MakeResultsList rest) => MakeResultsList (start :<|> rest) where
-  makeResultsList (start :<|> rest) = makeResultsList start ++ makeResultsList rest
+instance (MakeRequestsList start, MakeRequestsList rest) => MakeRequestsList (start :<|> rest) where
+  makeRequestsList (start :<|> rest) = makeRequestsList start ++ makeRequestsList rest

@@ -7,8 +7,8 @@ import           Data.List           (nub)
 import           Data.Proxy          (Proxy)
 import qualified Data.Text           as T
 import           Servant.Elm.Client (HasElmClient, ElmClient, elmClient)
-import           Servant.Elm.Request (MakeResultsList, Result (..),
-                                      makeResultsList)
+import           Servant.Elm.Request (MakeRequestsList, Request (..),
+                                      makeRequestsList)
 import           Servant.Foreign     (camelCase, Segment(..), SegmentType(..), QueryArg(..), ArgType(..))
 
 
@@ -32,19 +32,19 @@ defElmImports =
     ]
 
 
-generateElmForAPI :: (HasElmClient layout, MakeResultsList (ElmClient layout))
+generateElmForAPI :: (HasElmClient layout, MakeRequestsList (ElmClient layout))
                   => Proxy layout -> [String]
 generateElmForAPI = generateElmForAPIWith defElmOptions
 
 
-generateElmForAPIWith :: (HasElmClient layout, MakeResultsList (ElmClient layout))
+generateElmForAPIWith :: (HasElmClient layout, MakeRequestsList (ElmClient layout))
                       => ElmOptions -> Proxy layout -> [String]
-generateElmForAPIWith opts = nub . concatMap (generateElmForResult opts) . makeResultsList . elmClient
+generateElmForAPIWith opts = nub . concatMap (generateElmForRequest opts) . makeRequestsList . elmClient
 
 
 -- TODO: headers, query args, body, content type?, encoders?
-generateElmForResult :: ElmOptions -> Result -> [String]
-generateElmForResult opts result = typeDefs result ++ decoderDefs result ++ [func]
+generateElmForRequest :: ElmOptions -> Request -> [String]
+generateElmForRequest opts result = typeDefs result ++ decoderDefs result ++ [func]
   where func = funcName ++ " : " ++ (typeSignature . reverse . fnSignature) result ++ "\n"
                   ++ funcNameArgs ++ " =\n"
                   ++ "  let request =\n"

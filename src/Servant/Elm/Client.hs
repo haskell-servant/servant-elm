@@ -16,10 +16,10 @@ import           Servant.API         ((:<|>) ((:<|>)), (:>), Capture, Get, Post,
 import           Servant.Foreign     (ArgType (..), QueryArg (..), Segment (..),
                                       SegmentType (..))
 
-import           Servant.Elm.Request (Result (..), addArgName, setDecoder,
+import           Servant.Elm.Request (Request (..), addArgName, setDecoder,
                                       addDecoderDef,
                                       addTypeDef, addFnName, addFnSignature,
-                                      addUrlQueryStr, addUrlSegment, defResult,
+                                      addUrlQueryStr, addUrlSegment, defRequest,
                                       setHttpMethod)
 
 {-
@@ -41,12 +41,12 @@ Servant API coverage
 
 elmClient :: (HasElmClient layout)
           => Proxy layout -> ElmClient layout
-elmClient p = elmClientWithRoute p defResult
+elmClient p = elmClientWithRoute p defRequest
 
 
 class HasElmClient layout where
   type ElmClient layout :: *
-  elmClientWithRoute :: Proxy layout -> Result -> ElmClient layout
+  elmClientWithRoute :: Proxy layout -> Request -> ElmClient layout
 
 
 instance (HasElmClient a, HasElmClient b) => HasElmClient (a :<|> b) where
@@ -109,46 +109,46 @@ instance (KnownSymbol sym, ToElmType a, HasElmClient sublayout)
       where argName = symbolVal (Proxy :: Proxy sym)
 
 
--- Get '[cts] ResultType
-instance {-# OVERLAPPABLE #-} (ToElmType apiResult) => HasElmClient (Get (ct ': cts) apiResult) where
-  type ElmClient (Get (ct ': cts) apiResult) = Result
+-- Get '[cts] RequestType
+instance {-# OVERLAPPABLE #-} (ToElmType apiRequest) => HasElmClient (Get (ct ': cts) apiRequest) where
+  type ElmClient (Get (ct ': cts) apiRequest) = Request
   elmClientWithRoute Proxy =
     setHttpMethod "GET"
     . addFnSignature elmTypeName
-    . addTypeDef (maybeToElmTypeSource apiResultProxy)
-    . addDecoderDef (maybeToElmDecoderSource apiResultProxy)
-    . setDecoder (toElmDecoderName apiResultProxy)
+    . addTypeDef (maybeToElmTypeSource apiRequestProxy)
+    . addDecoderDef (maybeToElmDecoderSource apiRequestProxy)
+    . setDecoder (toElmDecoderName apiRequestProxy)
     where
-      apiResultProxy = Proxy :: Proxy apiResult
-      elmTypeName = toElmTypeName apiResultProxy
+      apiRequestProxy = Proxy :: Proxy apiRequest
+      elmTypeName = toElmTypeName apiRequestProxy
 
 
 -- Get '[cts] ()
 instance {-# OVERLAPPING #-} HasElmClient (Get (ct ': cts) ()) where
-  type ElmClient (Get (ct ': cts) ()) = Result
+  type ElmClient (Get (ct ': cts) ()) = Request
   elmClientWithRoute Proxy =
     setHttpMethod "GET"
     . addFnSignature "()"
     . setDecoder "(succeed ())"
 
 
--- Post '[cts] ResultType
-instance {-# OVERLAPPABLE #-} (ToElmType apiResult) => HasElmClient (Post (ct ': cts) apiResult) where
-  type ElmClient (Post (ct ': cts) apiResult) = Result
+-- Post '[cts] RequestType
+instance {-# OVERLAPPABLE #-} (ToElmType apiRequest) => HasElmClient (Post (ct ': cts) apiRequest) where
+  type ElmClient (Post (ct ': cts) apiRequest) = Request
   elmClientWithRoute Proxy =
     setHttpMethod "POST"
     . addFnSignature elmTypeName
-    . addTypeDef (maybeToElmTypeSource apiResultProxy)
-    . addDecoderDef (maybeToElmDecoderSource apiResultProxy)
-    . setDecoder (toElmDecoderName apiResultProxy)
+    . addTypeDef (maybeToElmTypeSource apiRequestProxy)
+    . addDecoderDef (maybeToElmDecoderSource apiRequestProxy)
+    . setDecoder (toElmDecoderName apiRequestProxy)
     where
-      apiResultProxy = Proxy :: Proxy apiResult
-      elmTypeName = toElmTypeName apiResultProxy
+      apiRequestProxy = Proxy :: Proxy apiRequest
+      elmTypeName = toElmTypeName apiRequestProxy
 
 
 -- Post '[cts] ()
 instance {-# OVERLAPPING #-} HasElmClient (Post (ct ': cts) ()) where
-  type ElmClient (Post (ct ': cts) ()) = Result
+  type ElmClient (Post (ct ': cts) ()) = Request
   elmClientWithRoute Proxy =
     setHttpMethod "POST"
     . addFnSignature "()"
