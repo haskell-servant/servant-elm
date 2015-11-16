@@ -21,22 +21,6 @@ import           Servant.Elm.Request (Request (..), addArgName, addDecoderDef,
                                       addUrlQueryStr, addUrlSegment, defRequest,
                                       setDecoder, setHttpMethod)
 
-{-
-TODO:
-Servant API coverage
-* MatrixFlag / MatrixParam / MatrixParams
-* Header (request)
-* Headers (response)
-* Delete / Patch / Put / Raw?
-* ReqBody
-* Vault / RemoteHost / IsSecure
-
-* Generate: use toString for params
-* Generate Json encoders?
-* ToText stuff for captures/params?
-* Option to not use elm-export
--}
-
 
 elmClient :: (HasElmClient layout)
           => Proxy layout -> [Request]
