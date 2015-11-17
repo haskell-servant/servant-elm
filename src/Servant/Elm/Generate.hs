@@ -26,6 +26,7 @@ defElmImports =
   unlines
     [ "import Json.Decode exposing (..)"
     , "import Json.Decode.Extra exposing (apply)"
+    , "import Json.Encode as JS"
     , "import Http"
     , "import String"
     , "import Task"
@@ -44,14 +45,14 @@ generateElmForAPIWith opts = nub . concatMap (generateElmForRequest opts) . elmC
 
 -- TODO: headers, query args, body, content type?, encoders?
 generateElmForRequest :: ElmOptions -> Request -> [String]
-generateElmForRequest opts result = typeDefs result ++ decoderDefs result ++ [func]
+generateElmForRequest opts result = typeDefs result ++ decoderDefs result ++ encoderDefs result ++ [func]
   where func = funcName ++ " : " ++ (typeSignature . reverse . fnSignature) result ++ "\n"
                   ++ funcNameArgs ++ " =\n"
                   ++ "  let request =\n"
                   ++ "        { verb = \"" ++ httpMethod result ++ "\"\n"
                   ++ "        , headers = [(\"Content-Type\", \"application/json\")]\n"
                   ++ "        , url = " ++ url ++ "\n"
-                  ++ "        , body = Http.empty\n"
+                  ++ "        , body = " ++ body ++ "\n"
                   ++ "        }\n"
                   ++ "  in  Http.fromJson\n"
                   ++ "        (" ++ decoder result ++ ")\n"
@@ -74,6 +75,9 @@ generateElmForRequest opts result = typeDefs result ++ decoderDefs result ++ [fu
         queryArgs = if null queryParams
                       then ""
                       else " ++ \"?" ++ elmParams queryParams
+        body = case bodyEncoder result of
+                 Just encoder -> "(Http.string (JS.encode 0 (" ++ encoder ++ " body)))"
+                 Nothing -> "Http.empty"
 
 
 elmSegments :: [Segment] -> String

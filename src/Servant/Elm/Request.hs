@@ -8,6 +8,7 @@ import           Servant.Foreign (QueryArg, Segment)
 data Request = Request
   { typeDefs    :: [String]
   , decoderDefs :: [String]
+  , encoderDefs :: [String]
   , decoder     :: String
   , fnName      :: [String]
   , fnSignature :: [String]
@@ -15,7 +16,7 @@ data Request = Request
   , urlQueryStr :: [QueryArg]
   , httpMethod  :: String
   , argNames    :: [String]
-  , hasBody     :: Bool
+  , bodyEncoder :: Maybe String
   } deriving (Show)
 
 
@@ -23,6 +24,7 @@ defRequest :: Request
 defRequest = Request
   { typeDefs = []
   , decoderDefs = []
+  , encoderDefs = []
   , decoder = ""
   , fnName = []
   , fnSignature = []
@@ -30,7 +32,7 @@ defRequest = Request
   , urlSegments = []
   , urlQueryStr = []
   , argNames = []
-  , hasBody = False
+  , bodyEncoder = Nothing
   }
 
 
@@ -70,5 +72,9 @@ setHttpMethod :: String -> Request -> Request
 setHttpMethod method result = result { httpMethod = method }
 
 
-setHasBody :: Bool -> Request -> Request
-setHasBody flag request = request { hasBody = flag }
+setBodyEncoder :: String -> Request -> Request
+setBodyEncoder encoder request = request { bodyEncoder = Just encoder }
+
+
+addEncoderDefs :: [String] -> Request -> Request
+addEncoderDefs defs result = result { encoderDefs = encoderDefs result ++ defs }

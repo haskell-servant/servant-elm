@@ -7,17 +7,17 @@ module Servant.Elm.Client where
 
 import           Data.Proxy          (Proxy (Proxy))
 import qualified Data.Text           as T
-import           Elm                 (ToElmType, toElmDecoder, toElmType')
+import           Elm                 (ToElmType, toElmDecoder, toElmType', toElmEncoder)
 import           GHC.TypeLits        (KnownSymbol, symbolVal)
 import           Servant.API         ((:<|>), (:>), Capture, Get, Post,
                                       QueryFlag, QueryParam, QueryParams, ReqBody)
 import           Servant.Foreign     (ArgType (..), QueryArg (..), Segment (..),
                                       SegmentType (..))
 
-import           Servant.Elm.Request (Request (..), addArgName, addDecoderDefs,
+import           Servant.Elm.Request (Request (..), addArgName, addDecoderDefs, addEncoderDefs,
                                       addFnName, addFnSignature, addTypeDefs,
                                       addUrlQueryStr, addUrlSegment, defRequest,
-                                      setDecoder, setHasBody, setHttpMethod)
+                                      setDecoder, setBodyEncoder, setHttpMethod)
 
 
 elmClient :: (HasElmClient layout)
@@ -105,8 +105,10 @@ instance (ToElmType body, HasElmClient sublayout)
                        ((addArgName "body"
                          . addTypeDefs typeDefs
                          . addFnSignature typeName
-                         . setHasBody True) request)
+                         . setBodyEncoder bodyEncoder
+                         . addEncoderDefs encoderDefs) request)
       where (typeName, typeDefs) = toElmType' (Proxy :: Proxy body)
+            (bodyEncoder, encoderDefs) = toElmEncoder (Proxy :: Proxy body)
 
 
 -- Get '[cts] RequestType
