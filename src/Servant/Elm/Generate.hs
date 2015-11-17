@@ -54,10 +54,10 @@ generateElmForRequest opts result = typeDefs result ++ decoderDefs result ++ [fu
                   ++ "        , body = Http.empty\n"
                   ++ "        }\n"
                   ++ "  in  Http.fromJson\n"
-                  ++ "        " ++ decoder result ++ "\n"
+                  ++ "        (" ++ decoder result ++ ")\n"
                   ++ "        (Http.send Http.defaultSettings request)"
         funcName = (T.unpack . camelCase . map T.pack . (:) (map toLower (httpMethod result)) . reverse) (fnName result)
-        typeSignature [x] = "Task.Task Http.Error " ++ x
+        typeSignature [x] = "Task.Task Http.Error (" ++ x ++ ")"
         typeSignature (x:xs) = x ++ " -> " ++ typeSignature xs
         typeSignature [] = ""
         funcNameArgs = unwords (funcName : args)
