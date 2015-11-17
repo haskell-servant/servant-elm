@@ -2,7 +2,6 @@
 
 module Servant.Elm.Request where
 
-import           Servant.API     ((:<|>) ((:<|>)))
 import           Servant.Foreign (QueryArg, Segment)
 
 
@@ -33,9 +32,8 @@ defRequest = Request
   }
 
 
-addTypeDef :: Maybe String -> Request -> Request
-addTypeDef (Just elmType) result = result { typeDefs = elmType : typeDefs result }
-addTypeDef _ result = result
+addTypeDefs :: [String] -> Request -> Request
+addTypeDefs elmTypes result = result { typeDefs = typeDefs result ++ elmTypes }
 
 
 addFnName :: String -> Request -> Request
@@ -58,9 +56,8 @@ setDecoder :: String -> Request -> Request
 setDecoder dec result = result { decoder = dec  }
 
 
-addDecoderDef :: Maybe String -> Request -> Request
-addDecoderDef (Just decoderDef) result = result { decoderDefs = decoderDef : decoderDefs result }
-addDecoderDef _ result = result
+addDecoderDefs :: [String] -> Request -> Request
+addDecoderDefs defs result = result { decoderDefs = decoderDefs result ++ defs }
 
 
 addArgName :: String -> Request -> Request
