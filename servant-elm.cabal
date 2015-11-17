@@ -23,7 +23,6 @@ library
                      , lens
                      , servant         == 0.5.*
                      , servant-foreign == 0.5.*
-                     , servant-js      == 0.5.*
                      , text
                      , elm-export
   default-language:    Haskell2010
