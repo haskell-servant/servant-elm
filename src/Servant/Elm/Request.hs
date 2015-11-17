@@ -15,6 +15,7 @@ data Request = Request
   , urlQueryStr :: [QueryArg]
   , httpMethod  :: String
   , argNames    :: [String]
+  , hasBody     :: Bool
   } deriving (Show)
 
 
@@ -29,6 +30,7 @@ defRequest = Request
   , urlSegments = []
   , urlQueryStr = []
   , argNames = []
+  , hasBody = False
   }
 
 
@@ -66,3 +68,7 @@ addArgName name result = result { argNames = name : argNames result }
 
 setHttpMethod :: String -> Request -> Request
 setHttpMethod method result = result { httpMethod = method }
+
+
+setHasBody :: Bool -> Request -> Request
+setHasBody flag request = request { hasBody = flag }

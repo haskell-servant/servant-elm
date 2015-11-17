@@ -7,17 +7,17 @@ module Servant.Elm.Client where
 
 import           Data.Proxy          (Proxy (Proxy))
 import qualified Data.Text           as T
-import           Elm                 (ToElmType, toElmType', toElmDecoder)
+import           Elm                 (ToElmType, toElmDecoder, toElmType')
 import           GHC.TypeLits        (KnownSymbol, symbolVal)
 import           Servant.API         ((:<|>), (:>), Capture, Get, Post,
-                                      QueryFlag, QueryParam, QueryParams)
+                                      QueryFlag, QueryParam, QueryParams, ReqBody)
 import           Servant.Foreign     (ArgType (..), QueryArg (..), Segment (..),
                                       SegmentType (..))
 
 import           Servant.Elm.Request (Request (..), addArgName, addDecoderDefs,
                                       addFnName, addFnSignature, addTypeDefs,
                                       addUrlQueryStr, addUrlSegment, defRequest,
-                                      setDecoder, setHttpMethod)
+                                      setDecoder, setHasBody, setHttpMethod)
 
 
 elmClient :: (HasElmClient layout)
@@ -97,25 +97,37 @@ instance (KnownSymbol sym, ToElmType a, HasElmClient sublayout)
             (typeName, typeDefs) = toElmType' (Proxy :: Proxy a)
 
 
--- Get '[cts] RequestType :> rest
+-- ReqBody '[cts] BodyType :> rest
+instance (ToElmType body, HasElmClient sublayout)
+      => HasElmClient (ReqBody (ct ': cts) body :> sublayout) where
+  elmClientWithRoute Proxy request =
+    elmClientWithRoute (Proxy :: Proxy sublayout)
+                       ((addArgName "body"
+                         . addTypeDefs typeDefs
+                         . addFnSignature typeName
+                         . setHasBody True) request)
+      where (typeName, typeDefs) = toElmType' (Proxy :: Proxy body)
+
+
+-- Get '[cts] RequestType
 instance {-# OVERLAPPABLE #-} (ToElmType apiRequest) => HasElmClient (Get (ct ': cts) apiRequest) where
   elmClientWithRoute Proxy request =
     [completeRequestWithType (Proxy :: Proxy apiRequest) "GET" request]
 
 
--- Get '[cts] () :> rest
+-- Get '[cts] ()
 instance {-# OVERLAPPING #-} HasElmClient (Get (ct ': cts) ()) where
   elmClientWithRoute Proxy request =
     [completeRequest "GET" request]
 
 
--- Post '[cts] RequestType :> rest
+-- Post '[cts] RequestType
 instance {-# OVERLAPPABLE #-} (ToElmType apiRequest) => HasElmClient (Post (ct ': cts) apiRequest) where
   elmClientWithRoute Proxy request =
     [completeRequestWithType (Proxy :: Proxy apiRequest) "POST" request]
 
 
--- Post '[cts] () :> rest
+-- Post '[cts] ()
 instance {-# OVERLAPPING #-} HasElmClient (Post (ct ': cts) ()) where
   elmClientWithRoute Proxy request =
     [completeRequest "POST" request]
