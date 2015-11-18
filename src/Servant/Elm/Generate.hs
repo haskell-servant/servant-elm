@@ -1,5 +1,3 @@
-{-# LANGUAGE FlexibleContexts #-}
-
 module Servant.Elm.Generate where
 
 import           Data.Char           (toLower)
