@@ -50,14 +50,14 @@ instance (KnownSymbol capture, ToElmType a, HasElmClient sublayout)
       => HasElmClient (Capture capture a :> sublayout) where
   elmClientWithRoute Proxy result =
     elmClientWithRoute (Proxy :: Proxy sublayout)
-                       ((addTypeDefs typeDefs
+                       ((addTypeDefs tDefs
                          . addFnSignature typeName
                          . addFnName "by"
                          . addArgName argName
                          . addUrlSegment (Segment (Cap (T.pack argName)))) result)
       where argProxy = Proxy :: Proxy a
             argName = symbolVal (Proxy :: Proxy capture)
-            (typeName, typeDefs) = toElmType' argProxy
+            (typeName, tDefs) = toElmType' argProxy
 
 
 -- QueryFlag name :> rest
@@ -77,11 +77,11 @@ instance (KnownSymbol sym, ToElmType a, HasElmClient sublayout)
   elmClientWithRoute Proxy result =
     elmClientWithRoute (Proxy :: Proxy sublayout)
                        ((addArgName argName
-                         . addTypeDefs typeDefs
+                         . addTypeDefs tDefs
                          . addFnSignature typeName
                          . addUrlQueryStr (QueryArg (T.pack argName) List)) result)
       where argName = symbolVal (Proxy :: Proxy sym)
-            (typeName, typeDefs) = toElmType' (Proxy :: Proxy [a])
+            (typeName, tDefs) = toElmType' (Proxy :: Proxy [a])
 
 
 -- QueryParam name ArgType :> rest
@@ -90,11 +90,11 @@ instance (KnownSymbol sym, ToElmType a, HasElmClient sublayout)
   elmClientWithRoute Proxy result =
     elmClientWithRoute (Proxy :: Proxy sublayout)
                        ((addArgName argName
-                         . addTypeDefs typeDefs
+                         . addTypeDefs tDefs
                          . addFnSignature typeName
                          . addUrlQueryStr (QueryArg (T.pack argName) Normal)) result)
       where argName = symbolVal (Proxy :: Proxy sym)
-            (typeName, typeDefs) = toElmType' (Proxy :: Proxy a)
+            (typeName, tDefs) = toElmType' (Proxy :: Proxy a)
 
 
 -- ReqBody '[cts] BodyType :> rest
