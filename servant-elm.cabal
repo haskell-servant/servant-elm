@@ -32,6 +32,8 @@ test-suite servant-elm-test
   hs-source-dirs:      test
   main-is:             Spec.hs
   build-depends:       base
+                     , hspec
+                     , servant
                      , servant-elm
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
   default-language:    Haskell2010
