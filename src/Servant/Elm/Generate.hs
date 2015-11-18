@@ -45,37 +45,37 @@ generateElmForAPIWith opts = nub . concatMap (generateElmForRequest opts) . elmC
 
 -- TODO: headers, query args, body, content type?, encoders?
 generateElmForRequest :: ElmOptions -> Request -> [String]
-generateElmForRequest opts result = typeDefs result ++ decoderDefs result ++ encoderDefs result ++ [func]
-  where func = funcName ++ " : " ++ (typeSignature . reverse . fnSignature) result ++ "\n"
+generateElmForRequest opts request = typeDefs request ++ decoderDefs request ++ encoderDefs request ++ [func]
+  where func = funcName ++ " : " ++ (typeSignature . reverse . fnSignature) request ++ "\n"
                   ++ funcNameArgs ++ " =\n"
                   ++ "  let request =\n"
-                  ++ "        { verb = \"" ++ httpMethod result ++ "\"\n"
+                  ++ "        { verb = \"" ++ httpMethod request ++ "\"\n"
                   ++ "        , headers = [(\"Content-Type\", \"application/json\")]\n"
                   ++ "        , url = " ++ url ++ "\n"
                   ++ "        , body = " ++ body ++ "\n"
                   ++ "        }\n"
                   ++ "  in  Http.fromJson\n"
-                  ++ "        (" ++ decoder result ++ ")\n"
+                  ++ "        (" ++ decoder request ++ ")\n"
                   ++ "        (Http.send Http.defaultSettings request)"
-        funcName = (T.unpack . camelCase . map T.pack . (:) (map toLower (httpMethod result)) . reverse) (fnName result)
+        funcName = (T.unpack . camelCase . map T.pack . (:) (map toLower (httpMethod request)) . reverse) (fnName request)
         typeSignature [x] = "Task.Task Http.Error (" ++ x ++ ")"
         typeSignature (x:xs) = x ++ " -> " ++ typeSignature xs
         typeSignature [] = ""
         funcNameArgs = unwords (funcName : args)
-        args = reverse (argNames result)
+        args = reverse (argNames request)
         url = if url' == "\"" then "\"/\"" else url'
         url' = "\""
            ++ urlPrefix opts
            ++ urlArgs
            ++ queryArgs
 
-        urlArgs = (elmSegments . reverse . urlSegments) result
+        urlArgs = (elmSegments . reverse . urlSegments) request
 
-        queryParams = reverse (urlQueryStr result)
+        queryParams = reverse (urlQueryStr request)
         queryArgs = if null queryParams
                       then ""
                       else " ++ \"?" ++ elmParams queryParams
-        body = case bodyEncoder result of
+        body = case bodyEncoder request of
                  Just encoder -> "(Http.string (JS.encode 0 (" ++ encoder ++ " body)))"
                  Nothing -> "Http.empty"
 
