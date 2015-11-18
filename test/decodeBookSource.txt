@@ -1,0 +1,3 @@
+decodeBook : Decoder Book
+decodeBook = Book
+  `map`   ("title" := string)
