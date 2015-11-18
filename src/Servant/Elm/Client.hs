@@ -94,7 +94,7 @@ instance (KnownSymbol sym, ToElmType a, HasElmClient sublayout)
                          . addFnSignature typeName
                          . addUrlQueryStr (QueryArg (T.pack argName) Normal)) result)
       where argName = symbolVal (Proxy :: Proxy sym)
-            (typeName, tDefs) = toElmType' (Proxy :: Proxy a)
+            (typeName, tDefs) = toElmType' (Proxy :: Proxy (Maybe a))
 
 
 -- ReqBody '[cts] BodyType :> rest
