@@ -22,54 +22,54 @@ data Request = Request
 
 defRequest :: Request
 defRequest = Request
-  { typeDefs = []
+  { typeDefs    = []
   , decoderDefs = []
   , encoderDefs = []
-  , decoder = ""
-  , fnName = []
+  , decoder     = ""
+  , fnName      = []
   , fnSignature = []
-  , httpMethod = "GET"
+  , httpMethod  = "GET"
   , urlSegments = []
   , urlQueryStr = []
-  , argNames = []
+  , argNames    = []
   , bodyEncoder = Nothing
   }
 
 
 addTypeDefs :: [String] -> Request -> Request
-addTypeDefs elmTypes result = result { typeDefs = typeDefs result ++ elmTypes }
+addTypeDefs elmTypes request = request { typeDefs = typeDefs request ++ elmTypes }
 
 
 addFnName :: String -> Request -> Request
-addFnName name result = result { fnName = name : fnName result }
+addFnName name request = request { fnName = name : fnName request }
 
 
 addUrlSegment :: Segment -> Request -> Request
-addUrlSegment segment result = result { urlSegments = segment : urlSegments result }
+addUrlSegment segment request = request { urlSegments = segment : urlSegments request }
 
 
 addUrlQueryStr :: QueryArg -> Request -> Request
-addUrlQueryStr arg result = result { urlQueryStr = arg : urlQueryStr result }
+addUrlQueryStr arg request = request { urlQueryStr = arg : urlQueryStr request }
 
 
 addFnSignature :: String -> Request -> Request
-addFnSignature name result = result { fnSignature = name : fnSignature result }
+addFnSignature name request = request { fnSignature = name : fnSignature request }
 
 
 setDecoder :: String -> Request -> Request
-setDecoder dec result = result { decoder = dec  }
+setDecoder dec request = request { decoder = dec  }
 
 
 addDecoderDefs :: [String] -> Request -> Request
-addDecoderDefs defs result = result { decoderDefs = decoderDefs result ++ defs }
+addDecoderDefs defs request = request { decoderDefs = decoderDefs request ++ defs }
 
 
 addArgName :: String -> Request -> Request
-addArgName name result = result { argNames = name : argNames result }
+addArgName name request = request { argNames = name : argNames request }
 
 
 setHttpMethod :: String -> Request -> Request
-setHttpMethod method result = result { httpMethod = method }
+setHttpMethod method request = request { httpMethod = method }
 
 
 setBodyEncoder :: String -> Request -> Request
@@ -77,4 +77,4 @@ setBodyEncoder encoder request = request { bodyEncoder = Just encoder }
 
 
 addEncoderDefs :: [String] -> Request -> Request
-addEncoderDefs defs result = result { encoderDefs = encoderDefs result ++ defs }
+addEncoderDefs defs request = request { encoderDefs = encoderDefs request ++ defs }
