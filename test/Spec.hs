@@ -6,6 +6,7 @@ import Test.Hspec
 
 import Control.Monad (zipWithM_)
 import Data.Aeson (ToJSON)
+import Data.Default (Default, def)
 import Data.Proxy (Proxy(Proxy))
 import Elm (ToElmType)
 import GHC.Generics (Generic)
@@ -24,6 +25,10 @@ instance ToElmType Book
 type TestApi = "one" :> Get '[JSON] Int
           :<|> "two" :> ReqBody '[JSON] String :> Post '[JSON] (Maybe Int)
           :<|> "books" :> Capture "id" Int :> Get '[JSON] Book
+          :<|> "books" :> QueryFlag "published"
+                       :> QueryParam "sort" String
+                       :> QueryParams "filters" (Maybe Bool)
+                       :> Get '[JSON] [Book]
 
 main :: IO ()
 main = hspec $
@@ -31,13 +36,21 @@ main = hspec $
     it "does it" $ do
       getOneSource     <- readFile "test/getOneSource.txt"
       postTwoSource    <- readFile "test/postTwoSource.txt"
-      getBooksBySource <- readFile "test/getBooksBySource.txt"
       bookTypeSource   <- readFile "test/bookTypeSource.txt"
       decodeBookSource <- readFile "test/decodeBookSource.txt"
+      getBooksBySource <- readFile "test/getBooksBySource.txt"
+      getBooksSource   <- readFile "test/getBooksSource.txt"
       let generated = map (++ "\n") (generateElmForAPI (Proxy :: Proxy TestApi))
           expected  = [ getOneSource
                       , postTwoSource
                       , bookTypeSource
                       , decodeBookSource
-                      , getBooksBySource ]
-      zipWithM_ shouldBe generated expected
+                      , getBooksBySource
+                      , getBooksSource
+                      ]
+      generated `itemsShouldBe` expected
+
+itemsShouldBe :: (Default a, Eq a, Show a) => [a] -> [a] -> IO ()
+itemsShouldBe actual expected =
+  zipWithM_ shouldBe (actual   ++ replicate (length expected - length actual) def)
+                     (expected ++ replicate (length actual - length expected) def)

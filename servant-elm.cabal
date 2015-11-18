@@ -33,6 +33,7 @@ test-suite servant-elm-test
   main-is:             Spec.hs
   build-depends:       aeson
                      , base
+                     , data-default
                      , elm-export
                      , hspec
                      , servant
