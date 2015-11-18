@@ -53,7 +53,7 @@ generateElmForRequest opts request = typeDefs request ++ decoderDefs request ++ 
                   ++ "        , body = " ++ body ++ "\n"
                   ++ "        }\n"
                   ++ "  in  Http.fromJson\n"
-                  ++ "        (" ++ decoder request ++ ")\n"
+                  ++ "        " ++ decoder request ++ "\n"
                   ++ "        (Http.send Http.defaultSettings request)"
         funcName = (T.unpack . camelCase . map T.pack . (:) (map toLower (httpMethod request)) . reverse) (fnName request)
         typeSignature [x] = "Task.Task Http.Error (" ++ x ++ ")"
@@ -74,7 +74,7 @@ generateElmForRequest opts request = typeDefs request ++ decoderDefs request ++ 
                       then ""
                       else " ++ \"?" ++ elmParams queryParams
         body = case bodyEncoder request of
-                 Just encoder -> "(Http.string (JS.encode 0 (" ++ encoder ++ " body)))"
+                 Just encoder -> "Http.string (JS.encode 0 (" ++ encoder ++ " body))"
                  Nothing -> "Http.empty"
 
 
