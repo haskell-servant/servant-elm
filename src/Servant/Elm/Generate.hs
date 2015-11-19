@@ -1,7 +1,8 @@
 module Servant.Elm.Generate where
 
 import           Data.Char           (toLower)
-import           Data.List           (nub)
+import           Data.List           (intercalate, nub)
+import           Data.Maybe          (catMaybes)
 import           Data.Proxy          (Proxy)
 import qualified Data.Text           as T
 import           Servant.Elm.Client  (HasElmClient, elmClient)
@@ -60,62 +61,44 @@ generateElmForRequest opts request = typeDefs request ++ decoderDefs request ++ 
         typeSignature (x:xs) = x ++ " -> " ++ typeSignature xs
         typeSignature [] = ""
         funcNameArgs = unwords (funcName : args)
+        url = buildUrl (urlPrefix opts) segments params
         args = reverse (argNames request)
-        url = if url' == "\"" then "\"/\"" else url'
-        url' = "\""
-           ++ urlPrefix opts
-           ++ urlArgs
-           ++ queryArgs
-
-        urlArgs = (elmSegments . reverse . urlSegments) request
-
-        queryParams = reverse (urlQueryStr request)
-        queryArgs = if null queryParams
-                      then ""
-                      else " ++ \"?" ++ elmParams queryParams
+        segments = (reverse . urlSegments) request
+        params = (reverse . urlQueryStr) request
         body = case bodyEncoder request of
                  Just encoder -> "Http.string (JS.encode 0 (" ++ encoder ++ " body))"
                  Nothing -> "Http.empty"
 
 
-elmSegments :: [Segment] -> String
-elmSegments []  = "\""
-elmSegments [x] = "/" ++ segmentToStr x False
-elmSegments (x:xs) = "/" ++ segmentToStr x True ++ elmSegments xs
+buildUrl :: String -> [Segment] -> [QueryArg] -> String
+buildUrl prefix segments params =
+  (intercalate newLine . catMaybes)
+    [ nullOr prefix $
+        "\"" ++ prefix ++ "\""
+    , nullOr segments $
+        "\"/\" ++ "
+        ++ intercalate (newLine ++ "\"/\" ++ ")
+             (map segmentToStr segments)
+    , nullOr params $
+        "\"?\" ++ "
+        ++ intercalate (newLine ++ "\"&\" ++ ")
+             (map paramToStr params)
+    ]
+  where newLine = "\n             ++ "
+        nullOr t x = if null t
+                        then Nothing
+                        else Just x
 
-segmentToStr :: Segment -> Bool -> String
-segmentToStr (Segment st) notTheEnd =
-  segmentTypeToStr st ++ if notTheEnd then "" else "\""
 
-segmentTypeToStr :: SegmentType -> String
-segmentTypeToStr (Static s) = T.unpack s
-segmentTypeToStr (Cap s)    = "\" ++ (" ++ T.unpack s ++ " |> toString |> Http.uriEncode) ++ \""
+segmentToStr :: Segment -> String
+segmentToStr (Segment (Static s)) = "\"" ++ T.unpack s ++ "\""
+segmentToStr (Segment (Cap s))    = "(" ++ T.unpack s ++ " |> toString |> Http.uriEncode)"
 
-elmGParams :: String -> [QueryArg] -> String
-elmGParams _ []     = ""
-elmGParams _ [x]    = paramToStr x False
-elmGParams s (x:xs) = paramToStr x True ++ s ++ elmGParams s xs
 
-elmParams :: [QueryArg] -> String
-elmParams = elmGParams "&"
-
-paramToStr :: QueryArg -> Bool -> String
-paramToStr qarg notTheEnd =
+paramToStr :: QueryArg -> String
+paramToStr qarg =
   case _argType qarg of
-    Normal -> name
-           ++ "=\" ++ (" ++ name ++ " |> toString |> Http.uriEncode)"
-           ++ if notTheEnd then " ++ \"" else ""
-    Flag   -> "\" ++ "
-           ++ "if " ++ name
-           ++ " then \"" ++ name ++ "=\""
-           ++ " else \"\""
-           ++ if notTheEnd then " ++ \"" else ""
-    List   -> "\" ++ "
-           ++ "String.join \"&\" "
-           ++ "(List.map "
-           ++ "(\\val -> \""
-           ++ name
-           ++ "[]=\" ++ (val |> toString |> Http.uriEncode)) "
-           ++ name ++ ")"
-           ++ if notTheEnd then " ++ \"" else ""
+    Normal -> "\"" ++ name ++ "=\" ++ (" ++ name ++ " |> toString |> Http.uriEncode)"
+    Flag   -> "if " ++ name ++ " then \"" ++ name ++ "=\" else \"\""
+    List   -> "String.join \"&\" (List.map (\\val -> \"" ++ name ++ "[]=\" ++ (val |> toString |> Http.uriEncode)) " ++ name ++ ")"
   where name = T.unpack (_argName qarg)

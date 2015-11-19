@@ -3,7 +3,7 @@ getOne =
   let request =
         { verb = "GET"
         , headers = [("Content-Type", "application/json")]
-        , url = "/one"
+        , url = "/" ++ "one"
         , body = Http.empty
         }
   in  Http.fromJson

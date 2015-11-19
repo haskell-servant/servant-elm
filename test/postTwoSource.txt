@@ -3,7 +3,7 @@ postTwo body =
   let request =
         { verb = "POST"
         , headers = [("Content-Type", "application/json")]
-        , url = "/two"
+        , url = "/" ++ "two"
         , body = Http.string (JS.encode 0 (JS.string body))
         }
   in  Http.fromJson
