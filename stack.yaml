@@ -15,8 +15,8 @@ packages:
   - servant-server
   extra-dep: True
 - location:
-    git: https://www.github.com/krisajenkins/elm-export
-    commit: 2a026e4c3a93a18006595636e783955223f9b98e
+    git: https://www.github.com/mattjbray/elm-export
+    commit: 68d2f9396c5376c7c907ca22b985ff9cfc29de74
 
 # Packages to be pulled from upstream that are not in the resolver (e.g., acme-missiles-0.3)
 extra-deps:
