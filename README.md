@@ -8,7 +8,45 @@ $ stack build
 
 ## Example
 
-See `examples/README.md`, or take a look at https://github.com/mattjbray/servant-elm-example-app.
+Given some Haskell defining your types and Servant API:
+
+```haskell
+data Book = Book
+  { name :: String
+  } deriving (Generic)
+
+instance ToElmType Book
+
+type BooksApi = "books" :> Capture "bookId" Int :> Get '[JSON] Book
+```
+
+We can generate Elm functions to query the API:
+
+```elm
+type alias Book =
+  {name : String}
+
+decodeBook : Decoder Book
+decodeBook = Book
+  `map`   ("name" := string)
+
+getBooksBy : Int -> Task.Task Http.Error (Book)
+getBooksBy bookId =
+  let request =
+        { verb = "GET"
+        , headers = [("Content-Type", "application/json")]
+        , url = "/" ++ "books"
+             ++ "/" ++ (bookId |> toString |> Http.uriEncode)
+        , body = Http.empty
+        }
+  in  Http.fromJson
+        decodeBook
+        (Http.send Http.defaultSettings request)
+```
+
+See [`examples`](examples) for a complete usage example, or take a look at
+https://github.com/mattjbray/servant-elm-example-app for an example project
+using this library.
 
 ## TODO
 
@@ -18,12 +56,9 @@ Servant API coverage:
 * Header (request)
 * Headers (response)
 * Delete / Patch / Put / Raw
-* ReqBody
 * Vault / RemoteHost / IsSecure
 
 Other:
 
-* Generate Elm Json encoders for ReqBody?
-* ToText in Elm for captures/params?
 * Option to not use elm-export: generate functions that take a decoder and
   String arguments.
