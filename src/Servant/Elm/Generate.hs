@@ -42,7 +42,7 @@ generateElmForAPIWith :: (HasElmClient layout)
 generateElmForAPIWith opts = nub . concatMap (generateElmForRequest opts) . elmClient
 
 
--- TODO: headers, query args, body, content type?, encoders?
+-- TODO: headers, content type?, url encoders?
 generateElmForRequest :: ElmOptions -> Request -> [String]
 generateElmForRequest opts request = typeDefs request ++ decoderDefs request ++ encoderDefs request ++ [func]
   where func = funcName ++ " : " ++ (typeSignature . reverse . fnSignature) request ++ "\n"
