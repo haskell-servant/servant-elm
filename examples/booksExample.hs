@@ -17,8 +17,8 @@ data Book = Book
 instance ToElmType Book
 
 type BooksApi = "books" :> ReqBody '[JSON] Book :> Post '[JSON] Book
-          :<|> "books" :> Get '[JSON] [Book]
-          :<|> "books" :> Capture "bookId" Int :> Get '[JSON] Book
+           :<|> "books" :> Get '[JSON] [Book]
+           :<|> "books" :> Capture "bookId" Int :> Get '[JSON] Book
 
 myElmOpts :: ElmOptions
 myElmOpts = defElmOptions { urlPrefix = "http://localhost:8000" }
