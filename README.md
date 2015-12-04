@@ -1,5 +1,7 @@
 # Servant Elm
 
+[![Build Status](https://travis-ci.org/mattjbray/servant-elm.svg?branch=master)](https://travis-ci.org/mattjbray/servant-elm)
+
 Generate Elm functions to query your Servant API!
 
 Elm type generation coutesy of [krisajenkins/elm-export](https://github.com/krisajenkins/elm-export).
