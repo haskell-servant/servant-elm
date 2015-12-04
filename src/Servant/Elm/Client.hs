@@ -7,17 +7,21 @@ module Servant.Elm.Client where
 
 import           Data.Proxy          (Proxy (Proxy))
 import qualified Data.Text           as T
-import           Elm                 (ToElmType, toElmDecoder, toElmType', toElmEncoder)
+import           Elm                 (ToElmType, toElmDecoderWithSources,
+                                      toElmEncoderWithSources,
+                                      toElmTypeWithSources)
 import           GHC.TypeLits        (KnownSymbol, symbolVal)
 import           Servant.API         ((:<|>), (:>), Capture, Get, Post,
-                                      QueryFlag, QueryParam, QueryParams, ReqBody)
+                                      QueryFlag, QueryParam, QueryParams,
+                                      ReqBody)
 import           Servant.Foreign     (ArgType (..), QueryArg (..), Segment (..),
                                       SegmentType (..))
 
-import           Servant.Elm.Request (Request (..), addArgName, addDecoderDefs, addEncoderDefs,
-                                      addFnName, addFnSignature, addTypeDefs,
-                                      addUrlQueryStr, addUrlSegment, defRequest,
-                                      setDecoder, setBodyEncoder, setHttpMethod)
+import           Servant.Elm.Request (Request (..), addArgName, addDecoderDefs,
+                                      addEncoderDefs, addFnName, addFnSignature,
+                                      addTypeDefs, addUrlQueryStr,
+                                      addUrlSegment, defRequest, setBodyEncoder,
+                                      setDecoder, setHttpMethod)
 
 
 elmClient :: (HasElmClient layout)
@@ -57,7 +61,7 @@ instance (KnownSymbol capture, ToElmType a, HasElmClient sublayout)
                          . addUrlSegment (Segment (Cap (T.pack argName)))) result)
       where argProxy = Proxy :: Proxy a
             argName = symbolVal (Proxy :: Proxy capture)
-            (typeName, tDefs) = toElmType' argProxy
+            (typeName, tDefs) = toElmTypeWithSources argProxy
 
 
 -- QueryFlag name :> rest
@@ -66,7 +70,7 @@ instance (KnownSymbol sym, HasElmClient sublayout)
   elmClientWithRoute Proxy result =
     elmClientWithRoute (Proxy :: Proxy sublayout)
                        ((addArgName argName
-                         . addFnSignature (fst (toElmType' (Proxy :: Proxy Bool)))
+                         . addFnSignature (fst (toElmTypeWithSources (Proxy :: Proxy Bool)))
                          . addUrlQueryStr (QueryArg (T.pack argName) Flag)) result)
       where argName = symbolVal (Proxy :: Proxy sym)
 
@@ -81,7 +85,7 @@ instance (KnownSymbol sym, ToElmType a, HasElmClient sublayout)
                          . addFnSignature typeName
                          . addUrlQueryStr (QueryArg (T.pack argName) List)) result)
       where argName = symbolVal (Proxy :: Proxy sym)
-            (typeName, tDefs) = toElmType' (Proxy :: Proxy [a])
+            (typeName, tDefs) = toElmTypeWithSources (Proxy :: Proxy [a])
 
 
 -- QueryParam name ArgType :> rest
@@ -94,7 +98,7 @@ instance (KnownSymbol sym, ToElmType a, HasElmClient sublayout)
                          . addFnSignature typeName
                          . addUrlQueryStr (QueryArg (T.pack argName) Normal)) result)
       where argName = symbolVal (Proxy :: Proxy sym)
-            (typeName, tDefs) = toElmType' (Proxy :: Proxy (Maybe a))
+            (typeName, tDefs) = toElmTypeWithSources (Proxy :: Proxy (Maybe a))
 
 
 -- ReqBody '[cts] BodyType :> rest
@@ -107,8 +111,8 @@ instance (ToElmType body, HasElmClient sublayout)
                          . addFnSignature typeName
                          . setBodyEncoder bodyEncoder
                          . addEncoderDefs encoderDefs) request)
-      where (typeName, typeDefs) = toElmType' (Proxy :: Proxy body)
-            (bodyEncoder, encoderDefs) = toElmEncoder (Proxy :: Proxy body)
+      where (typeName, typeDefs) = toElmTypeWithSources (Proxy :: Proxy body)
+            (bodyEncoder, encoderDefs) = toElmEncoderWithSources (Proxy :: Proxy body)
 
 
 -- Get '[cts] RequestType
@@ -143,8 +147,8 @@ completeRequestWithType proxy method =
   . addDecoderDefs decDefs
   . setDecoder dec
   where
-    (dec, decDefs) = toElmDecoder proxy
-    (typeName, typeDefs) = toElmType' proxy
+    (dec, decDefs) = toElmDecoderWithSources proxy
+    (typeName, typeDefs) = toElmTypeWithSources proxy
 
 
 completeRequest :: String -> Request -> Request
