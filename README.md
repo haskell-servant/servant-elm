@@ -87,8 +87,8 @@ getBooksBy bookId =
 ```
 
 See [`examples`](examples) for a complete usage example, or take a look at
-https://github.com/mattjbray/servant-elm-example-app for an example project
-using this library.
+[mattjbray/servant-elm-example-app](https://github.com/mattjbray/servant-elm-example-app)
+for an example project using this library.
 
 ## Development
 
