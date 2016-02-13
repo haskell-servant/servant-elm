@@ -1,11 +1,11 @@
-{-# LANGUAGE DataKinds         #-}
-{-# LANGUAGE DeriveGeneric     #-}
-{-# LANGUAGE TypeOperators     #-}
+{-# LANGUAGE DataKinds     #-}
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE TypeOperators #-}
 
 import           Data.Proxy
 import           Elm          (Spec (Spec), ToElmType, specsToDir)
 import           GHC.Generics (Generic)
-import           Servant      ((:>), Get, JSON, QueryParam)
+import           Servant.API  ((:>), Get, JSON, QueryParam)
 import           Servant.Elm  (ElmOptions (..), defElmImports, defElmOptions,
                                generateElmForAPIWith)
 

@@ -18,7 +18,7 @@ Let's get some boring language pragmas and imports out of the way.
 import           Data.Proxy   (Proxy(Proxy))
 import           Elm          (Spec(Spec), ToElmType, specsToDir)
 import           GHC.Generics (Generic)
-import           Servant      ((:>), Capture, Get, JSON)
+import           Servant.API  ((:>), Capture, Get, JSON)
 import           Servant.Elm  (defElmImports, generateElmForAPI)
 ```
 
@@ -43,49 +43,57 @@ spec = Spec ["Generated", "MyApi"]
              : generateElmForAPI (Proxy :: Proxy BooksApi))
 
 main :: IO ()
-main = specsToDir "my-elm-dir" [spec]
+main = specsToDir [spec] "my-elm-dir"
 ```
 
 Let's save this as `example.hs` and run it:
 
 ```
 $ stack runghc example.hs
-Writing: my-elm-dir/Generated/BooksApi.elm
+Writing: my-elm-dir/Generated/MyApi.elm
 $
 ```
 
 Here's what was generated:
 
 ```elm
-module Generated.BooksApi where
+module Generated.MyApi where
 
-import Json.Decode exposing (..)
-import Json.Decode.Extra exposing (apply)
-import Json.Encode as JS
+import Json.Decode exposing ((:=))
+import Json.Decode.Extra exposing ((|:))
+import Json.Encode
 import Http
 import String
 import Task
 
 
 type alias Book =
-  {name : String}
+  { name : String
+  }
 
-decodeBook : Decoder Book
-decodeBook = Book
-  `map`   ("name" := string)
+decodeBook : Json.Decode.Decoder Book
+decodeBook =
+  Json.Decode.succeed Book
+    |: ("name" := Json.Decode.string)
 
 getBooksBy : Int -> Task.Task Http.Error (Book)
 getBooksBy bookId =
-  let request =
-        { verb = "GET"
-        , headers = [("Content-Type", "application/json")]
-        , url = "/" ++ "books"
-             ++ "/" ++ (bookId |> toString |> Http.uriEncode)
-        , body = Http.empty
-        }
-  in  Http.fromJson
-        decodeBook
-        (Http.send Http.defaultSettings request)
+  let
+    request =
+      { verb =
+          "GET"
+      , headers =
+          [("Content-Type", "application/json")]
+      , url =
+          "/" ++ "books"
+          ++ "/" ++ (bookId |> toString |> Http.uriEncode)
+      , body =
+          Http.empty
+      }
+  in
+    Http.fromJson
+      decodeBook
+      (Http.send Http.defaultSettings request)
 ```
 
 See [`examples`](examples) for a complete usage example, or take a look at
