@@ -8,7 +8,7 @@ packages:
 - '.'
 - location:
     git: https://github.com/haskell-servant/servant.git
-    commit: 0d8439c5cd6a18ccca62aac5080d0a2f8e19d335
+    commit: 761443fffecbe83aa408d5f705dd0a8dade08af9
   subdirs:
   - servant
   - servant-foreign

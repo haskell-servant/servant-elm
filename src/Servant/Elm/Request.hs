@@ -52,6 +52,8 @@ addUrlQueryStr :: QueryArg -> Request -> Request
 addUrlQueryStr arg request = request { urlQueryStr = arg : urlQueryStr request }
 
 
+-- TODO: perhaps we could get rid of most of the fnSignature stuff now that
+-- servant-foreign allows us to keep it in their Arg type.
 addFnSignature :: String -> Request -> Request
 addFnSignature name request = request { fnSignature = name : fnSignature request }
 

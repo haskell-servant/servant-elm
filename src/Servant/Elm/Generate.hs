@@ -120,7 +120,7 @@ buildUrl prefix segments =
 
 segmentToStr :: Segment -> String
 segmentToStr (Segment (Static s)) = "\"" ++ T.unpack s ++ "\""
-segmentToStr (Segment (Cap s))    = "(" ++ T.unpack s ++ " |> toString |> Http.uriEncode)"
+segmentToStr (Segment (Cap (s, _)))    = "(" ++ T.unpack s ++ " |> toString |> Http.uriEncode)"
 
 
 paramToStr :: QueryArg -> String
@@ -145,5 +145,5 @@ paramToStr qarg =
         , "  |> List.map (\\val -> \"" ++ name ++ "[]=\" ++ (val |> toString |> Http.uriEncode))"
         , "  |> String.join \"&\""
         ]
-  where name = T.unpack (_argName qarg)
+  where name = T.unpack (fst (_argName qarg))
         newLine = "\n          "

@@ -58,7 +58,7 @@ instance (KnownSymbol capture, ToElmType a, HasElmClient sublayout)
                          . addFnSignature typeName
                          . addFnName "by"
                          . addArgName argName
-                         . addUrlSegment (Segment (Cap (T.pack argName)))) result)
+                         . addUrlSegment (Segment (Cap (T.pack argName, T.pack typeName)))) result)
       where argProxy = Proxy :: Proxy a
             argName = symbolVal (Proxy :: Proxy capture)
             (typeName, tDefs) = toElmTypeWithSources argProxy
@@ -70,9 +70,10 @@ instance (KnownSymbol sym, HasElmClient sublayout)
   elmClientWithRoute Proxy result =
     elmClientWithRoute (Proxy :: Proxy sublayout)
                        ((addArgName argName
-                         . addFnSignature (fst (toElmTypeWithSources (Proxy :: Proxy Bool)))
-                         . addUrlQueryStr (QueryArg (T.pack argName) Flag)) result)
+                         . addFnSignature typeName
+                         . addUrlQueryStr (QueryArg (T.pack argName, T.pack typeName) Flag)) result)
       where argName = symbolVal (Proxy :: Proxy sym)
+            (typeName, _) = toElmTypeWithSources (Proxy :: Proxy Bool)
 
 
 -- QueryParams name ArgType :> rest
@@ -83,7 +84,7 @@ instance (KnownSymbol sym, ToElmType a, HasElmClient sublayout)
                        ((addArgName argName
                          . addTypeDefs tDefs
                          . addFnSignature typeName
-                         . addUrlQueryStr (QueryArg (T.pack argName) List)) result)
+                         . addUrlQueryStr (QueryArg (T.pack argName, T.pack typeName) List)) result)
       where argName = symbolVal (Proxy :: Proxy sym)
             (typeName, tDefs) = toElmTypeWithSources (Proxy :: Proxy [a])
 
@@ -96,7 +97,7 @@ instance (KnownSymbol sym, ToElmType a, HasElmClient sublayout)
                        ((addArgName argName
                          . addTypeDefs tDefs
                          . addFnSignature typeName
-                         . addUrlQueryStr (QueryArg (T.pack argName) Normal)) result)
+                         . addUrlQueryStr (QueryArg (T.pack argName, T.pack typeName) Normal)) result)
       where argName = symbolVal (Proxy :: Proxy sym)
             (typeName, tDefs) = toElmTypeWithSources (Proxy :: Proxy (Maybe a))
 
