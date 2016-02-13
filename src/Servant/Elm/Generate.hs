@@ -11,15 +11,42 @@ import           Servant.Foreign     (ArgType (..), QueryArg (..), Segment (..),
                                       SegmentType (..), camelCase)
 
 
+{-|
+Options to configure how code is generated.
+-}
 data ElmOptions = ElmOptions
-  { urlPrefix :: String }
+  { {- | The protocol, host and any path prefix to be used as the base for all
+    requests.
+
+    Example: @"https://mydomain.com/api/v1"@
+    -}
+    urlPrefix :: String }
 
 
+{-|
+The default options for generating Elm code.
+
+[@urlPrefix@] (An empty string)
+-}
 defElmOptions :: ElmOptions
 defElmOptions = ElmOptions
   { urlPrefix = "" }
 
 
+{-|
+Default imports required by generated Elm code.
+
+You probably want to include this at the top of your generated Elm module.
+
+The default required imports are:
+
+> import Json.Decode exposing ((:=))
+> import Json.Decode.Extra exposing ((|:))
+> import Json.Encode
+> import Http
+> import String
+> import Task
+-}
 defElmImports :: String
 defElmImports =
   unlines
@@ -32,11 +59,25 @@ defElmImports =
     ]
 
 
+{-|
+Generate Elm code for the API with default options.
+
+Returns a list of Elm code definitions with everything you need to query your
+Servant API from Elm: type definitions, JSON decoders, JSON encoders, and query
+functions.
+
+You could spit these out to a file and call them from your Elm code, but you
+would be better off creating a 'Spec' with the result and using 'specsToDir',
+which handles the module name for you.
+-}
 generateElmForAPI :: (HasElmClient layout)
                   => Proxy layout -> [String]
 generateElmForAPI = generateElmForAPIWith defElmOptions
 
 
+{-|
+Generate Elm code for the API with custom options.
+-}
 generateElmForAPIWith :: (HasElmClient layout)
                       => ElmOptions -> Proxy layout -> [String]
 generateElmForAPIWith opts = nub . concatMap (generateElmForRequest opts) . elmClient
