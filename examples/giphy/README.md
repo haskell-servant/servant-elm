@@ -1,3 +1,5 @@
+## Giphy Example
+
 To build this example:
 
 ```
