@@ -10,5 +10,5 @@ getBooks published sort filters =
         , body = Http.empty
         }
   in  Http.fromJson
-        (list decodeBook)
+        (Json.Decode.list decodeBook)
         (Http.send Http.defaultSettings request)

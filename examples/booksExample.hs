@@ -28,4 +28,4 @@ spec = Spec ["Generated", "BooksApi"]
              : generateElmForAPIWith myElmOpts (Proxy :: Proxy BooksApi))
 
 main :: IO ()
-main = specsToDir "elm" [spec]
+main = specsToDir [spec] "elm"

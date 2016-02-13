@@ -1,24 +1,27 @@
 module Generated.BooksApi where
 
-import Json.Decode exposing (..)
-import Json.Decode.Extra exposing (apply)
-import Json.Encode as JS
+import Json.Decode
+import Json.Decode.Extra
+import Json.Encode
 import Http
 import String
 import Task
 
 
 type alias Book =
-  {name : String}
+  { name : String
+  }
 
-decodeBook : Decoder Book
-decodeBook = Book
-  `map`   ("name" := string)
+decodeBook : Json.Decode.Decoder Book
+decodeBook =
+  Json.Decode.succeed Book
+    |: ("name" := Json.Decode.string)
 
-encodeBook : Book -> JS.Value
+encodeBook : Book -> Json.Encode.Value
 encodeBook x =
-  JS.object
-    [("name", JS.string x.name)]
+  Json.Encode.object
+    [ ( "name", Json.Encode.string x.name )
+    ]
 
 postBooks : Book -> Task.Task Http.Error (Book)
 postBooks body =
@@ -27,7 +30,7 @@ postBooks body =
         , headers = [("Content-Type", "application/json")]
         , url = "http://localhost:8000"
              ++ "/" ++ "books"
-        , body = Http.string (JS.encode 0 (encodeBook body))
+        , body = Http.string (Json.Encode.encode 0 (encodeBook body))
         }
   in  Http.fromJson
         decodeBook
@@ -43,7 +46,7 @@ getBooks =
         , body = Http.empty
         }
   in  Http.fromJson
-        (list decodeBook)
+        (Json.Decode.list decodeBook)
         (Http.send Http.defaultSettings request)
 
 getBooksBy : Int -> Task.Task Http.Error (Book)

@@ -7,5 +7,5 @@ getOne =
         , body = Http.empty
         }
   in  Http.fromJson
-        int
+        Json.Decode.int
         (Http.send Http.defaultSettings request)

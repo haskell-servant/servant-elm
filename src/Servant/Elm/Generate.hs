@@ -23,9 +23,9 @@ defElmOptions = ElmOptions
 defElmImports :: String
 defElmImports =
   unlines
-    [ "import Json.Decode exposing (..)"
-    , "import Json.Decode.Extra exposing (apply)"
-    , "import Json.Encode as JS"
+    [ "import Json.Decode"
+    , "import Json.Decode.Extra"
+    , "import Json.Encode"
     , "import Http"
     , "import String"
     , "import Task"
@@ -66,7 +66,7 @@ generateElmForRequest opts request = typeDefs request ++ decoderDefs request ++ 
         segments = (reverse . urlSegments) request
         params = (reverse . urlQueryStr) request
         body = case bodyEncoder request of
-                 Just encoder -> "Http.string (JS.encode 0 (" ++ encoder ++ " body))"
+                 Just encoder -> "Http.string (Json.Encode.encode 0 (" ++ encoder ++ " body))"
                  Nothing -> "Http.empty"
 
 

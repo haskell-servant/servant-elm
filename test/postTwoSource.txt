@@ -4,8 +4,8 @@ postTwo body =
         { verb = "POST"
         , headers = [("Content-Type", "application/json")]
         , url = "/" ++ "two"
-        , body = Http.string (JS.encode 0 (JS.string body))
+        , body = Http.string (Json.Encode.encode 0 (Json.Encode.string body))
         }
   in  Http.fromJson
-        (maybe int)
+        (Json.Decode.maybe Json.Decode.int)
         (Http.send Http.defaultSettings request)
