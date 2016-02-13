@@ -3,11 +3,17 @@ getBooks published sort filters =
   let
     params =
       List.filter (not << String.isEmpty)
-        [ if published then "published=" else ""
+        [ if published then
+            "published="
+          else
+            ""
         , sort
-            |> Maybe.map (toString >> (++) "sort=" >> Http.uriEncode)
+            |> Maybe.map (toString >> Http.uriEncode >> (++) "sort=")
             |> Maybe.withDefault ""
-        , String.join "&" (List.map (\val -> "filters[]=" ++ (val |> toString |> Http.uriEncode)) filters)]
+        , filters
+            |> List.map (\val -> "filters[]=" ++ (val |> toString |> Http.uriEncode))
+            |> String.join "&"
+        ]
     request =
       { verb =
           "GET"
@@ -18,7 +24,7 @@ getBooks published sort filters =
           ++ if List.isEmpty params then
                ""
              else
-               "?" ++ String.join "," params
+               "?" ++ String.join "&" params
       , body =
           Http.empty
       }

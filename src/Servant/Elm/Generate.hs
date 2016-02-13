@@ -48,9 +48,7 @@ generateElmForRequest opts request = typeDefs request ++ decoderDefs request ++ 
   where func = funcName ++ " : " ++ (typeSignature . reverse . fnSignature) request ++ "\n"
                   ++ funcNameArgs ++ " =\n"
                   ++ "  let\n"
-                  ++ "    params =\n"
-                  ++ "      List.filter (not << String.isEmpty)\n"
-                  ++ "        [ " ++ intercalate "\n        , " params ++ "]\n"
+                  ++ letParams "    "
                   ++ "    request =\n"
                   ++ "      { verb =\n"
                   ++ "          \"" ++ httpMethod request ++ "\"\n"
@@ -58,10 +56,7 @@ generateElmForRequest opts request = typeDefs request ++ decoderDefs request ++ 
                   ++ "          [(\"Content-Type\", \"application/json\")]\n"
                   ++ "      , url =\n"
                   ++ "          " ++ url ++ "\n"
-                  ++ "          ++ if List.isEmpty params then\n"
-                  ++ "               \"\"\n"
-                  ++ "             else\n"
-                  ++ "               \"?\" ++ String.join \",\" params\n"
+                  ++ urlParams "          "
                   ++ "      , body =\n"
                   ++ "          " ++ body ++ "\n"
                   ++ "      }\n"
@@ -78,6 +73,30 @@ generateElmForRequest opts request = typeDefs request ++ decoderDefs request ++ 
         args = reverse (argNames request)
         segments = (reverse . urlSegments) request
         params = (map paramToStr . reverse . urlQueryStr) request
+        letParams indent =
+          if null params then
+            ""
+          else
+            indent
+            ++ intercalate ("\n" ++ indent)
+                 [ "params ="
+                 , "  List.filter (not << String.isEmpty)"
+                 , "    [ " ++ intercalate ("\n" ++ indent ++ "    , ") params
+                 , "    ]"
+                 ]
+            ++ "\n"
+        urlParams indent =
+          if null params then
+            ""
+          else
+            indent
+            ++ intercalate ("\n" ++ indent)
+                 [ "++ if List.isEmpty params then"
+                 , "     \"\""
+                 , "   else"
+                 , "     \"?\" ++ String.join \"&\" params"
+                 ]
+            ++ "\n"
         body = case bodyEncoder request of
                  Just encoder -> "Http.string (Json.Encode.encode 0 (" ++ encoder ++ " body))"
                  Nothing -> "Http.empty"
@@ -108,10 +127,23 @@ paramToStr :: QueryArg -> String
 paramToStr qarg =
   case _argType qarg of
     Normal ->
-      name ++ newLine ++
-      "  |> Maybe.map (toString >> (++) \"" ++ name ++ "=\" >> Http.uriEncode)" ++ newLine ++
-      "  |> Maybe.withDefault \"\""
-    Flag   -> "if " ++ name ++ " then \"" ++ name ++ "=\" else \"\""
-    List   -> "String.join \"&\" (List.map (\\val -> \"" ++ name ++ "[]=\" ++ (val |> toString |> Http.uriEncode)) " ++ name ++ ")"
+      intercalate newLine
+        [ name
+        , "  |> Maybe.map (toString >> Http.uriEncode >> (++) \"" ++ name ++ "=\")"
+        , "  |> Maybe.withDefault \"\""
+        ]
+    Flag ->
+      intercalate newLine
+        ["if " ++ name ++ " then"
+        , "  \"" ++ name ++ "=\""
+        , "else"
+        , "  \"\""
+        ]
+    List ->
+      intercalate newLine
+        [ name
+        , "  |> List.map (\\val -> \"" ++ name ++ "[]=\" ++ (val |> toString |> Http.uriEncode))"
+        , "  |> String.join \"&\""
+        ]
   where name = T.unpack (_argName qarg)
         newLine = "\n          "
