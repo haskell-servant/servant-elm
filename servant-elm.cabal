@@ -7,7 +7,7 @@ license:             BSD3
 license-file:        LICENSE
 author:              Matt Bray
 maintainer:          mattjbray@gmail.com
-copyright:           2015 Matt Bray
+copyright:           2015-2016 Matt Bray
 category:            Web
 build-type:          Simple
 -- extra-source-files:
