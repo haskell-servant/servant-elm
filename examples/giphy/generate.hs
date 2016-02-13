@@ -5,7 +5,7 @@
 import           Data.Proxy
 import           Elm          (Spec (Spec), ToElmType, specsToDir)
 import           GHC.Generics (Generic)
-import           Servant      ((:<|>), (:>), Capture, Get, JSON, Post, ReqBody, QueryParam)
+import           Servant      ((:>), Get, JSON, QueryParam)
 import           Servant.Elm  (ElmOptions (..), defElmImports, defElmOptions,
                                generateElmForAPIWith)
 
