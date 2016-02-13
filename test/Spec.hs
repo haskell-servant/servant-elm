@@ -34,12 +34,12 @@ main :: IO ()
 main = hspec $
   describe "encoding a simple api" $
     it "does it" $ do
-      getOneSource     <- readFile "test/getOneSource.txt"
-      postTwoSource    <- readFile "test/postTwoSource.txt"
-      bookTypeSource   <- readFile "test/bookTypeSource.txt"
-      decodeBookSource <- readFile "test/decodeBookSource.txt"
-      getBooksBySource <- readFile "test/getBooksBySource.txt"
-      getBooksSource   <- readFile "test/getBooksSource.txt"
+      getOneSource     <- readFile "test/getOneSource.elm"
+      postTwoSource    <- readFile "test/postTwoSource.elm"
+      bookTypeSource   <- readFile "test/bookTypeSource.elm"
+      decodeBookSource <- readFile "test/decodeBookSource.elm"
+      getBooksBySource <- readFile "test/getBooksBySource.elm"
+      getBooksSource   <- readFile "test/getBooksSource.elm"
       let generated = map (++ "\n") (generateElmForAPI (Proxy :: Proxy TestApi))
           expected  = [ getOneSource
                       , postTwoSource
