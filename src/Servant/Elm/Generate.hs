@@ -23,8 +23,8 @@ defElmOptions = ElmOptions
 defElmImports :: String
 defElmImports =
   unlines
-    [ "import Json.Decode"
-    , "import Json.Decode.Extra"
+    [ "import Json.Decode exposing ((:=))"
+    , "import Json.Decode.Extra exposing ((|:))"
     , "import Json.Encode"
     , "import Http"
     , "import String"
@@ -47,31 +47,44 @@ generateElmForRequest :: ElmOptions -> Request -> [String]
 generateElmForRequest opts request = typeDefs request ++ decoderDefs request ++ encoderDefs request ++ [func]
   where func = funcName ++ " : " ++ (typeSignature . reverse . fnSignature) request ++ "\n"
                   ++ funcNameArgs ++ " =\n"
-                  ++ "  let request =\n"
-                  ++ "        { verb = \"" ++ httpMethod request ++ "\"\n"
-                  ++ "        , headers = [(\"Content-Type\", \"application/json\")]\n"
-                  ++ "        , url = " ++ url ++ "\n"
-                  ++ "        , body = " ++ body ++ "\n"
-                  ++ "        }\n"
-                  ++ "  in  Http.fromJson\n"
-                  ++ "        " ++ decoder request ++ "\n"
-                  ++ "        (Http.send Http.defaultSettings request)"
+                  ++ "  let\n"
+                  ++ "    params =\n"
+                  ++ "      List.filter (not << String.isEmpty)\n"
+                  ++ "        [ " ++ intercalate "\n        , " params ++ "]\n"
+                  ++ "    request =\n"
+                  ++ "      { verb =\n"
+                  ++ "          \"" ++ httpMethod request ++ "\"\n"
+                  ++ "      , headers =\n"
+                  ++ "          [(\"Content-Type\", \"application/json\")]\n"
+                  ++ "      , url =\n"
+                  ++ "          " ++ url ++ "\n"
+                  ++ "          ++ if List.isEmpty params then\n"
+                  ++ "               \"\"\n"
+                  ++ "             else\n"
+                  ++ "               \"?\" ++ String.join \",\" params\n"
+                  ++ "      , body =\n"
+                  ++ "          " ++ body ++ "\n"
+                  ++ "      }\n"
+                  ++ "  in\n"
+                  ++ "    Http.fromJson\n"
+                  ++ "      " ++ decoder request ++ "\n"
+                  ++ "      (Http.send Http.defaultSettings request)"
         funcName = (T.unpack . camelCase . map T.pack . (:) (map toLower (httpMethod request)) . reverse) (fnName request)
         typeSignature [x] = "Task.Task Http.Error (" ++ x ++ ")"
         typeSignature (x:xs) = x ++ " -> " ++ typeSignature xs
         typeSignature [] = ""
         funcNameArgs = unwords (funcName : args)
-        url = buildUrl (urlPrefix opts) segments params
+        url = buildUrl (urlPrefix opts) segments
         args = reverse (argNames request)
         segments = (reverse . urlSegments) request
-        params = (reverse . urlQueryStr) request
+        params = (map paramToStr . reverse . urlQueryStr) request
         body = case bodyEncoder request of
                  Just encoder -> "Http.string (Json.Encode.encode 0 (" ++ encoder ++ " body))"
                  Nothing -> "Http.empty"
 
 
-buildUrl :: String -> [Segment] -> [QueryArg] -> String
-buildUrl prefix segments params =
+buildUrl :: String -> [Segment] -> String
+buildUrl prefix segments =
   (intercalate newLine . catMaybes)
     [ nullOr prefix $
         "\"" ++ prefix ++ "\""
@@ -79,12 +92,8 @@ buildUrl prefix segments params =
         "\"/\" ++ "
         ++ intercalate (newLine ++ "\"/\" ++ ")
              (map segmentToStr segments)
-    , nullOr params $
-        "\"?\" ++ "
-        ++ intercalate (newLine ++ "\"&\" ++ ")
-             (map paramToStr params)
     ]
-  where newLine = "\n             ++ "
+  where newLine = "\n          ++ "
         nullOr t x = if null t
                         then Nothing
                         else Just x
@@ -98,7 +107,11 @@ segmentToStr (Segment (Cap s))    = "(" ++ T.unpack s ++ " |> toString |> Http.u
 paramToStr :: QueryArg -> String
 paramToStr qarg =
   case _argType qarg of
-    Normal -> "\"" ++ name ++ "=\" ++ (" ++ name ++ " |> toString |> Http.uriEncode)"
+    Normal ->
+      name ++ newLine ++
+      "  |> Maybe.map (toString >> (++) \"" ++ name ++ "=\" >> Http.uriEncode)" ++ newLine ++
+      "  |> Maybe.withDefault \"\""
     Flag   -> "if " ++ name ++ " then \"" ++ name ++ "=\" else \"\""
     List   -> "String.join \"&\" (List.map (\\val -> \"" ++ name ++ "[]=\" ++ (val |> toString |> Http.uriEncode)) " ++ name ++ ")"
   where name = T.unpack (_argName qarg)
+        newLine = "\n          "

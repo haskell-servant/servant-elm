@@ -1,7 +1,7 @@
 module Generated.BooksApi where
 
-import Json.Decode
-import Json.Decode.Extra
+import Json.Decode exposing ((:=))
+import Json.Decode.Extra exposing ((|:))
 import Json.Encode
 import Http
 import String
