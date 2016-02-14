@@ -6,6 +6,34 @@ Generate Elm functions to query your Servant API!
 
 Elm type generation coutesy of [krisajenkins/elm-export](https://github.com/krisajenkins/elm-export).
 
+## Installation
+
+Until `elm-export` and `servant >= 0.5` are released, `servant-elm` requires
+stack. Add this to your `stack.yaml` file:
+
+```yaml
+...
+packages:
+  ...
+- location:
+    git: https://github.com/haskell-servant/servant.git
+    commit: 761443fffecbe83aa408d5f705dd0a8dade08af9
+  subdirs:
+  - servant
+  - servant-foreign
+  - servant-server
+  extra-dep: True
+- location:
+    git: https://www.github.com/mattjbray/elm-export
+    commit: a8a5b61798fbb04e081f5c83cab76ceaabc5ba13
+  extra-dep: True
+- location:
+    git: https://www.github.com/mattjbray/servant-elm
+    commit: 749e09ed9d623284b3b90d1ae1ccba7ae79ad381
+  extra-dep: True
+...
+```
+
 ## Example
 
 Let's get some boring language pragmas and imports out of the way.
