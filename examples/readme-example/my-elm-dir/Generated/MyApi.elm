@@ -17,8 +17,8 @@ decodeBook =
   Json.Decode.succeed Book
     |: ("name" := Json.Decode.string)
 
-getBooksBy : Int -> Task.Task Http.Error (Book)
-getBooksBy bookId =
+getBooksByBookId : Int -> Task.Task Http.Error (Book)
+getBooksByBookId bookId =
   let
     request =
       { verb =
