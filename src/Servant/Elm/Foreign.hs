@@ -16,11 +16,23 @@ import           Servant.Foreign (Foreign, GenerateList, HasForeign,
 data LangElm
 
 data GeneratedElm = GeneratedElm
-  { elmType           :: String
+  { -- The Elm type of the thing we're looking at.
+    -- E.g. "BlogPost"
+    elmType           :: String
+    -- The Elm definitions required to use the type.
+    -- E.g. "type BlogPost = ...; type Comment = ..."
   , elmTypeSources    :: [String]
+    -- The name of the JSON decoder for the type.
+    -- E.g. "decodeBlogPost"
   , elmDecoder        :: String
+    -- Elm definitions required to use the decoder.
+    -- E.g. "decodeBlogPost = ...; decodeComment = ..."
   , elmDecoderSources :: [String]
+    -- The name of the JSON encoder for the type.
+    -- E.g. "encodeBlogPost"
   , elmEncoder        :: String
+    -- Elm definitions required to use the encoder.
+    -- E.g. "encodeBlogPost = ...; encodeComment = ..."
   , elmEncoderSources :: [String]
   } deriving (Show)
 
@@ -50,4 +62,5 @@ getEndpoints
      , GenerateList GeneratedElm (Foreign GeneratedElm api))
   => Proxy api
   -> [Req GeneratedElm]
-getEndpoints api = listFromAPI (Proxy :: Proxy LangElm) (Proxy :: Proxy GeneratedElm) api
+getEndpoints =
+  listFromAPI (Proxy :: Proxy LangElm) (Proxy :: Proxy GeneratedElm)
