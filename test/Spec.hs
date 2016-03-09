@@ -29,6 +29,7 @@ type TestApi = "one" :> Get '[JSON] Int
                        :> QueryParam "sort" String
                        :> QueryParams "filters" (Maybe Bool)
                        :> Get '[JSON] [Book]
+          :<|> "nothing" :> Get '[JSON] ()
 
 main :: IO ()
 main = hspec $
@@ -40,6 +41,7 @@ main = hspec $
       decodeBookSource <- readFile "test/decodeBookSource.elm"
       getBooksBySource <- readFile "test/getBooksBySource.elm"
       getBooksSource   <- readFile "test/getBooksSource.elm"
+      getNothingSource <- readFile "test/getNothingSource.elm"
       let generated = map (++ "\n") (generateElmForAPI (Proxy :: Proxy TestApi))
           expected  = [ getOneSource
                       , postTwoSource
@@ -47,6 +49,7 @@ main = hspec $
                       , decodeBookSource
                       , getBooksBySource
                       , getBooksSource
+                      , getNothingSource
                       ]
       generated `itemsShouldBe` expected
 
