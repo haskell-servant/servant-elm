@@ -156,4 +156,4 @@ completeRequest :: String -> Request -> Request
 completeRequest method =
   setHttpMethod method
   . addFnSignature "()"
-  . setDecoder "(succeed ())"
+  . setDecoder "(Json.Decode.succeed ())"
