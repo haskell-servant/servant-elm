@@ -36,18 +36,18 @@ packages:
 
 ## Example
 
-Let's get some boring language pragmas and imports out of the way.
+Let's get some language pragmas and imports out of the way.
 
 ```haskell
-{-# LANGUAGE DeriveGeneric     #-}
-{-# LANGUAGE DataKinds         #-}
-{-# LANGUAGE TypeOperators     #-}
+{-# LANGUAGE DataKinds     #-}
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE TypeOperators #-}
 
-import           Data.Proxy   (Proxy(Proxy))
-import           Elm          (Spec(Spec), ToElmType, specsToDir)
 import           GHC.Generics (Generic)
 import           Servant.API  ((:>), Capture, Get, JSON)
-import           Servant.Elm  (defElmImports, generateElmForAPI)
+import           Servant.Elm  (Proxy (Proxy), Spec (Spec), ToElmType,
+                               defElmImports, generateElmForAPI, specsToDir,
+                               specsToDir)
 ```
 
 We have some Haskell-defined types and our Servant API.
