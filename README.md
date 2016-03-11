@@ -149,5 +149,6 @@ Servant API coverage:
 
 Other:
 
+* Encode captures and query params?
 * Option to not use elm-export: generate functions that take a decoder and
   String arguments.
