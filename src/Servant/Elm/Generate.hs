@@ -1,7 +1,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 module Servant.Elm.Generate where
 
-import Control.Lens ((^.))
+import Control.Lens ((^.), view)
 import           Data.List           (intercalate, nub)
 import           Data.Maybe          (catMaybes)
 import           Data.Proxy          (Proxy)
@@ -122,18 +122,18 @@ generateElmForRequest opts request =
         ]
 
     fnName =
-      T.unpack (F.camelCase (request ^. F.funcName))
+      T.unpack (F.camelCase (request ^. F.reqFuncName))
 
     fnNameArgs =
       unwords (fnName : args)
 
     args =
-      [ T.unpack $ F.captureArg segment ^. F.argName
+      [ T.unpack . F.unPathSegment $ F.captureArg segment ^. F.argName
       | segment <- request ^. F.reqUrl . F.path
       , F.isCapture segment
       ]
       ++
-      [ T.unpack $ arg ^. F.queryArg . F.argName
+      [ T.unpack . F.unPathSegment $ arg ^. F.queryArgName . F.argName
       | arg <- request ^. F.reqUrl . F.queryStr
       ]
       ++
@@ -184,7 +184,7 @@ typeSignature request =
 
     queryArgToElmType arg =
       let
-        eType = elmType (arg ^. F.queryArg . F.argType)
+        eType = elmType (arg ^. F.queryArgName . F.argType)
       in
         case arg ^. F.queryArgType of
           F.Normal ->
@@ -232,11 +232,11 @@ mkUrl prefix segments =
         Just x
 
     segmentToStr s =
-      case s ^. F.segment of
+      case F.unSegment s of
         F.Static path ->
-          "\"" ++ T.unpack path ++ "\""
+          "\"" ++ T.unpack (F.unPathSegment path) ++ "\""
         F.Cap arg ->
-          "(" ++ T.unpack (arg ^. F.argName) ++ " |> toString |> Http.uriEncode)"
+          "(" ++ T.unpack (F.unPathSegment (arg ^. F.argName)) ++ " |> toString |> Http.uriEncode)"
 
 mkLetQueryParams
   :: String
@@ -277,7 +277,7 @@ mkLetQueryParams indent request =
             , "  |> List.map (\\val -> \"" ++ name ++ "[]=\" ++ (val |> toString |> Http.uriEncode))"
             , "  |> String.join \"&\""
             ]
-      where name = T.unpack (qarg ^. F.queryArg . F.argName)
+      where name = T.unpack . F.unPathSegment . view (F.queryArgName . F.argName) $ qarg
             newLine = "\n          "
 
 mkQueryParams

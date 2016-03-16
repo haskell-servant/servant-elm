@@ -7,8 +7,8 @@ resolver: lts-3.8
 packages:
 - '.'
 - location:
-    git: https://github.com/purcell/servant.git
-    commit: f4f32b22b5a10d31d4075cccda40406e36f04372
+    git: https://github.com/haskell-servant/servant.git
+    commit: f5fe9a060cf2e74c9c94eef59c066e6ac913fbe4
   subdirs:
   - servant
   - servant-foreign
