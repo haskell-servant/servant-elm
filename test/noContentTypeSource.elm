@@ -1,0 +1,2 @@
+type NoContent
+  = NoContent

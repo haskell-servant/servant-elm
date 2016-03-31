@@ -9,6 +9,7 @@ module Servant.Elm.Foreign where
 import           Data.Proxy      (Proxy (Proxy))
 import           Elm             (ToElmType, toElmDecoderWithSources,
                                   toElmEncoderWithSources, toElmTypeWithSources)
+import           Servant.API     (NoContent)
 import           Servant.Foreign (Foreign, GenerateList, HasForeign,
                                   HasForeignType, Req, listFromAPI, typeFor)
 
@@ -24,19 +25,19 @@ data GeneratedElm = GeneratedElm
   , elmTypeSources    :: [String]
     -- The name of the JSON decoder for the type.
     -- E.g. "decodeBlogPost"
-  , elmDecoder        :: String
+  , elmDecoder        :: Maybe String
     -- Elm definitions required to use the decoder.
     -- E.g. "decodeBlogPost = ...; decodeComment = ..."
   , elmDecoderSources :: [String]
     -- The name of the JSON encoder for the type.
     -- E.g. "encodeBlogPost"
-  , elmEncoder        :: String
+  , elmEncoder        :: Maybe String
     -- Elm definitions required to use the encoder.
     -- E.g. "encodeBlogPost = ...; encodeComment = ..."
   , elmEncoderSources :: [String]
   } deriving (Show)
 
-instance (ToElmType a) => HasForeignType LangElm GeneratedElm a where
+instance {-# Overlappable #-} (ToElmType a) => HasForeignType LangElm GeneratedElm a where
   typeFor _ _ _ =
     let
       proxy =
@@ -51,11 +52,25 @@ instance (ToElmType a) => HasForeignType LangElm GeneratedElm a where
       GeneratedElm
         { elmType = eType
         , elmTypeSources = eTypeSources
-        , elmDecoder = eDecoder
+        , elmDecoder = Just eDecoder
         , elmDecoderSources = eDecoderSources
-        , elmEncoder = eEncoder
+        , elmEncoder = Just eEncoder
         , elmEncoderSources = eEncoderSources
         }
+
+
+instance {-# Overlapping #-} HasForeignType LangElm GeneratedElm NoContent where
+  typeFor _ _ _ =
+    GeneratedElm
+      { elmType = "NoContent"
+      , elmTypeSources =
+          [ "type NoContent\n  = NoContent" ]
+      , elmDecoder = Nothing
+      , elmDecoderSources = []
+      , elmEncoder = Nothing
+      , elmEncoderSources = []
+      }
+
 
 getEndpoints
   :: ( HasForeign LangElm GeneratedElm api

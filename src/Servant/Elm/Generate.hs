@@ -1,13 +1,15 @@
-{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleContexts      #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 module Servant.Elm.Generate where
 
-import Control.Lens ((^.), view)
+import           Control.Lens        (view, (^.))
+import           Control.Monad       (join)
 import           Data.List           (intercalate, nub)
-import           Data.Maybe          (catMaybes)
+import           Data.Maybe          (catMaybes, fromMaybe)
 import           Data.Proxy          (Proxy)
 import qualified Data.Text           as T
-import qualified Data.Text.Encoding           as T
-import           Servant.Elm.Foreign (LangElm, GeneratedElm(..), getEndpoints)
+import qualified Data.Text.Encoding  as T
+import           Servant.Elm.Foreign (GeneratedElm (..), LangElm, getEndpoints)
 import qualified Servant.Foreign     as F
 
 
@@ -96,6 +98,7 @@ generateElmForRequest :: ElmOptions -> F.Req GeneratedElm -> [String]
 generateElmForRequest opts request =
   allGeneratedSources elmTypeSources request
   ++ allGeneratedSources elmDecoderSources request
+  ++ supportFns
   ++ [funcDef]
   where
     funcDef =
@@ -116,9 +119,7 @@ generateElmForRequest opts request =
         , "          " ++ body
         , "      }"
         , "  in"
-        , "    Http.fromJson"
-        , "      " ++ decoder
-        , "      (Http.send Http.defaultSettings request)"
+        , httpRequest
         ]
 
     fnName =
@@ -151,11 +152,12 @@ generateElmForRequest opts request =
       maybe
         "Http.empty"
         (\generatedElm ->
-          "Http.string (Json.Encode.encode 0 (" ++ elmEncoder generatedElm ++ " body))")
+          "Http.string (Json.Encode.encode 0 (" ++
+          fromMaybe "TODO" (elmEncoder generatedElm) ++
+          " body))")
         (request ^. F.reqBody)
 
-    decoder =
-      maybe "(succeed ())" elmDecoder (request ^. F.reqReturnType)
+    (httpRequest, supportFns) = mkHttpRequest "    " request
 
 typeSignature
   :: F.Req GeneratedElm
@@ -294,6 +296,74 @@ mkQueryParams indent request =
         , "     \"\""
         , "   else"
         , "     \"?\" ++ String.join \"&\" params"
+        ]
+
+
+{-| If the return type has a decoder, construct the request using Http.fromJson.
+Otherwise, construct an HTTP request that expects an empty response.
+-}
+mkHttpRequest :: String -> F.Req GeneratedElm -> (String, [String])
+mkHttpRequest indent request =
+  ( indent ++ intercalate ("\n" ++ indent) elmLines
+  , supportFns
+  )
+  where
+    (elmLines, supportFns) =
+      case join (elmDecoder <$> request ^. F.reqReturnType) of
+        Just decoder ->
+          (jsonRequest decoder, [])
+        Nothing ->
+          ( emptyResponseRequest
+          , [ emptyResponseHandlerSrc
+            , handleResponseSrc
+            , promoteErrorSrc
+            ]
+          )
+
+    jsonRequest decoder =
+      [ "Http.fromJson"
+      , "  " ++ decoder
+      , "  (Http.send Http.defaultSettings request)"
+      ]
+
+    emptyResponseRequest =
+      [ "Task.mapError promoteError"
+      , "  (Http.send Http.defaultSettings request)"
+      , "    `Task.andThen`"
+      , "      handleResponse (emptyResponseHandler NoContent)"
+      ]
+
+    emptyResponseHandlerSrc =
+      intercalate "\n"
+        [ "emptyResponseHandler : a -> String -> Task.Task Http.Error a"
+        , "emptyResponseHandler x str ="
+        , "  if String.isEmpty str then"
+        , "    Task.succeed x"
+        , "  else"
+        , "    Task.fail (Http.UnexpectedPayload str)"
+        ]
+
+    handleResponseSrc =
+      intercalate "\n"
+        [ "handleResponse : (String -> Task.Task Http.Error a) -> Http.Response -> Task.Task Http.Error a"
+        , "handleResponse handle response ="
+        , "  if 200 <= response.status && response.status < 300 then"
+        , "    case response.value of"
+        , "      Http.Text str ->"
+        , "        handle str"
+        , "      _ ->"
+        , "        Task.fail (Http.UnexpectedPayload \"Response body is a blob, expecting a string.\")"
+        , "  else"
+        , "    Task.fail (Http.BadResponse response.status response.statusText)"
+        ]
+
+    promoteErrorSrc =
+      intercalate "\n"
+        [ "promoteError : Http.RawError -> Http.Error"
+        , "promoteError rawError ="
+        , "  case rawError of"
+        , "    Http.RawTimeout -> Http.Timeout"
+        , "    Http.RawNetworkError -> Http.NetworkError"
         ]
 
 

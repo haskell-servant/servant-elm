@@ -1,4 +1,4 @@
-getNothing : Task.Task Http.Error (())
+getNothing : Task.Task Http.Error (NoContent)
 getNothing =
   let
     request =
@@ -12,6 +12,7 @@ getNothing =
           Http.empty
       }
   in
-    Http.fromJson
-      (Json.Decode.succeed ())
+    Task.mapError promoteError
       (Http.send Http.defaultSettings request)
+        `Task.andThen`
+          handleResponse (emptyResponseHandler NoContent)
