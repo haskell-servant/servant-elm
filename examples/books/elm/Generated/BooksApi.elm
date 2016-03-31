@@ -61,8 +61,8 @@ getBooks =
       (Json.Decode.list decodeBook)
       (Http.send Http.defaultSettings request)
 
-getBooksBy : Int -> Task.Task Http.Error (Book)
-getBooksBy bookId =
+getBooksByBookId : Int -> Task.Task Http.Error (Book)
+getBooksByBookId bookId =
   let
     request =
       { verb =
