@@ -15,6 +15,10 @@ extra-source-files:
   README.md
 cabal-version:       >=1.10
 
+flag examples
+  Description:       Build the example programs.
+  Default:           False
+
 library
   hs-source-dirs:      src
   exposed-modules:     Servant.Elm
@@ -45,3 +49,25 @@ test-suite servant-elm-test
 source-repository head
   type:     git
   location: https://github.com/mattjbray/servant-elm
+
+executable readme-example
+  if !flag(examples)
+    Buildable:         False
+  main-is:             generate.hs
+  build-depends:       base >= 4.7 && < 5
+                     , servant >= 0.5
+                     , servant-elm
+  hs-source-dirs:      examples/readme-example
+  ghc-options:         -threaded -rtsopts -with-rtsopts=-N
+  default-language:    Haskell2010
+
+executable books-example
+  if !flag(examples)
+    Buildable:         False
+  main-is:             generate.hs
+  build-depends:       base >= 4.7 && < 5
+                     , servant >= 0.5
+                     , servant-elm
+  hs-source-dirs:      examples/readme-example
+  ghc-options:         -threaded -rtsopts -with-rtsopts=-N
+  default-language:    Haskell2010
