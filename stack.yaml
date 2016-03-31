@@ -1,19 +1,11 @@
 # For more information, see: https://github.com/commercialhaskell/stack/blob/release/doc/yaml_configuration.md
 
 # Specifies the GHC version and set of packages available (e.g., lts-3.5, nightly-2015-09-21, ghc-7.10.2)
-resolver: lts-3.8
+resolver: lts-5.10
 
 # Local packages, usually specified by relative directory name
 packages:
 - '.'
-- location:
-    git: https://github.com/haskell-servant/servant.git
-    commit: f5fe9a060cf2e74c9c94eef59c066e6ac913fbe4
-  subdirs:
-  - servant
-  - servant-foreign
-  - servant-server
-  extra-dep: True
 - location:
     git: https://www.github.com/mattjbray/elm-export
     commit: a8a5b61798fbb04e081f5c83cab76ceaabc5ba13
@@ -21,7 +13,9 @@ packages:
 
 # Packages to be pulled from upstream that are not in the resolver (e.g., acme-missiles-0.3)
 extra-deps:
-- http-api-data-0.1.1.1
+- servant-0.5
+- servant-foreign-0.5
+- servant-server-0.5
 
 # Override default flag values for local packages and extra-deps
 flags: {}
