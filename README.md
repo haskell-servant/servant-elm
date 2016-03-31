@@ -8,30 +8,26 @@ Elm type generation coutesy of [krisajenkins/elm-export](https://github.com/kris
 
 ## Installation
 
-Until `elm-export` and `servant >= 0.5` are released, `servant-elm` requires
-stack. Add this to your `stack.yaml` file:
+Until `elm-export` is released, `servant-elm` requires stack. Add this to your
+`stack.yaml` file:
 
 ```yaml
 ...
 packages:
   ...
 - location:
-    git: https://github.com/haskell-servant/servant.git
-    commit: 761443fffecbe83aa408d5f705dd0a8dade08af9
-  subdirs:
-  - servant
-  - servant-foreign
-  - servant-server
-  extra-dep: True
-- location:
     git: https://www.github.com/mattjbray/elm-export
     commit: a8a5b61798fbb04e081f5c83cab76ceaabc5ba13
   extra-dep: True
 - location:
     git: https://www.github.com/mattjbray/servant-elm
-    commit: 749e09ed9d623284b3b90d1ae1ccba7ae79ad381
+    commit: 0cfa159f2767701d3f9171206c0806da43ce69be
   extra-dep: True
 ...
+extra-deps:
+- servant-0.5
+- servant-foreign-0.5
+- servant-server-0.5
 ```
 
 ## Example
@@ -138,16 +134,6 @@ $ stack test
 ```
 
 ## TODO
-
-Servant API coverage:
-
-* MatrixFlag / MatrixParam / MatrixParams
-* Header (request)
-* Headers (response)
-* Delete / Patch / Put / Raw
-* Vault / RemoteHost / IsSecure
-
-Other:
 
 * Encode captures and query params?
 * Option to not use elm-export: generate functions that take a decoder and
