@@ -30,6 +30,8 @@ type TestApi =
                  :> QueryParam "sort" String
                  :> QueryParams "filters" (Maybe Bool)
                  :> Get '[JSON] [Book]
+  :<|> "books"   :> ReqBody '[JSON] Book
+                 :> PostNoContent '[JSON] NoContent
   :<|> "nothing" :> GetNoContent '[JSON] NoContent
 
 main :: IO ()
@@ -41,12 +43,14 @@ main = hspec $
         , "test/postTwoSource.elm"
         , "test/bookTypeSource.elm"
         , "test/decodeBookSource.elm"
+        , "test/encodeBookSource.elm"
         , "test/getBooksByIdSource.elm"
         , "test/getBooksSource.elm"
         , "test/noContentTypeSource.elm"
         , "test/emptyResponseHandlerSource.elm"
         , "test/handleResponseSource.elm"
         , "test/promoteErrorSource.elm"
+        , "test/postBooksSource.elm"
         , "test/getNothingSource.elm"
         ]
 

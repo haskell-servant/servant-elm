@@ -98,6 +98,7 @@ generateElmForRequest :: ElmOptions -> F.Req GeneratedElm -> [String]
 generateElmForRequest opts request =
   allGeneratedSources elmTypeSources request
   ++ allGeneratedSources elmDecoderSources request
+  ++ allGeneratedSources elmEncoderSources request
   ++ supportFns
   ++ [funcDef]
   where
