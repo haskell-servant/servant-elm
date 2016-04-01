@@ -17,7 +17,7 @@ data Book = Book
   } deriving Generic
 
 instance ToJSON Book
-instance ToElmType Book
+instance ElmType Book
 
 
 type TestApi =

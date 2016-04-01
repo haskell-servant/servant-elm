@@ -7,8 +7,8 @@
 module Servant.Elm.Foreign where
 
 import           Data.Proxy      (Proxy (Proxy))
-import           Elm             (ToElmType, toElmDecoderWithSources,
-                                  toElmEncoderWithSources, toElmTypeWithSources)
+import           Elm             (ElmType, toElmDecoderSourceDefs,
+                                  toElmEncoderSourceDefs, toElmTypeSourceDefs)
 import           Servant.API     (NoContent)
 import           Servant.Foreign (Foreign, GenerateList, HasForeign,
                                   HasForeignType, Req, listFromAPI, typeFor)
@@ -37,17 +37,17 @@ data GeneratedElm = GeneratedElm
   , elmEncoderSources :: [String]
   } deriving (Show)
 
-instance {-# Overlappable #-} (ToElmType a) => HasForeignType LangElm GeneratedElm a where
+instance {-# Overlappable #-} (ElmType a) => HasForeignType LangElm GeneratedElm a where
   typeFor _ _ _ =
     let
       proxy =
         Proxy :: Proxy a
       (eType, eTypeSources) =
-        toElmTypeWithSources proxy
+        toElmTypeSourceDefs proxy
       (eDecoder, eDecoderSources) =
-        toElmDecoderWithSources proxy
+        toElmDecoderSourceDefs proxy
       (eEncoder, eEncoderSources) =
-        toElmEncoderWithSources proxy
+        toElmEncoderSourceDefs proxy
     in
       GeneratedElm
         { elmType = eType
