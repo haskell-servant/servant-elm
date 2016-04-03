@@ -17,11 +17,11 @@ packages:
   ...
 - location:
     git: https://www.github.com/mattjbray/elm-export
-    commit: a8a5b61798fbb04e081f5c83cab76ceaabc5ba13
+    commit: 9099194eedd3ac8693381e0b61f9fca313c61654
   extra-dep: True
 - location:
     git: https://www.github.com/mattjbray/servant-elm
-    commit: 0cfa159f2767701d3f9171206c0806da43ce69be
+    commit: 7d4d3aebae0db83fc149b797faadaa0adf4e3f82
   extra-dep: True
 ...
 extra-deps:
