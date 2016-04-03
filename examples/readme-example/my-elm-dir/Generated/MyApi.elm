@@ -17,6 +17,12 @@ decodeBook =
   Json.Decode.succeed Book
     |: ("name" := Json.Decode.string)
 
+encodeBook : Book -> Json.Encode.Value
+encodeBook x =
+  Json.Encode.object
+    [ ( "name", Json.Encode.string x.name )
+    ]
+
 getBooksByBookId : Int -> Task.Task Http.Error (Book)
 getBooksByBookId bookId =
   let

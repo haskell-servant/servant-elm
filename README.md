@@ -32,7 +32,7 @@ extra-deps:
 
 ## Example
 
-Let's get some language pragmas and imports out of the way.
+First, some language pragmas and imports.
 
 ```haskell
 {-# LANGUAGE DataKinds     #-}
@@ -41,7 +41,7 @@ Let's get some language pragmas and imports out of the way.
 
 import           GHC.Generics (Generic)
 import           Servant.API  ((:>), Capture, Get, JSON)
-import           Servant.Elm  (Proxy (Proxy), Spec (Spec), ToElmType,
+import           Servant.Elm  (ElmType, Proxy (Proxy), Spec (Spec),
                                defElmImports, generateElmForAPI, specsToDir,
                                specsToDir)
 ```
@@ -53,7 +53,7 @@ data Book = Book
   { name :: String
   } deriving (Generic)
 
-instance ToElmType Book
+instance ElmType Book
 
 type BooksApi = "books" :> Capture "bookId" Int :> Get '[JSON] Book
 ```
@@ -100,8 +100,14 @@ decodeBook =
   Json.Decode.succeed Book
     |: ("name" := Json.Decode.string)
 
-getBooksBy : Int -> Task.Task Http.Error (Book)
-getBooksBy bookId =
+encodeBook : Book -> Json.Encode.Value
+encodeBook x =
+  Json.Encode.object
+    [ ( "name", Json.Encode.string x.name )
+    ]
+
+getBooksByBookId : Int -> Task.Task Http.Error (Book)
+getBooksByBookId bookId =
   let
     request =
       { verb =
