@@ -2,18 +2,17 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE TypeOperators #-}
 
-import           Data.Proxy
-import           Elm          (Spec (Spec), ToElmType, specsToDir)
 import           GHC.Generics (Generic)
 import           Servant.API  ((:<|>), (:>), Capture, Get, JSON, Post, ReqBody)
-import           Servant.Elm  (ElmOptions (..), defElmImports, defElmOptions,
-                               generateElmForAPIWith)
+import           Servant.Elm  (ElmOptions (..), ElmType, Proxy (Proxy),
+                               Spec (Spec), defElmImports, defElmOptions,
+                               generateElmForAPIWith, specsToDir)
 
 data Book = Book
   { name :: String
   } deriving (Show, Eq, Generic)
 
-instance ToElmType Book
+instance ElmType Book
 
 type BooksApi = "books" :> ReqBody '[JSON] Book :> Post '[JSON] Book
            :<|> "books" :> Get '[JSON] [Book]

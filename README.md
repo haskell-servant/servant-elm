@@ -129,7 +129,7 @@ for an example project using this library.
 ```
 $ git clone https://github.com/mattjbray/servant-elm.git
 $ cd servant-elm
-$ stack build
+$ stack build -flag servant-elm:examples
 $ stack test
 ```
 

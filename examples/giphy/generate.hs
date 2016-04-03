@@ -2,12 +2,11 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE TypeOperators #-}
 
-import           Data.Proxy
-import           Elm          (Spec (Spec), ToElmType, specsToDir)
 import           GHC.Generics (Generic)
 import           Servant.API  ((:>), Get, JSON, QueryParam)
-import           Servant.Elm  (ElmOptions (..), defElmImports, defElmOptions,
-                               generateElmForAPIWith)
+import           Servant.Elm  (ElmOptions (..), ElmType, Proxy (Proxy),
+                               Spec (Spec), defElmImports, defElmOptions,
+                               generateElmForAPIWith, specsToDir)
 
 
 data GifData = GifData
@@ -18,8 +17,8 @@ data Gif = Gif
   { _data :: GifData
   } deriving (Show, Eq, Generic)
 
-instance ToElmType GifData
-instance ToElmType Gif
+instance ElmType GifData
+instance ElmType Gif
 
 myElmOpts :: ElmOptions
 myElmOpts = defElmOptions { urlPrefix =  "http://api.giphy.com/v1/gifs" }
