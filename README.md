@@ -19,11 +19,11 @@ packages:
 - '.'
 - location:
     git: https://www.github.com/mattjbray/elm-export
-    commit: 9099194eedd3ac8693381e0b61f9fca313c61654
+    commit: 3dfafc7a717003ff4374119ff6f60e5b56868d8f
   extra-dep: True
 - location:
     git: https://www.github.com/mattjbray/servant-elm
-    commit: 7d4d3aebae0db83fc149b797faadaa0adf4e3f82
+    commit: 36c90557d17d237e621cdcb4912ae9e4f25a9e59
   extra-dep: True
 
 extra-deps:
@@ -137,7 +137,7 @@ for an example project using this library.
 ```
 $ git clone https://github.com/mattjbray/servant-elm.git
 $ cd servant-elm
-$ stack build -flag servant-elm:examples
+$ stack build --flag servant-elm:examples
 $ stack test
 ```
 
