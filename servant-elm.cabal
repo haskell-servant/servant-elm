@@ -36,7 +36,7 @@ test-suite servant-elm-test
   type:                exitcode-stdio-1.0
   hs-source-dirs:      test
   main-is:             Spec.hs
-  build-depends:       aeson
+  build-depends:       aeson >= 0.9
                      , base
                      , data-default
                      , elm-export

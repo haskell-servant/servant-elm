@@ -72,6 +72,18 @@ instance {-# Overlapping #-} HasForeignType LangElm GeneratedElm NoContent where
       }
 
 
+instance {-# Overlapping #-} HasForeignType LangElm GeneratedElm () where
+  typeFor _ _ _ =
+    GeneratedElm
+      { elmType = "()"
+      , elmTypeSources = []
+      , elmDecoder = Nothing
+      , elmDecoderSources = []
+      , elmEncoder = Nothing
+      , elmEncoderSources = []
+      }
+
+
 getEndpoints
   :: ( HasForeign LangElm GeneratedElm api
      , GenerateList GeneratedElm (Foreign GeneratedElm api))

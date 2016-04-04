@@ -33,6 +33,7 @@ type TestApi =
   :<|> "books"   :> ReqBody '[JSON] Book
                  :> PostNoContent '[JSON] NoContent
   :<|> "nothing" :> GetNoContent '[JSON] NoContent
+  :<|> "nothing" :> Put '[JSON] () -- old way to specify no content
 
 main :: IO ()
 main = hspec $
@@ -52,6 +53,7 @@ main = hspec $
         , "test/promoteErrorSource.elm"
         , "test/postBooksSource.elm"
         , "test/getNothingSource.elm"
+        , "test/putNothingSource.elm"
         ]
 
       let generated = map (++ "\n") (generateElmForAPI (Proxy :: Proxy TestApi))

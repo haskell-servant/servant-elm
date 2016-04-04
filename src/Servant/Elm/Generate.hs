@@ -13,6 +13,9 @@ import           Servant.Elm.Foreign (GeneratedElm (..), LangElm, getEndpoints)
 import qualified Servant.Foreign     as F
 
 
+-- FIXME: remove use of fromMaybe - can we make this explicit in the types?
+
+
 {-|
 Options to configure how code is generated.
 -}
@@ -154,7 +157,7 @@ generateElmForRequest opts request =
         "Http.empty"
         (\generatedElm ->
           "Http.string (Json.Encode.encode 0 (" ++
-          fromMaybe "TODO" (elmEncoder generatedElm) ++
+          fromMaybe "<missing encoder for body type>" (elmEncoder generatedElm) ++
           " body))")
         (request ^. F.reqBody)
 
@@ -331,7 +334,9 @@ mkHttpRequest indent request =
       [ "Task.mapError promoteError"
       , "  (Http.send Http.defaultSettings request)"
       , "    `Task.andThen`"
-      , "      handleResponse (emptyResponseHandler NoContent)"
+      , "      handleResponse (emptyResponseHandler " ++
+          fromMaybe "<missing return type>" (elmType <$> request ^. F.reqReturnType)++
+          ")"
       ]
 
     emptyResponseHandlerSrc =
