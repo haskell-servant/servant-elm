@@ -13,8 +13,10 @@ Until `elm-export` is released, `servant-elm` requires stack. Add this to your
 
 ```yaml
 ...
+resolver: lts-5.10
+
 packages:
-  ...
+- '.'
 - location:
     git: https://www.github.com/mattjbray/elm-export
     commit: 9099194eedd3ac8693381e0b61f9fca313c61654
@@ -23,7 +25,7 @@ packages:
     git: https://www.github.com/mattjbray/servant-elm
     commit: 7d4d3aebae0db83fc149b797faadaa0adf4e3f82
   extra-dep: True
-...
+
 extra-deps:
 - servant-0.5
 - servant-foreign-0.5
