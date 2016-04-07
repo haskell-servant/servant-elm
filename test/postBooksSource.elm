@@ -1,15 +1,15 @@
-getNothing : Task.Task Http.Error (NoContent)
-getNothing =
+postBooks : Book -> Task.Task Http.Error (NoContent)
+postBooks body =
   let
     request =
       { verb =
-          "GET"
+          "POST"
       , headers =
           [("Content-Type", "application/json")]
       , url =
-          "/" ++ "nothing"
+          "/" ++ "books"
       , body =
-          Http.empty
+          Http.string (Json.Encode.encode 0 (encodeBook body))
       }
   in
     Task.mapError promoteError

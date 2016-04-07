@@ -15,12 +15,15 @@ extra-source-files:
   README.md
 cabal-version:       >=1.10
 
+flag examples
+  Description:       Build the example programs.
+  Default:           False
+
 library
   hs-source-dirs:      src
   exposed-modules:     Servant.Elm
-  other-modules:       Servant.Elm.Client
+  other-modules:       Servant.Elm.Foreign
                      , Servant.Elm.Generate
-                     , Servant.Elm.Request
   build-depends:       base >= 4.7 && < 5
                      , lens
                      , servant         == 0.5.*
@@ -33,7 +36,7 @@ test-suite servant-elm-test
   type:                exitcode-stdio-1.0
   hs-source-dirs:      test
   main-is:             Spec.hs
-  build-depends:       aeson
+  build-depends:       aeson >= 0.9
                      , base
                      , data-default
                      , elm-export
@@ -46,3 +49,47 @@ test-suite servant-elm-test
 source-repository head
   type:     git
   location: https://github.com/mattjbray/servant-elm
+
+executable books-example
+  if !flag(examples)
+    Buildable:         False
+  main-is:             generate.hs
+  build-depends:       base >= 4.7 && < 5
+                     , servant >= 0.5
+                     , servant-elm
+  hs-source-dirs:      examples/books
+  ghc-options:         -threaded -rtsopts -with-rtsopts=-N
+  default-language:    Haskell2010
+
+executable e2e-tests-example
+  if !flag(examples)
+    Buildable:         False
+  main-is:             generate.hs
+  build-depends:       base >= 4.7 && < 5
+                     , servant >= 0.5
+                     , servant-elm
+  hs-source-dirs:      examples/e2e-tests
+  ghc-options:         -threaded -rtsopts -with-rtsopts=-N
+  default-language:    Haskell2010
+
+executable giphy-example
+  if !flag(examples)
+    Buildable:         False
+  main-is:             generate.hs
+  build-depends:       base >= 4.7 && < 5
+                     , servant >= 0.5
+                     , servant-elm
+  hs-source-dirs:      examples/giphy
+  ghc-options:         -threaded -rtsopts -with-rtsopts=-N
+  default-language:    Haskell2010
+
+executable readme-example
+  if !flag(examples)
+    Buildable:         False
+  main-is:             generate.hs
+  build-depends:       base >= 4.7 && < 5
+                     , servant >= 0.5
+                     , servant-elm
+  hs-source-dirs:      examples/readme-example
+  ghc-options:         -threaded -rtsopts -with-rtsopts=-N
+  default-language:    Haskell2010

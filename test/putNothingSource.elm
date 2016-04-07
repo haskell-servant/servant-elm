@@ -1,9 +1,9 @@
-getNothing : Task.Task Http.Error (NoContent)
-getNothing =
+putNothing : Task.Task Http.Error (())
+putNothing =
   let
     request =
       { verb =
-          "GET"
+          "PUT"
       , headers =
           [("Content-Type", "application/json")]
       , url =
@@ -15,4 +15,4 @@ getNothing =
     Task.mapError promoteError
       (Http.send Http.defaultSettings request)
         `Task.andThen`
-          handleResponse (emptyResponseHandler NoContent)
+          handleResponse (emptyResponseHandler ())

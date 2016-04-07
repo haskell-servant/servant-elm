@@ -8,35 +8,33 @@ Elm type generation coutesy of [krisajenkins/elm-export](https://github.com/kris
 
 ## Installation
 
-Until `elm-export` and `servant >= 0.5` are released, `servant-elm` requires
-stack. Add this to your `stack.yaml` file:
+Until `elm-export` is released, `servant-elm` requires stack. Add this to your
+`stack.yaml` file:
 
 ```yaml
 ...
+resolver: lts-5.10
+
 packages:
-  ...
-- location:
-    git: https://github.com/haskell-servant/servant.git
-    commit: 761443fffecbe83aa408d5f705dd0a8dade08af9
-  subdirs:
-  - servant
-  - servant-foreign
-  - servant-server
-  extra-dep: True
+- '.'
 - location:
     git: https://www.github.com/mattjbray/elm-export
-    commit: a8a5b61798fbb04e081f5c83cab76ceaabc5ba13
+    commit: 3dfafc7a717003ff4374119ff6f60e5b56868d8f
   extra-dep: True
 - location:
     git: https://www.github.com/mattjbray/servant-elm
-    commit: 749e09ed9d623284b3b90d1ae1ccba7ae79ad381
+    commit: 36c90557d17d237e621cdcb4912ae9e4f25a9e59
   extra-dep: True
-...
+
+extra-deps:
+- servant-0.5
+- servant-foreign-0.5
+- servant-server-0.5
 ```
 
 ## Example
 
-Let's get some language pragmas and imports out of the way.
+First, some language pragmas and imports.
 
 ```haskell
 {-# LANGUAGE DataKinds     #-}
@@ -45,7 +43,7 @@ Let's get some language pragmas and imports out of the way.
 
 import           GHC.Generics (Generic)
 import           Servant.API  ((:>), Capture, Get, JSON)
-import           Servant.Elm  (Proxy (Proxy), Spec (Spec), ToElmType,
+import           Servant.Elm  (ElmType, Proxy (Proxy), Spec (Spec),
                                defElmImports, generateElmForAPI, specsToDir,
                                specsToDir)
 ```
@@ -57,7 +55,7 @@ data Book = Book
   { name :: String
   } deriving (Generic)
 
-instance ToElmType Book
+instance ElmType Book
 
 type BooksApi = "books" :> Capture "bookId" Int :> Get '[JSON] Book
 ```
@@ -104,8 +102,14 @@ decodeBook =
   Json.Decode.succeed Book
     |: ("name" := Json.Decode.string)
 
-getBooksBy : Int -> Task.Task Http.Error (Book)
-getBooksBy bookId =
+encodeBook : Book -> Json.Encode.Value
+encodeBook x =
+  Json.Encode.object
+    [ ( "name", Json.Encode.string x.name )
+    ]
+
+getBooksByBookId : Int -> Task.Task Http.Error (Book)
+getBooksByBookId bookId =
   let
     request =
       { verb =
@@ -133,21 +137,11 @@ for an example project using this library.
 ```
 $ git clone https://github.com/mattjbray/servant-elm.git
 $ cd servant-elm
-$ stack build
+$ stack build --flag servant-elm:examples
 $ stack test
 ```
 
 ## TODO
-
-Servant API coverage:
-
-* MatrixFlag / MatrixParam / MatrixParams
-* Header (request)
-* Headers (response)
-* Delete / Patch / Put / Raw
-* Vault / RemoteHost / IsSecure
-
-Other:
 
 * Encode captures and query params?
 * Option to not use elm-export: generate functions that take a decoder and

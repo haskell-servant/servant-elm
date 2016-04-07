@@ -4,7 +4,7 @@
 
 import           GHC.Generics (Generic)
 import           Servant.API  ((:>), Capture, Get, JSON)
-import           Servant.Elm  (Proxy (Proxy), Spec (Spec), ToElmType,
+import           Servant.Elm  (ElmType, Proxy (Proxy), Spec (Spec),
                                defElmImports, generateElmForAPI, specsToDir,
                                specsToDir)
 
@@ -12,7 +12,7 @@ data Book = Book
   { name :: String
   } deriving (Generic)
 
-instance ToElmType Book
+instance ElmType Book
 
 type BooksApi = "books" :> Capture "bookId" Int :> Get '[JSON] Book
 

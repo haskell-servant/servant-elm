@@ -1,5 +1,5 @@
-getBooksBy : Int -> Task.Task Http.Error (Book)
-getBooksBy id =
+getBooksById : Int -> Task.Task Http.Error (Book)
+getBooksById id =
   let
     request =
       { verb =

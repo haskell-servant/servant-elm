@@ -1,17 +1,15 @@
+{-# LANGUAGE DataKinds     #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE TypeOperators #-}
-{-# LANGUAGE DataKinds #-}
 
-import Test.Hspec
+import           Test.Hspec
 
-import Control.Monad (zipWithM_)
-import Data.Aeson (ToJSON)
-import Data.Default (Default, def)
-import Data.Proxy (Proxy(Proxy))
-import Elm (ToElmType)
-import GHC.Generics (Generic)
-import Servant.API
-import Servant.Elm
+import           Control.Monad (zipWithM_)
+import           Data.Aeson    (ToJSON)
+import           Data.Default  (Default, def)
+import           GHC.Generics  (Generic)
+import           Servant.API
+import           Servant.Elm
 
 
 data Book = Book
@@ -19,38 +17,47 @@ data Book = Book
   } deriving Generic
 
 instance ToJSON Book
-instance ToElmType Book
+instance ElmType Book
 
 
-type TestApi = "one" :> Get '[JSON] Int
-          :<|> "two" :> ReqBody '[JSON] String :> Post '[JSON] (Maybe Int)
-          :<|> "books" :> Capture "id" Int :> Get '[JSON] Book
-          :<|> "books" :> QueryFlag "published"
-                       :> QueryParam "sort" String
-                       :> QueryParams "filters" (Maybe Bool)
-                       :> Get '[JSON] [Book]
-          :<|> "nothing" :> Get '[JSON] ()
+type TestApi =
+       "one"     :> Get '[JSON] Int
+  :<|> "two"     :> ReqBody '[JSON] String
+                 :> Post '[JSON] (Maybe Int)
+  :<|> "books"   :> Capture "id" Int
+                 :> Get '[JSON] Book
+  :<|> "books"   :> QueryFlag "published"
+                 :> QueryParam "sort" String
+                 :> QueryParams "filters" (Maybe Bool)
+                 :> Get '[JSON] [Book]
+  :<|> "books"   :> ReqBody '[JSON] Book
+                 :> PostNoContent '[JSON] NoContent
+  :<|> "nothing" :> GetNoContent '[JSON] NoContent
+  :<|> "nothing" :> Put '[JSON] () -- old way to specify no content
 
 main :: IO ()
 main = hspec $
   describe "encoding a simple api" $
     it "does it" $ do
-      getOneSource     <- readFile "test/getOneSource.elm"
-      postTwoSource    <- readFile "test/postTwoSource.elm"
-      bookTypeSource   <- readFile "test/bookTypeSource.elm"
-      decodeBookSource <- readFile "test/decodeBookSource.elm"
-      getBooksBySource <- readFile "test/getBooksBySource.elm"
-      getBooksSource   <- readFile "test/getBooksSource.elm"
-      getNothingSource <- readFile "test/getNothingSource.elm"
+      expected <- mapM readFile
+        [ "test/getOneSource.elm"
+        , "test/postTwoSource.elm"
+        , "test/bookTypeSource.elm"
+        , "test/decodeBookSource.elm"
+        , "test/encodeBookSource.elm"
+        , "test/getBooksByIdSource.elm"
+        , "test/getBooksSource.elm"
+        , "test/noContentTypeSource.elm"
+        , "test/emptyResponseHandlerSource.elm"
+        , "test/handleResponseSource.elm"
+        , "test/promoteErrorSource.elm"
+        , "test/postBooksSource.elm"
+        , "test/getNothingSource.elm"
+        , "test/putNothingSource.elm"
+        ]
+
       let generated = map (++ "\n") (generateElmForAPI (Proxy :: Proxy TestApi))
-          expected  = [ getOneSource
-                      , postTwoSource
-                      , bookTypeSource
-                      , decodeBookSource
-                      , getBooksBySource
-                      , getBooksSource
-                      , getNothingSource
-                      ]
+
       generated `itemsShouldBe` expected
 
 itemsShouldBe :: (Default a, Eq a, Show a) => [a] -> [a] -> IO ()
