@@ -30,11 +30,11 @@ port tasks =
 
 
 type alias Model =
-  { successGetIp : Maybe (Result Http.Error Api.OriginIp)
+  { successGetIp : Maybe (Result Http.Error Api.Response)
   , successGetStatus204 : Maybe (Result Http.Error Api.NoContent)
-  , successPostPost : Maybe (Result Http.Error Api.MessageResponse)
-  , successGetGet : Maybe (Result MyError Api.QueryArgsResponse)
-  , successGetByPath : Maybe (Result Http.Error Api.OriginIp)
+  , successPostPost : Maybe (Result Http.Error Api.ResponseWithJson)
+  , successGetGet : Maybe (Result MyError Api.ResponseWithArgs)
+  , successGetByPath : Maybe (Result Http.Error Api.Response)
   }
 
 type MyError
@@ -62,10 +62,10 @@ init =
 
 type Action
   = SetSuccessStatus204 (Result Http.Error Api.NoContent)
-  | SetSuccessIp (Result Http.Error Api.OriginIp)
-  | SetSuccessPost (Result Http.Error Api.MessageResponse)
-  | CheckSuccessGet (Result Http.Error Api.QueryArgsResponse)
-  | SetSuccessGetByPath (Result Http.Error Api.OriginIp)
+  | SetSuccessIp (Result Http.Error Api.Response)
+  | SetSuccessPost (Result Http.Error Api.ResponseWithJson)
+  | CheckSuccessGet (Result Http.Error Api.ResponseWithArgs)
+  | SetSuccessGetByPath (Result Http.Error Api.Response)
 
 
 fetchStatus204 : Effects.Effects Action

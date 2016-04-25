@@ -8,22 +8,22 @@ import String
 import Task
 
 
-type alias OriginIp =
+type alias Response =
   { origin : String
   }
 
-decodeOriginIp : Json.Decode.Decoder OriginIp
-decodeOriginIp =
-  Json.Decode.succeed OriginIp
+decodeResponse : Json.Decode.Decoder Response
+decodeResponse =
+  Json.Decode.succeed Response
     |: ("origin" := Json.Decode.string)
 
-encodeOriginIp : OriginIp -> Json.Encode.Value
-encodeOriginIp x =
+encodeResponse : Response -> Json.Encode.Value
+encodeResponse x =
   Json.Encode.object
     [ ( "origin", Json.Encode.string x.origin )
     ]
 
-getIp : Task.Task Http.Error (OriginIp)
+getIp : Task.Task Http.Error (Response)
 getIp =
   let
     request =
@@ -39,7 +39,7 @@ getIp =
       }
   in
     Http.fromJson
-      decodeOriginIp
+      decodeResponse
       (Http.send Http.defaultSettings request)
 
 type NoContent
@@ -94,7 +94,7 @@ type alias MessageBody =
   { message : String
   }
 
-type alias MessageResponse =
+type alias ResponseWithJson =
   { json : MessageBody
   }
 
@@ -103,9 +103,9 @@ decodeMessageBody =
   Json.Decode.succeed MessageBody
     |: ("message" := Json.Decode.string)
 
-decodeMessageResponse : Json.Decode.Decoder MessageResponse
-decodeMessageResponse =
-  Json.Decode.succeed MessageResponse
+decodeResponseWithJson : Json.Decode.Decoder ResponseWithJson
+decodeResponseWithJson =
+  Json.Decode.succeed ResponseWithJson
     |: ("json" := decodeMessageBody)
 
 encodeMessageBody : MessageBody -> Json.Encode.Value
@@ -114,13 +114,13 @@ encodeMessageBody x =
     [ ( "message", Json.Encode.string x.message )
     ]
 
-encodeMessageResponse : MessageResponse -> Json.Encode.Value
-encodeMessageResponse x =
+encodeResponseWithJson : ResponseWithJson -> Json.Encode.Value
+encodeResponseWithJson x =
   Json.Encode.object
     [ ( "json", encodeMessageBody x.json )
     ]
 
-postPost : MessageBody -> Task.Task Http.Error (MessageResponse)
+postPost : MessageBody -> Task.Task Http.Error (ResponseWithJson)
 postPost body =
   let
     request =
@@ -136,10 +136,10 @@ postPost body =
       }
   in
     Http.fromJson
-      decodeMessageResponse
+      decodeResponseWithJson
       (Http.send Http.defaultSettings request)
 
-type alias QueryArgsResponse =
+type alias ResponseWithArgs =
   { args : QueryArgs
   }
 
@@ -147,9 +147,9 @@ type alias QueryArgs =
   { q : String
   }
 
-decodeQueryArgsResponse : Json.Decode.Decoder QueryArgsResponse
-decodeQueryArgsResponse =
-  Json.Decode.succeed QueryArgsResponse
+decodeResponseWithArgs : Json.Decode.Decoder ResponseWithArgs
+decodeResponseWithArgs =
+  Json.Decode.succeed ResponseWithArgs
     |: ("args" := decodeQueryArgs)
 
 decodeQueryArgs : Json.Decode.Decoder QueryArgs
@@ -157,8 +157,8 @@ decodeQueryArgs =
   Json.Decode.succeed QueryArgs
     |: ("q" := Json.Decode.string)
 
-encodeQueryArgsResponse : QueryArgsResponse -> Json.Encode.Value
-encodeQueryArgsResponse x =
+encodeResponseWithArgs : ResponseWithArgs -> Json.Encode.Value
+encodeResponseWithArgs x =
   Json.Encode.object
     [ ( "args", encodeQueryArgs x.args )
     ]
@@ -169,7 +169,7 @@ encodeQueryArgs x =
     [ ( "q", Json.Encode.string x.q )
     ]
 
-getGet : Maybe (String) -> Task.Task Http.Error (QueryArgsResponse)
+getGet : Maybe (String) -> Task.Task Http.Error (ResponseWithArgs)
 getGet q =
   let
     params =
@@ -195,10 +195,10 @@ getGet q =
       }
   in
     Http.fromJson
-      decodeQueryArgsResponse
+      decodeResponseWithArgs
       (Http.send Http.defaultSettings request)
 
-getByPath : String -> Task.Task Http.Error (OriginIp)
+getByPath : String -> Task.Task Http.Error (Response)
 getByPath path =
   let
     request =
@@ -214,5 +214,5 @@ getByPath path =
       }
   in
     Http.fromJson
-      decodeOriginIp
+      decodeResponse
       (Http.send Http.defaultSettings request)
