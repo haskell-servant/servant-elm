@@ -24,7 +24,9 @@ data ElmOptions = ElmOptions
 
     Example: @"https://mydomain.com/api/v1"@
     -}
-    urlPrefix :: String }
+    urlPrefix        :: String
+  , elmExportOptions :: Elm.Options
+  }
 
 
 {-|
@@ -34,7 +36,9 @@ The default options for generating Elm code.
 -}
 defElmOptions :: ElmOptions
 defElmOptions = ElmOptions
-  { urlPrefix = "" }
+  { urlPrefix = ""
+  , elmExportOptions = Elm.defaultOptions
+  }
 
 
 {-|
@@ -128,7 +132,7 @@ generateElmForRequest opts request =
       T.unpack (F.camelCase (request ^. F.reqFuncName))
 
     (typeSig, typeSigDefs) =
-      typeSignature request
+      typeSignature opts request
 
     fnNameArgs =
       unwords (fnName : args)
@@ -160,18 +164,19 @@ generateElmForRequest opts request =
         Just elmTypeExpr ->
           let
             (encoderName, encoderSourceDefs) =
-              Elm.toElmEncoderSourceDefs elmTypeExpr
+              Elm.toElmEncoderSourceDefsWith (elmExportOptions opts) elmTypeExpr
           in
             ( "Http.string (Json.Encode.encode 0 (" ++ encoderName ++ " body))"
             , encoderSourceDefs
             )
 
-    (httpRequest, supportFns) = mkHttpRequest "    " request
+    (httpRequest, supportFns) = mkHttpRequest "    " opts request
 
 typeSignature
-  :: F.Req ElmTypeExpr
+  :: ElmOptions
+  -> F.Req ElmTypeExpr
   -> (String, [String])
-typeSignature request =
+typeSignature opts request =
   (collect . catMaybes)
     [ urlCaptureTypes
     , queryTypes
@@ -195,13 +200,16 @@ typeSignature request =
         Nothing
       else
         Just $ collect
-          [ Elm.toElmTypeSourceDefs (arg ^. F.argType)
+          [ Elm.toElmTypeSourceDefsWith (elmExportOptions opts) (arg ^. F.argType)
           | arg <- urlCaptureArgs
           ]
 
     queryArgToElmType arg =
       let
-        (eType, eTypeDefs) = Elm.toElmTypeSourceDefs (arg ^. F.queryArgName . F.argType)
+        (eType, eTypeDefs) =
+          Elm.toElmTypeSourceDefsWith
+            (elmExportOptions opts)
+            (arg ^. F.queryArgName . F.argType)
       in
         ( case arg ^. F.queryArgType of
             F.Normal ->
@@ -219,7 +227,9 @@ typeSignature request =
           map queryArgToElmType (request ^. F.reqUrl . F.queryStr)
 
     bodyType =
-      fmap Elm.toElmTypeSourceDefs (request ^. F.reqBody)
+      fmap
+        (Elm.toElmTypeSourceDefsWith (elmExportOptions opts))
+        (request ^. F.reqBody)
 
     returnType =
       case request ^. F.reqReturnType of
@@ -228,7 +238,7 @@ typeSignature request =
         Just elmTypeExpr ->
           let
             (eType, eTypeDefs) =
-              Elm.toElmTypeSourceDefs elmTypeExpr
+              Elm.toElmTypeSourceDefsWith (elmExportOptions opts) elmTypeExpr
           in
             Just ( "Task.Task Http.Error (" ++ eType ++ ")"
                  , eTypeDefs
@@ -352,8 +362,8 @@ mkQueryParams indent request =
 {-| If the return type has a decoder, construct the request using Http.fromJson.
 Otherwise, construct an HTTP request that expects an empty response.
 -}
-mkHttpRequest :: String -> F.Req ElmTypeExpr -> (String, [String])
-mkHttpRequest indent request =
+mkHttpRequest :: String -> ElmOptions -> F.Req ElmTypeExpr -> (String, [String])
+mkHttpRequest indent opts request =
   ( indent ++ intercalate ("\n" ++ indent) elmLines
   , supportFns
   )
@@ -373,9 +383,9 @@ mkHttpRequest indent request =
                 , handleResponseSrc
                 , promoteErrorSrc
                 ])
-            (Elm.toElmTypeSourceDefs elmTypeExpr)
+            (Elm.toElmTypeSourceDefsWith (elmExportOptions opts) elmTypeExpr)
         Just elmTypeExpr ->
-          first jsonRequest (Elm.toElmDecoderSourceDefs elmTypeExpr)
+          first jsonRequest (Elm.toElmDecoderSourceDefsWith (elmExportOptions opts) elmTypeExpr)
         Nothing ->
           error "mkHttpRequest: no reqReturnType?"
 
