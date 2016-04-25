@@ -29,5 +29,5 @@ import           Servant.Elm.Generate (ElmOptions (..), defElmImports,
                                        defElmOptions, generateElmForAPI,
                                        generateElmForAPIWith)
 
-import Data.Proxy (Proxy(Proxy))
-import Elm (Spec(Spec), ElmType, specsToDir)
+import           Data.Proxy           (Proxy (Proxy))
+import           Elm                  (ElmType, Spec (Spec), specsToDir)

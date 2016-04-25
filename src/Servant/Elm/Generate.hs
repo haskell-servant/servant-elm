@@ -11,7 +11,7 @@ import qualified Data.Text           as T
 import qualified Data.Text.Encoding  as T
 import           Elm                 (ElmTypeExpr)
 import qualified Elm
-import Servant.API (NoContent(..))
+import           Servant.API         (NoContent (..))
 import           Servant.Elm.Foreign (LangElm, getEndpoints)
 import qualified Servant.Foreign     as F
 
@@ -25,12 +25,12 @@ data ElmOptions = ElmOptions
 
     Example: @"https://mydomain.com/api/v1"@
     -}
-    urlPrefix        :: String
-  , elmExportOptions :: Elm.Options
+    urlPrefix             :: String
+  , elmExportOptions      :: Elm.Options
     -- ^ Options to pass to elm-export
   , emptyResponseElmTypes :: [ElmTypeExpr]
     -- ^ Types that represent an empty Http response.
-  , stringElmTypes :: [ElmTypeExpr]
+  , stringElmTypes        :: [ElmTypeExpr]
     -- ^ Types that represent a String.
   }
 
