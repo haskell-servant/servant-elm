@@ -13,6 +13,7 @@ import           Elm                 (ElmTypeExpr)
 import qualified Elm
 import           Servant.API         (NoContent (..))
 import           Servant.Elm.Foreign (LangElm, getEndpoints)
+import           Servant.Elm.Orphans ()
 import qualified Servant.Foreign     as F
 
 
