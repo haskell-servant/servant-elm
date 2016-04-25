@@ -11,6 +11,7 @@ import qualified Data.Text           as T
 import qualified Data.Text.Encoding  as T
 import           Elm                 (ElmTypeExpr)
 import qualified Elm
+import Servant.API (NoContent(..))
 import           Servant.Elm.Foreign (LangElm, getEndpoints)
 import qualified Servant.Foreign     as F
 
@@ -27,18 +28,39 @@ data ElmOptions = ElmOptions
     urlPrefix        :: String
   , elmExportOptions :: Elm.Options
     -- ^ Options to pass to elm-export
+  , emptyResponseElmTypes :: [ElmTypeExpr]
+    -- ^ Types that represent an empty Http response.
+  , stringElmTypes :: [ElmTypeExpr]
+    -- ^ Types that represent a String.
   }
 
 
 {-|
-The default options for generating Elm code.
+Default options for generating Elm code.
 
-[@urlPrefix@] (An empty string)
+The default options are:
+
+> { urlPrefix =
+>     ""
+> , elmExportOptions =
+>     Elm.defaultOptions
+> , emptyResponseElmTypes =
+>     [ toElmType (), toElmType NoContent ]
+> , stringElmTypes =
+>     [ toElmType "" ]
+> }
 -}
 defElmOptions :: ElmOptions
 defElmOptions = ElmOptions
   { urlPrefix = ""
   , elmExportOptions = Elm.defaultOptions
+  , emptyResponseElmTypes =
+      [ Elm.toElmType ()
+      , Elm.toElmType NoContent
+      ]
+  , stringElmTypes =
+      [ Elm.toElmType ""
+      ]
   }
 
 
@@ -130,7 +152,7 @@ generateElmForRequest opts request =
       unwords (fnName : mkArgsList request)
 
     letParams =
-      mkLetParams "    " request
+      mkLetParams "    " opts request
 
     (letRequest, bodyEncoderDefs) =
       mkLetRequest "    " opts request
@@ -143,9 +165,9 @@ mkTypeSignature
   :: ElmOptions
   -> F.Req ElmTypeExpr
   -> ( String
-       -- ^ The type signature
+       -- The type signature
      , [String]
-       -- ^ Supporting type definitions
+       -- Supporting type definitions
      )
 mkTypeSignature opts request =
   (collect . catMaybes)
@@ -243,13 +265,13 @@ mkArgsList request =
 
 
 mkUrl
-  :: String
+  :: ElmOptions
   -> [F.Segment ElmTypeExpr]
   -> String
-mkUrl prefix segments =
+mkUrl opts segments =
   (intercalate newLine . catMaybes)
-    [ nullOr prefix $
-        "\"" ++ prefix ++ "\""
+    [ nullOr (urlPrefix opts) $
+        "\"" ++ urlPrefix opts ++ "\""
     , nullOr segments $
         "\"/\" ++ "
         ++ intercalate (newLine ++ "\"/\" ++ ")
@@ -274,7 +296,7 @@ mkUrl prefix segments =
           let
             -- Don't use "toString" on Elm Strings, otherwise we get extraneous quotes.
             toStringSrc =
-              if isElmStringType (arg ^. F.argType) then
+              if isElmStringType opts (arg ^. F.argType) then
                 ""
               else
                 " |> toString"
@@ -284,9 +306,10 @@ mkUrl prefix segments =
 
 mkLetParams
   :: String
+  -> ElmOptions
   -> F.Req ElmTypeExpr
   -> [String]
-mkLetParams indent request =
+mkLetParams indent opts request =
   if null (request ^. F.reqUrl . F.queryStr) then
     []
   else
@@ -307,7 +330,7 @@ mkLetParams indent request =
           let
             -- Don't use "toString" on Elm Strings, otherwise we get extraneous quotes.
             toStringSrc =
-              if isElmStringType (qarg ^. F.queryArgName . F.argType) then
+              if isElmStringType opts (qarg ^. F.queryArgName . F.argType) then
                 ""
               else
                 "toString >> "
@@ -343,9 +366,9 @@ mkLetRequest
   -> ElmOptions
   -> F.Req ElmTypeExpr
   -> ( [String]
-       -- ^ The source lines for the Elm request value.
+       -- The source lines for the Elm request value.
      , [String]
-       -- ^ Supporting definitions for the body JSON encoder.
+       -- Supporting definitions for the body JSON encoder.
      )
 mkLetRequest indent opts request =
   ( map (indent ++)
@@ -370,7 +393,7 @@ mkLetRequest indent opts request =
        T.unpack (T.decodeUtf8 (request ^. F.reqMethod))
 
     url =
-      mkUrl (urlPrefix opts) (request ^. F.reqUrl . F.path)
+      mkUrl opts (request ^. F.reqUrl . F.path)
 
     (body, bodyEncoderDefs) =
       case request ^. F.reqBody of
@@ -415,7 +438,7 @@ mkHttpRequest indent opts request =
   where
     (elmLines, responseDecoderDefs) =
       case request ^. F.reqReturnType of
-        Just elmTypeExpr | isEmptyType elmTypeExpr ->
+        Just elmTypeExpr | isEmptyType opts elmTypeExpr ->
           bimap
             emptyResponseRequest
             (++ [ emptyResponseHandlerSrc
@@ -480,20 +503,14 @@ mkHttpRequest indent opts request =
 {- | Determines whether we construct an Elm function that expects an empty
 response body.
 -}
-isEmptyType :: ElmTypeExpr -> Bool
-isEmptyType elmTypeExpr =
-  case elmTypeExpr of
-    Elm.Primitive "()" -> True
-    Elm.DataType "NoContent" _ -> True
-    _ -> False
+isEmptyType :: ElmOptions -> ElmTypeExpr -> Bool
+isEmptyType opts elmTypeExpr =
+  elmTypeExpr `elem` emptyResponseElmTypes opts
 
 
 {- | Determines whether we call `toString` on URL captures and query params of
 this type in Elm.
 -}
-isElmStringType :: ElmTypeExpr -> Bool
-isElmStringType elmTypeExpr =
-  case elmTypeExpr of
-    Elm.Primitive "String" -> True
-    Elm.Product (Elm.Primitive "List") (Elm.Primitive "Char") -> True
-    _ -> False
+isElmStringType :: ElmOptions -> ElmTypeExpr -> Bool
+isElmStringType opts elmTypeExpr =
+  elmTypeExpr `elem` stringElmTypes opts
