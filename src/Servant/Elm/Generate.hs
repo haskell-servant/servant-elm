@@ -103,37 +103,28 @@ generateElmForAPIWith opts =
 
 generateElmForRequest :: ElmOptions -> F.Req ElmTypeExpr -> [String]
 generateElmForRequest opts request =
-  typeSigDefs
+  typeSignatureDefs
   ++ bodyEncoderDefs
   ++ responseDecoderDefs
   ++ [funcDef]
   where
     funcDef =
       (intercalate "\n" . filter (not . null))
-        [ fnName ++ " : " ++ typeSig
-        , fnNameArgs ++ " ="
-        , "  let"
-        , mkLetQueryParams "    " request
-        , "    request ="
-        , "      { verb ="
-        , "          \"" ++ method ++ "\""
-        , "      , headers ="
-        , "          [(\"Content-Type\", \"application/json\")]"
-        , "      , url ="
-        , "          " ++ url
-        , mkQueryParams "          " request
-        , "      , body ="
-        , "          " ++ body
-        , "      }"
-        , "  in"
-        , httpRequest
-        ]
+        ([ fnName ++ " : " ++ typeSignature
+         , fnNameArgs ++ " ="
+         , "  let"
+         ]
+         ++ letParams
+         ++ letRequest
+         ++ [ "  in" ]
+         ++ httpRequest
+         )
 
     fnName =
       T.unpack (F.camelCase (request ^. F.reqFuncName))
 
-    (typeSig, typeSigDefs) =
-      typeSignature opts request
+    (typeSignature, typeSignatureDefs) =
+      mkTypeSignature opts request
 
     fnNameArgs =
       unwords (fnName : args)
@@ -152,29 +143,16 @@ generateElmForRequest opts request =
         [ fmap (const "body") (request ^. F.reqBody)
         ]
 
-    method =
-       T.unpack (T.decodeUtf8 (request ^. F.reqMethod))
+    letParams =
+      mkLetParams "    " request
 
-    url =
-      mkUrl (urlPrefix opts) (request ^. F.reqUrl . F.path)
-
-    (body, bodyEncoderDefs) =
-      case request ^. F.reqBody of
-        Nothing ->
-          ( "Http.empty", [] )
-        Just elmTypeExpr ->
-          let
-            (encoderName, encoderSourceDefs) =
-              Elm.toElmEncoderSourceDefsWith (elmExportOptions opts) elmTypeExpr
-          in
-            ( "Http.string (Json.Encode.encode 0 (" ++ encoderName ++ " body))"
-            , encoderSourceDefs
-            )
+    (letRequest, bodyEncoderDefs) =
+      mkLetRequest "    " opts request
 
     (httpRequest, responseDecoderDefs) =
       mkHttpRequest "    " opts request
 
-typeSignature
+mkTypeSignature
   :: ElmOptions
   -> F.Req ElmTypeExpr
   -> ( String
@@ -182,7 +160,7 @@ typeSignature
      , [String]
        -- ^ Supporting type definitions
      )
-typeSignature opts request =
+mkTypeSignature opts request =
   (collect . catMaybes)
     [ urlCaptureTypes
     , queryTypes
@@ -293,16 +271,15 @@ isElmStringType elmTypeExpr =
     _ ->
       False
 
-mkLetQueryParams
+mkLetParams
   :: String
   -> F.Req ElmTypeExpr
-  -> String
-mkLetQueryParams indent request =
+  -> [String]
+mkLetParams indent request =
   if null (request ^. F.reqUrl . F.queryStr) then
-    ""
+    []
   else
-    indent
-    ++ intercalate ("\n" ++ indent)
+    map (indent ++)
         [ "params ="
         , "  List.filter (not << String.isEmpty)"
         , "    [ " ++ intercalate ("\n" ++ indent ++ "    , ") params
@@ -343,29 +320,78 @@ mkLetQueryParams indent request =
       where name = T.unpack . F.unPathSegment . view (F.queryArgName . F.argName) $ qarg
             newLine = "\n          "
 
+
+mkLetRequest
+  :: String
+  -> ElmOptions
+  -> F.Req ElmTypeExpr
+  -> ( [String]
+       -- ^ The source lines for the Elm request value.
+     , [String]
+       -- ^ Supporting definitions for the body JSON encoder.
+     )
+mkLetRequest indent opts request =
+  ( map (indent ++)
+      ([ "request ="
+       , "  { verb ="
+       , "      \"" ++ method ++ "\""
+       , "  , headers ="
+       , "      [(\"Content-Type\", \"application/json\")]"
+       , "  , url ="
+       , "      " ++ url
+       ]
+       ++ mkQueryParams "      " request ++
+       [ "  , body ="
+       , "      " ++ body
+       , "  }"
+       ]
+      )
+  , bodyEncoderDefs
+  )
+  where
+    method =
+       T.unpack (T.decodeUtf8 (request ^. F.reqMethod))
+
+    url =
+      mkUrl (urlPrefix opts) (request ^. F.reqUrl . F.path)
+
+    (body, bodyEncoderDefs) =
+      case request ^. F.reqBody of
+        Nothing ->
+          ( "Http.empty", [] )
+        Just elmTypeExpr ->
+          first
+            (\encoderName ->
+               "Http.string (Json.Encode.encode 0 (" ++ encoderName ++ " body))")
+            (Elm.toElmEncoderSourceDefsWith (elmExportOptions opts) elmTypeExpr)
+
+
 mkQueryParams
   :: String
   -> F.Req ElmTypeExpr
-  -> String
+  -> [String]
 mkQueryParams indent request =
   if null (request ^. F.reqUrl . F.queryStr) then
-    ""
+    []
   else
-    indent
-    ++ intercalate ("\n" ++ indent)
-        [ "++ if List.isEmpty params then"
-        , "     \"\""
-        , "   else"
-        , "     \"?\" ++ String.join \"&\" params"
-        ]
+    map (indent ++)
+    [ "++ if List.isEmpty params then"
+    , "     \"\""
+    , "   else"
+    , "     \"?\" ++ String.join \"&\" params"
+    ]
 
 
 {-| If the return type has a decoder, construct the request using Http.fromJson.
 Otherwise, construct an HTTP request that expects an empty response.
 -}
-mkHttpRequest :: String -> ElmOptions -> F.Req ElmTypeExpr -> (String, [String])
+mkHttpRequest
+  :: String
+  -> ElmOptions
+  -> F.Req ElmTypeExpr
+  -> ([String], [String])
 mkHttpRequest indent opts request =
-  ( indent ++ intercalate ("\n" ++ indent) elmLines
+  ( map (indent ++) elmLines
   , responseDecoderDefs
   )
   where
