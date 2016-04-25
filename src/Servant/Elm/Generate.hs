@@ -127,21 +127,7 @@ generateElmForRequest opts request =
       mkTypeSignature opts request
 
     fnNameArgs =
-      unwords (fnName : args)
-
-    args =
-      [ T.unpack . F.unPathSegment $ F.captureArg segment ^. F.argName
-      | segment <- request ^. F.reqUrl . F.path
-      , F.isCapture segment
-      ]
-      ++
-      [ T.unpack . F.unPathSegment $ arg ^. F.queryArgName . F.argName
-      | arg <- request ^. F.reqUrl . F.queryStr
-      ]
-      ++
-      catMaybes
-        [ fmap (const "body") (request ^. F.reqBody)
-        ]
+      unwords (fnName : mkArgsList request)
 
     letParams =
       mkLetParams "    " request
@@ -222,6 +208,28 @@ mkTypeSignature opts request =
 
     returnType =
       fmap mkReturnType (request ^. F.reqReturnType)
+
+
+mkArgsList
+  :: F.Req ElmTypeExpr
+  -> [String]
+mkArgsList request =
+  -- URL Captures
+  [ T.unpack . F.unPathSegment $ F.captureArg segment ^. F.argName
+  | segment <- request ^. F.reqUrl . F.path
+  , F.isCapture segment
+  ]
+  ++
+  -- Query params
+  [ T.unpack . F.unPathSegment $ arg ^. F.queryArgName . F.argName
+  | arg <- request ^. F.reqUrl . F.queryStr
+  ]
+  ++
+  -- Request body
+  catMaybes
+    [ fmap (const "body") (request ^. F.reqBody)
+    ]
+
 
 mkUrl
   :: String
