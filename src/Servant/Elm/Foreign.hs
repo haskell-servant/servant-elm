@@ -9,8 +9,8 @@
 module Servant.Elm.Foreign where
 
 import           Data.Proxy      (Proxy (Proxy))
-import           Elm             (ElmType, toElmDecoderSourceDefs,
-                                  toElmEncoderSourceDefs, toElmTypeSourceDefs)
+import           Elm             (ElmType, ElmTypeExpr, toElmDecoderSourceDefs,
+                                  toElmEncoderSourceDefs, toElmTypeSourceDefs, toElmType)
 import           GHC.Generics    (Generic)
 import           Servant.API     (NoContent (NoContent))
 import           Servant.Foreign (Foreign, GenerateList, HasForeign,
@@ -38,6 +38,7 @@ data GeneratedElm = GeneratedElm
     -- Elm definitions required to use the encoder.
     -- E.g. "encodeBlogPost = ...; encodeComment = ..."
   , elmEncoderSources :: [String]
+  , elmTypeExpr :: ElmTypeExpr
   } deriving (Show)
 
 instance {-# Overlappable #-} (ElmType a) => HasForeignType LangElm GeneratedElm a where
@@ -59,6 +60,7 @@ instance {-# Overlappable #-} (ElmType a) => HasForeignType LangElm GeneratedElm
         , elmDecoderSources = eDecoderSources
         , elmEncoder = Just eEncoder
         , elmEncoderSources = eEncoderSources
+        , elmTypeExpr = toElmType proxy
         }
 
 
@@ -85,6 +87,7 @@ typeForNoJSON x =
       , elmDecoderSources = []
       , elmEncoder = Nothing
       , elmEncoderSources = []
+      , elmTypeExpr = toElmType x
       }
 
 

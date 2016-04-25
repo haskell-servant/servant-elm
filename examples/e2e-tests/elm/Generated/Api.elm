@@ -175,7 +175,7 @@ getGet q =
     params =
       List.filter (not << String.isEmpty)
         [ q
-            |> Maybe.map (toString >> Http.uriEncode >> (++) "q=")
+            |> Maybe.map (Http.uriEncode >> (++) "q=")
             |> Maybe.withDefault ""
         ]
     request =
@@ -208,7 +208,7 @@ getByPath path =
           [("Content-Type", "application/json")]
       , url =
           "https://httpbin.org"
-          ++ "/" ++ (path |> toString |> Http.uriEncode)
+          ++ "/" ++ (path |> Http.uriEncode)
       , body =
           Http.empty
       }

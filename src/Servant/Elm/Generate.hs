@@ -9,6 +9,7 @@ import           Data.Maybe          (catMaybes, fromMaybe)
 import           Data.Proxy          (Proxy)
 import qualified Data.Text           as T
 import qualified Data.Text.Encoding  as T
+import qualified Elm
 import           Servant.Elm.Foreign (GeneratedElm (..), LangElm, getEndpoints)
 import qualified Servant.Foreign     as F
 
@@ -240,7 +241,25 @@ mkUrl prefix segments =
         F.Static path ->
           "\"" ++ T.unpack (F.unPathSegment path) ++ "\""
         F.Cap arg ->
-          "(" ++ T.unpack (F.unPathSegment (arg ^. F.argName)) ++ " |> toString |> Http.uriEncode)"
+          let
+            -- Don't use "toString" on Elm Strings, otherwise we get extraneous quotes.
+            toStringSrc =
+              if isElmStringType (arg ^. F.argType) then
+                ""
+              else
+                " |> toString"
+          in
+            "(" ++ T.unpack (F.unPathSegment (arg ^. F.argName)) ++ toStringSrc ++ " |> Http.uriEncode)"
+
+isElmStringType :: GeneratedElm -> Bool
+isElmStringType generatedElm =
+  case elmTypeExpr generatedElm of
+    Elm.Primitive "String" ->
+      True
+    Elm.Product (Elm.Primitive "List") (Elm.Primitive "Char") ->
+      True
+    _ ->
+      False
 
 mkLetQueryParams
   :: String
@@ -263,11 +282,19 @@ mkLetQueryParams indent request =
     paramToStr qarg =
       case qarg ^. F.queryArgType of
         F.Normal ->
-          intercalate newLine
-            [ name
-            , "  |> Maybe.map (toString >> Http.uriEncode >> (++) \"" ++ name ++ "=\")"
-            , "  |> Maybe.withDefault \"\""
-            ]
+          let
+            -- Don't use "toString" on Elm Strings, otherwise we get extraneous quotes.
+            toStringSrc =
+              if isElmStringType (qarg ^. F.queryArgName . F.argType) then
+                ""
+              else
+                "toString >> "
+          in
+            intercalate newLine
+              [ name
+              , "  |> Maybe.map (" ++ toStringSrc ++ "Http.uriEncode >> (++) \"" ++ name ++ "=\")"
+              , "  |> Maybe.withDefault \"\""
+              ]
         F.Flag ->
           intercalate newLine
             ["if " ++ name ++ " then"

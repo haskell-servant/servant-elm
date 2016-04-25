@@ -26,8 +26,11 @@ type TestApi =
                  :> Post '[JSON] (Maybe Int)
   :<|> "books"   :> Capture "id" Int
                  :> Get '[JSON] Book
+  :<|> "books"   :> Capture "title" String
+                 :> Get '[JSON] Book
   :<|> "books"   :> QueryFlag "published"
                  :> QueryParam "sort" String
+                 :> QueryParam "year" Int
                  :> QueryParams "filters" (Maybe Bool)
                  :> Get '[JSON] [Book]
   :<|> "books"   :> ReqBody '[JSON] Book
@@ -46,6 +49,7 @@ main = hspec $
         , "test/decodeBookSource.elm"
         , "test/encodeBookSource.elm"
         , "test/getBooksByIdSource.elm"
+        , "test/getBooksByTitleSource.elm"
         , "test/getBooksSource.elm"
         , "test/noContentTypeSource.elm"
         , "test/emptyResponseHandlerSource.elm"

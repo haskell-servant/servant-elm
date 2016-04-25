@@ -1,5 +1,5 @@
-getBooks : Bool -> Maybe (String) -> List (Maybe Bool) -> Task.Task Http.Error (List (Book))
-getBooks published sort filters =
+getBooks : Bool -> Maybe (String) -> Maybe (Int) -> List (Maybe Bool) -> Task.Task Http.Error (List (Book))
+getBooks published sort year filters =
   let
     params =
       List.filter (not << String.isEmpty)
@@ -8,7 +8,10 @@ getBooks published sort filters =
           else
             ""
         , sort
-            |> Maybe.map (toString >> Http.uriEncode >> (++) "sort=")
+            |> Maybe.map (Http.uriEncode >> (++) "sort=")
+            |> Maybe.withDefault ""
+        , year
+            |> Maybe.map (toString >> Http.uriEncode >> (++) "year=")
             |> Maybe.withDefault ""
         , filters
             |> List.map (\val -> "filters[]=" ++ (val |> toString |> Http.uriEncode))
