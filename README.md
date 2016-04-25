@@ -137,8 +137,21 @@ for an example project using this library.
 ```
 $ git clone https://github.com/mattjbray/servant-elm.git
 $ cd servant-elm
-$ stack build --flag servant-elm:examples
 $ stack test
+```
+
+To build all examples:
+
+```
+$ make examples
+```
+
+To run an example:
+
+```
+$ cd examples/e2e-tests
+$ elm-reactor
+# Open http://localhost:8000/elm/Main.elm
 ```
 
 ## TODO
