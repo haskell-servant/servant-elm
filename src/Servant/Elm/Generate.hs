@@ -177,7 +177,11 @@ generateElmForRequest opts request =
 typeSignature
   :: ElmOptions
   -> F.Req ElmTypeExpr
-  -> (String, [String])
+  -> ( String
+       -- ^ The type signature
+     , [String]
+       -- ^ Supporting type definitions
+     )
 typeSignature opts request =
   (collect . catMaybes)
     [ urlCaptureTypes
@@ -233,18 +237,13 @@ typeSignature opts request =
         (Elm.toElmTypeSourceDefsWith (elmExportOptions opts))
         (request ^. F.reqBody)
 
+    mkReturnType elmTypeExpr =
+      first
+        (\eType -> "Task.Task Http.Error (" ++ eType ++ ")")
+        (Elm.toElmTypeSourceDefsWith (elmExportOptions opts) elmTypeExpr)
+
     returnType =
-      case request ^. F.reqReturnType of
-        Nothing ->
-          Nothing
-        Just elmTypeExpr ->
-          let
-            (eType, eTypeDefs) =
-              Elm.toElmTypeSourceDefsWith (elmExportOptions opts) elmTypeExpr
-          in
-            Just ( "Task.Task Http.Error (" ++ eType ++ ")"
-                 , eTypeDefs
-                 )
+      fmap mkReturnType (request ^. F.reqReturnType)
 
 mkUrl
   :: String
