@@ -138,3 +138,81 @@ postPost body =
     Http.fromJson
       decodeMessageResponse
       (Http.send Http.defaultSettings request)
+
+type alias QueryArgsResponse =
+  { args : QueryArgs
+  }
+
+type alias QueryArgs =
+  { q : String
+  }
+
+decodeQueryArgsResponse : Json.Decode.Decoder QueryArgsResponse
+decodeQueryArgsResponse =
+  Json.Decode.succeed QueryArgsResponse
+    |: ("args" := decodeQueryArgs)
+
+decodeQueryArgs : Json.Decode.Decoder QueryArgs
+decodeQueryArgs =
+  Json.Decode.succeed QueryArgs
+    |: ("q" := Json.Decode.string)
+
+encodeQueryArgsResponse : QueryArgsResponse -> Json.Encode.Value
+encodeQueryArgsResponse x =
+  Json.Encode.object
+    [ ( "args", encodeQueryArgs x.args )
+    ]
+
+encodeQueryArgs : QueryArgs -> Json.Encode.Value
+encodeQueryArgs x =
+  Json.Encode.object
+    [ ( "q", Json.Encode.string x.q )
+    ]
+
+getGet : Maybe (String) -> Task.Task Http.Error (QueryArgsResponse)
+getGet q =
+  let
+    params =
+      List.filter (not << String.isEmpty)
+        [ q
+            |> Maybe.map (toString >> Http.uriEncode >> (++) "q=")
+            |> Maybe.withDefault ""
+        ]
+    request =
+      { verb =
+          "GET"
+      , headers =
+          [("Content-Type", "application/json")]
+      , url =
+          "https://httpbin.org"
+          ++ "/" ++ "get"
+          ++ if List.isEmpty params then
+               ""
+             else
+               "?" ++ String.join "&" params
+      , body =
+          Http.empty
+      }
+  in
+    Http.fromJson
+      decodeQueryArgsResponse
+      (Http.send Http.defaultSettings request)
+
+getByPath : String -> Task.Task Http.Error (OriginIp)
+getByPath path =
+  let
+    request =
+      { verb =
+          "GET"
+      , headers =
+          [("Content-Type", "application/json")]
+      , url =
+          "https://httpbin.org"
+          ++ "/" ++ (path |> toString |> Http.uriEncode)
+      , body =
+          Http.empty
+      }
+  in
+    Http.fromJson
+      decodeOriginIp
+      (Http.send Http.defaultSettings request)

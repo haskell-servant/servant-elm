@@ -33,7 +33,13 @@ type alias Model =
   { successGetIp : Maybe (Result Http.Error Api.OriginIp)
   , successGetStatus204 : Maybe (Result Http.Error Api.NoContent)
   , successPostPost : Maybe (Result Http.Error Api.MessageResponse)
+  , successGetGet : Maybe (Result MyError Api.QueryArgsResponse)
+  , successGetByPath : Maybe (Result Http.Error Api.OriginIp)
   }
+
+type MyError
+  = HttpError Http.Error
+  | AppError String
 
 
 init : ( Model, Effects.Effects Action )
@@ -41,11 +47,15 @@ init =
   ( { successGetIp = Nothing
     , successGetStatus204 = Nothing
     , successPostPost = Nothing
+    , successGetGet = Nothing
+    , successGetByPath = Nothing
     }
   , Effects.batch
       [ fetchStatus204
       , fetchIp
       , postPost
+      , getGet
+      , getByPath
       ]
   )
 
@@ -54,6 +64,8 @@ type Action
   = SetSuccessStatus204 (Result Http.Error Api.NoContent)
   | SetSuccessIp (Result Http.Error Api.OriginIp)
   | SetSuccessPost (Result Http.Error Api.MessageResponse)
+  | CheckSuccessGet (Result Http.Error Api.QueryArgsResponse)
+  | SetSuccessGetByPath (Result Http.Error Api.OriginIp)
 
 
 fetchStatus204 : Effects.Effects Action
@@ -80,6 +92,22 @@ postPost =
     |> Effects.task
 
 
+getGet : Effects.Effects Action
+getGet =
+  Api.getGet (Just "Hello World")
+    |> Task.toResult
+    |> Task.map CheckSuccessGet
+    |> Effects.task
+
+
+getByPath : Effects.Effects Action
+getByPath =
+  Api.getByPath "get"
+    |> Task.toResult
+    |> Task.map SetSuccessGetByPath
+    |> Effects.task
+
+
 update : Action -> Model -> ( Model, Effects.Effects Action )
 update action model =
   case action of
@@ -98,6 +126,33 @@ update action model =
       , Effects.none
       )
 
+    CheckSuccessGet result ->
+      ( { model
+          | successGetGet =
+            Just
+              (case result of
+                Ok response ->
+                  if response.args.q == "Hello World" then
+                    promoteError result
+                  else
+                    Err (AppError (toString response.args.q ++ " != " ++ toString "Hello World"))
+                Err _ ->
+                  promoteError result)
+        }
+      , Effects.none
+      )
+
+    SetSuccessGetByPath result ->
+      ( { model | successGetByPath = Just result }
+      , Effects.none
+      )
+
+promoteError : Result Http.Error a -> Result MyError a
+promoteError result =
+  case result of
+    Ok a -> Ok a
+    Err e -> Err (HttpError e)
+
 
 view : Signal.Address Action -> Model -> Html.Html
 view address model =
@@ -110,12 +165,14 @@ view address model =
           [ viewResult "getIp" model.successGetIp
           , viewResult "getStatus204" model.successGetStatus204
           , viewResult "postPost" model.successPostPost
+          , viewResult "getGet" model.successGetGet
+          , viewResult "getByPath" model.successGetByPath
           ]
         )
     ]
 
 
-viewResult : String -> Maybe (Result Http.Error a) -> List Html.Html
+viewResult : String -> Maybe (Result e a) -> List Html.Html
 viewResult name success =
   let
     ( status, content ) =
