@@ -138,6 +138,7 @@ generateElmForRequest opts request =
     (httpRequest, responseDecoderDefs) =
       mkHttpRequest "    " opts request
 
+
 mkTypeSignature
   :: ElmOptions
   -> F.Req ElmTypeExpr
@@ -160,20 +161,26 @@ mkTypeSignature opts request =
       , concatMap snd xs
       )
 
+    urlCaptureArgs :: [F.Arg ElmTypeExpr]
     urlCaptureArgs =
       [ F.captureArg cap
       | cap <- request ^. F.reqUrl . F.path
       , F.isCapture cap
       ]
+
+    urlCaptureTypes :: Maybe (String, [String])
     urlCaptureTypes =
       if null urlCaptureArgs then
         Nothing
       else
         Just $ collect
-          [ Elm.toElmTypeSourceDefsWith (elmExportOptions opts) (arg ^. F.argType)
+          [ Elm.toElmTypeSourceDefsWith
+              (elmExportOptions opts)
+              (arg ^. F.argType)
           | arg <- urlCaptureArgs
           ]
 
+    queryArgToElmType :: F.QueryArg ElmTypeExpr -> (String, [String])
     queryArgToElmType arg =
       let
         (eType, eTypeDefs) =
@@ -189,6 +196,7 @@ mkTypeSignature opts request =
         , eTypeDefs
         )
 
+    queryTypes :: Maybe (String, [String])
     queryTypes =
       if null (request ^. F.reqUrl . F.queryStr) then
         Nothing
@@ -196,16 +204,19 @@ mkTypeSignature opts request =
         Just . collect $
           map queryArgToElmType (request ^. F.reqUrl . F.queryStr)
 
+    bodyType :: Maybe (String, [String])
     bodyType =
       fmap
         (Elm.toElmTypeSourceDefsWith (elmExportOptions opts))
         (request ^. F.reqBody)
 
+    mkReturnType :: ElmTypeExpr -> (String, [String])
     mkReturnType elmTypeExpr =
       first
         (\eType -> "Task.Task Http.Error (" ++ eType ++ ")")
         (Elm.toElmTypeSourceDefsWith (elmExportOptions opts) elmTypeExpr)
 
+    returnType :: Maybe (String, [String])
     returnType =
       fmap mkReturnType (request ^. F.reqReturnType)
 
@@ -254,6 +265,7 @@ mkUrl prefix segments =
       else
         Just x
 
+    segmentToStr :: F.Segment ElmTypeExpr -> String
     segmentToStr s =
       case F.unSegment s of
         F.Static path ->
@@ -269,6 +281,7 @@ mkUrl prefix segments =
           in
             "(" ++ T.unpack (F.unPathSegment (arg ^. F.argName)) ++ toStringSrc ++ " |> Http.uriEncode)"
 
+
 isElmStringType :: ElmTypeExpr -> Bool
 isElmStringType elmTypeExpr =
   case elmTypeExpr of
@@ -278,6 +291,7 @@ isElmStringType elmTypeExpr =
       True
     _ ->
       False
+
 
 mkLetParams
   :: String
@@ -294,8 +308,10 @@ mkLetParams indent request =
         , "    ]"
         ]
   where
+    params :: [String]
     params = map paramToStr (request ^. F.reqUrl . F.queryStr)
 
+    paramToStr :: F.QueryArg ElmTypeExpr -> String
     paramToStr qarg =
       case qarg ^. F.queryArgType of
         F.Normal ->
@@ -312,6 +328,7 @@ mkLetParams indent request =
               , "  |> Maybe.map (" ++ toStringSrc ++ "Http.uriEncode >> (++) \"" ++ name ++ "=\")"
               , "  |> Maybe.withDefault \"\""
               ]
+
         F.Flag ->
           intercalate newLine
             ["if " ++ name ++ " then"
@@ -319,14 +336,17 @@ mkLetParams indent request =
             , "else"
             , "  \"\""
             ]
+
         F.List ->
           intercalate newLine
             [ name
             , "  |> List.map (\\val -> \"" ++ name ++ "[]=\" ++ (val |> toString |> Http.uriEncode))"
             , "  |> String.join \"&\""
             ]
-      where name = T.unpack . F.unPathSegment . view (F.queryArgName . F.argName) $ qarg
-            newLine = "\n          "
+      where
+        name =
+          T.unpack . F.unPathSegment . view (F.queryArgName . F.argName) $ qarg
+        newLine = "\n          "
 
 
 mkLetRequest
@@ -367,6 +387,7 @@ mkLetRequest indent opts request =
       case request ^. F.reqBody of
         Nothing ->
           ( "Http.empty", [] )
+
         Just elmTypeExpr ->
           first
             (\encoderName ->
@@ -419,8 +440,10 @@ mkHttpRequest indent opts request =
                 , promoteErrorSrc
                 ])
             (Elm.toElmTypeSourceDefsWith (elmExportOptions opts) elmTypeExpr)
+
         Just elmTypeExpr ->
           first jsonRequest (Elm.toElmDecoderSourceDefsWith (elmExportOptions opts) elmTypeExpr)
+
         Nothing ->
           error "mkHttpRequest: no reqReturnType?"
 
