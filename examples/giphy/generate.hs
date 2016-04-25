@@ -2,6 +2,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE TypeOperators #-}
 
+import qualified Elm
 import           GHC.Generics (Generic)
 import           Servant.API  ((:>), Get, JSON, QueryParam)
 import           Servant.Elm  (ElmOptions (..), ElmType, Proxy (Proxy),
@@ -20,8 +21,18 @@ data Gif = Gif
 instance ElmType GifData
 instance ElmType Gif
 
+stripUnderscore :: String -> String
+stripUnderscore ('_' : field) = field
+stripUnderscore field = field
+
 myElmOpts :: ElmOptions
-myElmOpts = defElmOptions { urlPrefix =  "http://api.giphy.com/v1/gifs" }
+myElmOpts =
+  defElmOptions
+    { urlPrefix =  "http://api.giphy.com/v1/gifs"
+    , elmExportOptions =
+        Elm.defaultOptions
+          { Elm.fieldLabelModifier = stripUnderscore }
+    }
 
 type GiphyApi = "random" :> QueryParam "api_key" String :> QueryParam "tag" String :> Get '[JSON] Gif
 

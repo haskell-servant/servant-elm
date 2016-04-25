@@ -9,7 +9,7 @@ import Task
 
 
 type alias Gif =
-  { _data : GifData
+  { data : GifData
   }
 
 type alias GifData =
@@ -19,24 +19,12 @@ type alias GifData =
 decodeGif : Json.Decode.Decoder Gif
 decodeGif =
   Json.Decode.succeed Gif
-    |: ("_data" := decodeGifData)
+    |: ("data" := decodeGifData)
 
 decodeGifData : Json.Decode.Decoder GifData
 decodeGifData =
   Json.Decode.succeed GifData
     |: ("image_url" := Json.Decode.string)
-
-encodeGif : Gif -> Json.Encode.Value
-encodeGif x =
-  Json.Encode.object
-    [ ( "_data", encodeGifData x._data )
-    ]
-
-encodeGifData : GifData -> Json.Encode.Value
-encodeGifData x =
-  Json.Encode.object
-    [ ( "image_url", Json.Encode.string x.image_url )
-    ]
 
 getRandom : Maybe (String) -> Maybe (String) -> Task.Task Http.Error (Gif)
 getRandom api_key tag =

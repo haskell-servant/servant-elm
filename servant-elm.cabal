@@ -77,6 +77,7 @@ executable giphy-example
     Buildable:         False
   main-is:             generate.hs
   build-depends:       base >= 4.7 && < 5
+                     , elm-export >= 0.3
                      , servant >= 0.5
                      , servant-elm
   hs-source-dirs:      examples/giphy
