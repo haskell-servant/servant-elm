@@ -282,17 +282,6 @@ mkUrl prefix segments =
             "(" ++ T.unpack (F.unPathSegment (arg ^. F.argName)) ++ toStringSrc ++ " |> Http.uriEncode)"
 
 
-isElmStringType :: ElmTypeExpr -> Bool
-isElmStringType elmTypeExpr =
-  case elmTypeExpr of
-    Elm.Primitive "String" ->
-      True
-    Elm.Product (Elm.Primitive "List") (Elm.Primitive "Char") ->
-      True
-    _ ->
-      False
-
-
 mkLetParams
   :: String
   -> F.Req ElmTypeExpr
@@ -424,12 +413,6 @@ mkHttpRequest indent opts request =
   , responseDecoderDefs
   )
   where
-    isEmptyType elmTypeExpr =
-      case elmTypeExpr of
-        Elm.Primitive "()" -> True
-        Elm.DataType "NoContent" _ -> True
-        _ -> False
-
     (elmLines, responseDecoderDefs) =
       case request ^. F.reqReturnType of
         Just elmTypeExpr | isEmptyType elmTypeExpr ->
@@ -492,3 +475,25 @@ mkHttpRequest indent opts request =
         , "    Http.RawTimeout -> Http.Timeout"
         , "    Http.RawNetworkError -> Http.NetworkError"
         ]
+
+
+{- | Determines whether we construct an Elm function that expects an empty
+response body.
+-}
+isEmptyType :: ElmTypeExpr -> Bool
+isEmptyType elmTypeExpr =
+  case elmTypeExpr of
+    Elm.Primitive "()" -> True
+    Elm.DataType "NoContent" _ -> True
+    _ -> False
+
+
+{- | Determines whether we call `toString` on URL captures and query params of
+this type in Elm.
+-}
+isElmStringType :: ElmTypeExpr -> Bool
+isElmStringType elmTypeExpr =
+  case elmTypeExpr of
+    Elm.Primitive "String" -> True
+    Elm.Product (Elm.Primitive "List") (Elm.Primitive "Char") -> True
+    _ -> False
