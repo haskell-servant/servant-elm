@@ -26,16 +26,28 @@ decodeGifData =
   Json.Decode.succeed GifData
     |: ("image_url" := Json.Decode.string)
 
+encodeGif : Gif -> Json.Encode.Value
+encodeGif x =
+  Json.Encode.object
+    [ ( "_data", encodeGifData x._data )
+    ]
+
+encodeGifData : GifData -> Json.Encode.Value
+encodeGifData x =
+  Json.Encode.object
+    [ ( "image_url", Json.Encode.string x.image_url )
+    ]
+
 getRandom : Maybe (String) -> Maybe (String) -> Task.Task Http.Error (Gif)
 getRandom api_key tag =
   let
     params =
       List.filter (not << String.isEmpty)
         [ api_key
-            |> Maybe.map (toString >> Http.uriEncode >> (++) "api_key=")
+            |> Maybe.map (Http.uriEncode >> (++) "api_key=")
             |> Maybe.withDefault ""
         , tag
-            |> Maybe.map (toString >> Http.uriEncode >> (++) "tag=")
+            |> Maybe.map (Http.uriEncode >> (++) "tag=")
             |> Maybe.withDefault ""
         ]
     request =
