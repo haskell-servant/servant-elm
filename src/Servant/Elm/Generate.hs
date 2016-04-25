@@ -26,6 +26,7 @@ data ElmOptions = ElmOptions
     -}
     urlPrefix        :: String
   , elmExportOptions :: Elm.Options
+    -- ^ Options to pass to elm-export
   }
 
 
