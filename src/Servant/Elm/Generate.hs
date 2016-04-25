@@ -3,14 +3,15 @@
 module Servant.Elm.Generate where
 
 import           Control.Lens        (view, (^.))
-import           Control.Monad       (join)
+import           Data.Bifunctor      (bimap, first)
 import           Data.List           (intercalate, nub)
-import           Data.Maybe          (catMaybes, fromMaybe)
+import           Data.Maybe          (catMaybes)
 import           Data.Proxy          (Proxy)
 import qualified Data.Text           as T
 import qualified Data.Text.Encoding  as T
+import           Elm                 (ElmTypeExpr)
 import qualified Elm
-import           Servant.Elm.Foreign (GeneratedElm (..), LangElm, getEndpoints)
+import           Servant.Elm.Foreign (LangElm, getEndpoints)
 import qualified Servant.Foreign     as F
 
 
@@ -74,8 +75,8 @@ would be better off creating a 'Spec' with the result and using 'specsToDir',
 which handles the module name for you.
 -}
 generateElmForAPI
-  :: ( F.HasForeign LangElm GeneratedElm api
-     , F.GenerateList GeneratedElm (F.Foreign GeneratedElm api))
+  :: ( F.HasForeign LangElm ElmTypeExpr api
+     , F.GenerateList ElmTypeExpr (F.Foreign ElmTypeExpr api))
   => Proxy api
   -> [String]
 generateElmForAPI =
@@ -86,8 +87,8 @@ generateElmForAPI =
 Generate Elm code for the API with custom options.
 -}
 generateElmForAPIWith
-  :: ( F.HasForeign LangElm GeneratedElm api
-     , F.GenerateList GeneratedElm (F.Foreign GeneratedElm api))
+  :: ( F.HasForeign LangElm ElmTypeExpr api
+     , F.GenerateList ElmTypeExpr (F.Foreign ElmTypeExpr api))
   => ElmOptions
   -> Proxy api
   -> [String]
@@ -95,17 +96,16 @@ generateElmForAPIWith opts =
   nub . concatMap (generateElmForRequest opts) . getEndpoints
 
 
-generateElmForRequest :: ElmOptions -> F.Req GeneratedElm -> [String]
+generateElmForRequest :: ElmOptions -> F.Req ElmTypeExpr -> [String]
 generateElmForRequest opts request =
-  allGeneratedSources elmTypeSources request
-  ++ allGeneratedSources elmDecoderSources request
-  ++ allGeneratedSources elmEncoderSources request
-  ++ supportFns
+  typeSigDefs ++
+  bodyEncoderSources ++
+  supportFns
   ++ [funcDef]
   where
     funcDef =
       (intercalate "\n" . filter (not . null))
-        [ fnName ++ " : " ++ typeSignature request
+        [ fnName ++ " : " ++ typeSig
         , fnNameArgs ++ " ="
         , "  let"
         , mkLetQueryParams "    " request
@@ -126,6 +126,9 @@ generateElmForRequest opts request =
 
     fnName =
       T.unpack (F.camelCase (request ^. F.reqFuncName))
+
+    (typeSig, typeSigDefs) =
+      typeSignature request
 
     fnNameArgs =
       unwords (fnName : args)
@@ -150,72 +153,90 @@ generateElmForRequest opts request =
     url =
       mkUrl (urlPrefix opts) (request ^. F.reqUrl . F.path)
 
-    body =
-      maybe
-        "Http.empty"
-        (\generatedElm ->
-          "Http.string (Json.Encode.encode 0 (" ++
-          -- FIXME: remove use of fromMaybe - can we make this explicit in the types?
-          fromMaybe "<missing encoder for body type>" (elmEncoder generatedElm) ++
-          " body))")
-        (request ^. F.reqBody)
+    (body, bodyEncoderSources) =
+      case request ^. F.reqBody of
+        Nothing ->
+          ( "Http.empty", [] )
+        Just elmTypeExpr ->
+          let
+            (encoderName, encoderSourceDefs) =
+              Elm.toElmEncoderSourceDefs elmTypeExpr
+          in
+            ( "Http.string (Json.Encode.encode 0 (" ++ encoderName ++ " body))"
+            , encoderSourceDefs
+            )
 
     (httpRequest, supportFns) = mkHttpRequest "    " request
 
 typeSignature
-  :: F.Req GeneratedElm
-  -> String
+  :: F.Req ElmTypeExpr
+  -> (String, [String])
 typeSignature request =
-  (intercalate " -> " . catMaybes)
-    [ urlTypes
+  (collect . catMaybes)
+    [ urlCaptureTypes
     , queryTypes
     , bodyType
     , returnType
     ]
   where
+    collect :: [(String, [String])] -> (String, [String])
+    collect xs =
+      ( intercalate " -> " (map fst xs)
+      , concatMap snd xs
+      )
+
     urlCaptureArgs =
       [ F.captureArg cap
       | cap <- request ^. F.reqUrl . F.path
       , F.isCapture cap
       ]
-    urlTypes =
+    urlCaptureTypes =
       if null urlCaptureArgs then
         Nothing
       else
-        Just $ intercalate " -> "
-          [ elmType (arg ^. F.argType)
+        Just $ collect
+          [ Elm.toElmTypeSourceDefs (arg ^. F.argType)
           | arg <- urlCaptureArgs
           ]
 
     queryArgToElmType arg =
       let
-        eType = elmType (arg ^. F.queryArgName . F.argType)
+        (eType, eTypeDefs) = Elm.toElmTypeSourceDefs (arg ^. F.queryArgName . F.argType)
       in
-        case arg ^. F.queryArgType of
-          F.Normal ->
-            "Maybe (" ++ eType ++ ")"
-          _ ->
-            eType
+        ( case arg ^. F.queryArgType of
+            F.Normal ->
+              "Maybe (" ++ eType ++ ")"
+            _ ->
+              eType
+        , eTypeDefs
+        )
 
     queryTypes =
       if null (request ^. F.reqUrl . F.queryStr) then
         Nothing
       else
-        Just . intercalate " -> " $
+        Just . collect $
           map queryArgToElmType (request ^. F.reqUrl . F.queryStr)
 
     bodyType =
-      fmap elmType (request ^. F.reqBody)
+      fmap Elm.toElmTypeSourceDefs (request ^. F.reqBody)
 
     returnType =
-      fmap
-        (\generatedElm ->
-           "Task.Task Http.Error (" ++ elmType generatedElm ++ ")")
-        (request ^. F.reqReturnType)
+      case request ^. F.reqReturnType of
+        Nothing ->
+          Nothing
+        Just elmTypeExpr ->
+          let
+            (eType, eTypeDefs) =
+              Elm.toElmTypeSourceDefs elmTypeExpr
+          in
+            Just ( "Task.Task Http.Error (" ++ eType ++ ")"
+                 , eTypeDefs
+                 )
 
 mkUrl
   :: String
-  -> [F.Segment GeneratedElm]
+  -> [F.Segment ElmTypeExpr]
   -> String
 mkUrl prefix segments =
   (intercalate newLine . catMaybes)
@@ -251,9 +272,9 @@ mkUrl prefix segments =
           in
             "(" ++ T.unpack (F.unPathSegment (arg ^. F.argName)) ++ toStringSrc ++ " |> Http.uriEncode)"
 
-isElmStringType :: GeneratedElm -> Bool
-isElmStringType generatedElm =
-  case elmTypeExpr generatedElm of
+isElmStringType :: ElmTypeExpr -> Bool
+isElmStringType elmTypeExpr =
+  case elmTypeExpr of
     Elm.Primitive "String" ->
       True
     Elm.Product (Elm.Primitive "List") (Elm.Primitive "Char") ->
@@ -263,7 +284,7 @@ isElmStringType generatedElm =
 
 mkLetQueryParams
   :: String
-  -> F.Req GeneratedElm
+  -> F.Req ElmTypeExpr
   -> String
 mkLetQueryParams indent request =
   if null (request ^. F.reqUrl . F.queryStr) then
@@ -313,7 +334,7 @@ mkLetQueryParams indent request =
 
 mkQueryParams
   :: String
-  -> F.Req GeneratedElm
+  -> F.Req ElmTypeExpr
   -> String
 mkQueryParams indent request =
   if null (request ^. F.reqUrl . F.queryStr) then
@@ -331,23 +352,32 @@ mkQueryParams indent request =
 {-| If the return type has a decoder, construct the request using Http.fromJson.
 Otherwise, construct an HTTP request that expects an empty response.
 -}
-mkHttpRequest :: String -> F.Req GeneratedElm -> (String, [String])
+mkHttpRequest :: String -> F.Req ElmTypeExpr -> (String, [String])
 mkHttpRequest indent request =
   ( indent ++ intercalate ("\n" ++ indent) elmLines
   , supportFns
   )
   where
+    isEmptyType elmTypeExpr =
+      case elmTypeExpr of
+        Elm.Primitive "()" -> True
+        Elm.DataType "NoContent" _ -> True
+        _ -> False
+
     (elmLines, supportFns) =
-      case join (elmDecoder <$> request ^. F.reqReturnType) of
-        Just decoder ->
-          (jsonRequest decoder, [])
+      case request ^. F.reqReturnType of
+        Just elmTypeExpr | isEmptyType elmTypeExpr ->
+          bimap
+            emptyResponseRequest
+            (++ [ emptyResponseHandlerSrc
+                , handleResponseSrc
+                , promoteErrorSrc
+                ])
+            (Elm.toElmTypeSourceDefs elmTypeExpr)
+        Just elmTypeExpr ->
+          first jsonRequest (Elm.toElmDecoderSourceDefs elmTypeExpr)
         Nothing ->
-          ( emptyResponseRequest
-          , [ emptyResponseHandlerSrc
-            , handleResponseSrc
-            , promoteErrorSrc
-            ]
-          )
+          error "mkHttpRequest: no reqReturnType?"
 
     jsonRequest decoder =
       [ "Http.fromJson"
@@ -355,14 +385,11 @@ mkHttpRequest indent request =
       , "  (Http.send Http.defaultSettings request)"
       ]
 
-    emptyResponseRequest =
+    emptyResponseRequest elmType =
       [ "Task.mapError promoteError"
       , "  (Http.send Http.defaultSettings request)"
       , "    `Task.andThen`"
-        -- FIXME: remove use of fromMaybe - can we make this explicit in the types?
-      , "      handleResponse (emptyResponseHandler " ++
-          fromMaybe "<missing return type>" (elmType <$> request ^. F.reqReturnType)++
-          ")"
+      , "      handleResponse (emptyResponseHandler " ++ elmType ++ ")"
       ]
 
     emptyResponseHandlerSrc =
@@ -397,18 +424,3 @@ mkHttpRequest indent request =
         , "    Http.RawTimeout -> Http.Timeout"
         , "    Http.RawNetworkError -> Http.NetworkError"
         ]
-
-
-allGeneratedSources
-  :: (GeneratedElm -> [String])
-  -> F.Req GeneratedElm
-  -> [String]
-allGeneratedSources f request =
-  fromUrl ++ fromBody ++ fromReturnType
-  where
-    fromUrl =
-      []
-    fromBody =
-      maybe [] f (request ^. F.reqBody)
-    fromReturnType =
-      maybe [] f (request ^. F.reqReturnType)
