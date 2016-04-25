@@ -103,9 +103,9 @@ generateElmForAPIWith opts =
 
 generateElmForRequest :: ElmOptions -> F.Req ElmTypeExpr -> [String]
 generateElmForRequest opts request =
-  typeSigDefs ++
-  bodyEncoderSources ++
-  supportFns
+  typeSigDefs
+  ++ bodyEncoderDefs
+  ++ responseDecoderDefs
   ++ [funcDef]
   where
     funcDef =
@@ -158,7 +158,7 @@ generateElmForRequest opts request =
     url =
       mkUrl (urlPrefix opts) (request ^. F.reqUrl . F.path)
 
-    (body, bodyEncoderSources) =
+    (body, bodyEncoderDefs) =
       case request ^. F.reqBody of
         Nothing ->
           ( "Http.empty", [] )
@@ -171,7 +171,8 @@ generateElmForRequest opts request =
             , encoderSourceDefs
             )
 
-    (httpRequest, supportFns) = mkHttpRequest "    " opts request
+    (httpRequest, responseDecoderDefs) =
+      mkHttpRequest "    " opts request
 
 typeSignature
   :: ElmOptions
@@ -366,7 +367,7 @@ Otherwise, construct an HTTP request that expects an empty response.
 mkHttpRequest :: String -> ElmOptions -> F.Req ElmTypeExpr -> (String, [String])
 mkHttpRequest indent opts request =
   ( indent ++ intercalate ("\n" ++ indent) elmLines
-  , supportFns
+  , responseDecoderDefs
   )
   where
     isEmptyType elmTypeExpr =
@@ -375,7 +376,7 @@ mkHttpRequest indent opts request =
         Elm.DataType "NoContent" _ -> True
         _ -> False
 
-    (elmLines, supportFns) =
+    (elmLines, responseDecoderDefs) =
       case request ^. F.reqReturnType of
         Just elmTypeExpr | isEmptyType elmTypeExpr ->
           bimap
