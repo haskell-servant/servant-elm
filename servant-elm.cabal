@@ -40,8 +40,12 @@ test-suite servant-elm-test
   build-depends:       aeson >= 0.9
                      , base
                      , data-default
+                     , directory
                      , elm-export
                      , hspec
+                     , interpolate
+                     , mockery
+                     , process
                      , servant
                      , servant-elm
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
