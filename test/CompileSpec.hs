@@ -1,4 +1,8 @@
-{-# LANGUAGE QuasiQuotes   #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE TypeOperators #-}
 
 module CompileSpec where
 
@@ -8,10 +12,16 @@ import           Test.Mockery.Directory
 import           Control.Exception
 import           Control.Monad (when)
 import           Data.List
+import           Data.Map
 import           Data.String.Interpolate
 import           Data.String.Interpolate.Util
+import           Elm
+import           GHC.Generics
 import           GenerateSpec
+import           Servant.API
 import           Servant.Elm
+import           Servant.Elm.Foreign
+import           Servant.Foreign.Internal
 import           System.Directory
   ( canonicalizePath
   , createDirectoryIfMissing
@@ -22,17 +32,39 @@ import           System.Directory
   )
 import           System.Process
 
+data WithMap
+  = WithMap {
+    withMapMap :: Map String Int
+  }
+  deriving (Generic)
+
+instance ElmType WithMap
+
+type MapApi =
+  "foo" :> Get '[JSON] WithMap
+
+mapApi :: Proxy MapApi
+mapApi = Proxy
+
 spec :: Test.Hspec.Spec
 spec = do
   describe "generateElmForAPI" $ do
-    it "creates compilable javascript" $ do
-      inTempElmDir $ do
-        let generated =
-              intercalate "\n\n" $
-                defElmImports :
-                generateElmForAPI testApi
-        writeFile "Api.elm" generated
-        callCommand "elm-make Api.elm --output api.js"
+    it "creates compilable javascript for the TestApi" $ do
+      shouldCompile testApi
+
+    it "allows to use Maps" $ do
+      shouldCompile mapApi
+
+shouldCompile :: (HasForeign LangElm ElmTypeExpr api, GenerateList ElmTypeExpr (Foreign ElmTypeExpr api)) =>
+  Proxy api -> IO ()
+shouldCompile proxy = do
+  inTempElmDir $ do
+    let generated =
+          intercalate "\n\n" $
+            defElmImports :
+            generateElmForAPI proxy
+    writeFile "Api.elm" generated
+    callCommand "elm-make Api.elm --output api.js"
 
 inTempElmDir :: IO a -> IO a
 inTempElmDir action = do

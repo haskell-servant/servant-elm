@@ -86,6 +86,7 @@ defElmImports =
     , "import Json.Decode.Extra exposing ((|:))"
     , "import Json.Encode"
     , "import Http"
+    , "import Dict exposing (Dict)"
     , "import String"
     , "import Task"
     ]
