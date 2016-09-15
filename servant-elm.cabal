@@ -27,8 +27,8 @@ library
                      , Servant.Elm.Orphans
   build-depends:       base >= 4.7 && < 5
                      , lens
-                     , servant         >= 0.5
-                     , servant-foreign >= 0.5
+                     , servant         >= 0.8
+                     , servant-foreign >= 0.8
                      , text
                      , elm-export
   default-language:    Haskell2010
@@ -60,7 +60,7 @@ executable books-example
     Buildable:         False
   main-is:             generate.hs
   build-depends:       base >= 4.7 && < 5
-                     , servant >= 0.5
+                     , servant >= 0.8
                      , servant-elm
   hs-source-dirs:      examples/books
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
@@ -71,7 +71,7 @@ executable e2e-tests-example
     Buildable:         False
   main-is:             generate.hs
   build-depends:       base >= 4.7 && < 5
-                     , servant >= 0.5
+                     , servant >= 0.8
                      , servant-elm
   hs-source-dirs:      examples/e2e-tests
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
@@ -83,7 +83,7 @@ executable giphy-example
   main-is:             generate.hs
   build-depends:       base >= 4.7 && < 5
                      , elm-export >= 0.3
-                     , servant >= 0.5
+                     , servant >= 0.8
                      , servant-elm
   hs-source-dirs:      examples/giphy
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
@@ -94,7 +94,7 @@ executable readme-example
     Buildable:         False
   main-is:             generate.hs
   build-depends:       base >= 4.7 && < 5
-                     , servant >= 0.5
+                     , servant >= 0.8
                      , servant-elm
   hs-source-dirs:      examples/readme-example
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N

@@ -12,5 +12,4 @@ instance ElmType ElmTypeExpr where
   toElmType = id
 
 
-deriving instance Generic NoContent
 instance ElmType NoContent
