@@ -3,7 +3,7 @@
 {-# LANGUAGE OverloadedStrings     #-}
 module Servant.Elm.Generate where
 
-import           Control.Lens        (view, (^.))
+import           Control.Lens        (view, to, (^.))
 import           Data.List           (nub)
 import           Data.Maybe          (catMaybes)
 import           Data.Monoid         ((<>))
@@ -13,15 +13,11 @@ import qualified Data.Text           as T
 import qualified Data.Text.Encoding  as T
 import           Elm                 (ElmDatatype)
 import qualified Elm
-import           Formatting          (Format, now, sformat, stext, (%))
+import           Formatting          (sformat, stext, (%))
 import           Servant.API         (NoContent (..))
 import           Servant.Elm.Foreign (LangElm, getEndpoints)
 import           Servant.Elm.Orphans ()
 import qualified Servant.Foreign     as F
-
-
-cr :: Format r r
-cr = now "\n"
 
 
 {-|
@@ -127,6 +123,12 @@ generateElmForAPIWith
 generateElmForAPIWith opts =
   nub . concatMap (generateElmForRequest opts) . getEndpoints
 
+cr :: Text
+cr = "\n"
+
+quote :: Text
+quote = "\""
+
 {-|
 Generate an Elm function for one endpoint.
 
@@ -139,34 +141,22 @@ generateElmForRequest opts request =
   ++ [funcDef]
   where
     funcDef =
-      sformat
-        (stext % " : " % stext % cr %
-         stext % " =" % cr %
-         "  let" % cr %
-         -- stext % cr %
-         stext %
-         stext % cr %
-         "  in" % cr %
-         stext
-        )
-        fnName
-        typeSignature
-        fnNameArgs
-        (case letParams of
-           Just x -> x <> "\n"
-           Nothing -> ""
-        )
-        letRequest
-        httpRequest
+      fnName <> " : " <> typeSignature <> cr <>
+      T.unwords (fnName : args) <> " =" <> cr <>
+      "  let" <> cr <>
+      (maybe "" (<> cr) letParams) <>
+      letRequest <> cr <>
+      "  in" <> cr <>
+      httpRequest
 
     fnName =
-      (F.camelCase (request ^. F.reqFuncName))
+      request ^. F.reqFuncName . to F.camelCase
 
     typeSignature =
       mkTypeSignature opts request
 
-    fnNameArgs =
-      T.unwords (fnName : mkArgsList request)
+    args =
+      mkArgsList request
 
     letParams =
       mkLetParams "    " opts request
@@ -181,41 +171,44 @@ generateElmForRequest opts request =
 mkTypeSignature
   :: ElmOptions
   -> F.Req ElmDatatype
-  ->  Text
+  -> Text
 mkTypeSignature opts request =
     T.intercalate " -> "
     ( urlCaptureTypes
     ++ queryTypes
     ++ catMaybes [bodyType, returnType])
   where
-    getElmName :: ElmDatatype -> Text
-    getElmName eType =
+    elmTypeRef :: ElmDatatype -> Text
+    elmTypeRef eType =
       Elm.toElmTypeRefWith (elmExportOptions opts) eType
 
     urlCaptureTypes :: [Text]
     urlCaptureTypes =
-        [ getElmName (F.captureArg cap ^. F.argType)
-        | cap <- request ^. F.reqUrl . F.path
-        , F.isCapture cap
+        [ F.captureArg capture ^. F.argType . to elmTypeRef
+        | capture <- request ^. F.reqUrl . F.path
+        , F.isCapture capture
         ]
 
     queryTypes :: [Text]
     queryTypes =
-      [ case arg ^. F.queryArgType of
-          F.Normal ->
-            getElmName (Elm.ElmPrimitive . Elm.EMaybe $ arg ^. F.queryArgName . F.argType)
-          _ ->
-            getElmName (arg ^. F.queryArgName . F.argType)
+      [ arg ^. F.queryArgName . F.argType . to (elmTypeRef . wrapper)
       | arg <- request ^. F.reqUrl . F.queryStr
+      , wrapper <- [
+          case arg ^. F.queryArgType of
+            F.Normal ->
+              Elm.ElmPrimitive . Elm.EMaybe
+            _ ->
+              id
+          ]
       ]
 
     bodyType :: Maybe Text
     bodyType =
-        getElmName <$> (request ^. F.reqBody)
+        elmTypeRef <$> request ^. F.reqBody
 
     returnType :: Maybe Text
     returnType =
-      (sformat ("Task.Task Http.Error (" % stext % ")")) . getElmName <$> (request ^. F.reqReturnType)
+      sformat ("Task.Task Http.Error (" % stext % ")") . elmTypeRef <$> request ^. F.reqReturnType
 
 
 mkArgsList
@@ -223,42 +216,41 @@ mkArgsList
   -> [Text]
 mkArgsList request =
   -- URL Captures
-  [ F.unPathSegment $ F.captureArg segment ^. F.argName
+  [ F.captureArg segment ^. F.argName . to F.unPathSegment
   | segment <- request ^. F.reqUrl . F.path
   , F.isCapture segment
   ]
   ++
   -- Query params
-  [ F.unPathSegment $ arg ^. F.queryArgName . F.argName
+  [ arg ^. F.queryArgName . F.argName . to F.unPathSegment
   | arg <- request ^. F.reqUrl . F.queryStr
   ]
   ++
   -- Request body
-  catMaybes
-    [ fmap (const "body") (request ^. F.reqBody)
-    ]
+  maybe [] (const ["body"]) (request ^. F.reqBody)
 
 
 mkUrl
-  :: ElmOptions
+  :: Text
+  -> ElmOptions
   -> [F.Segment ElmDatatype]
   -> Text
-mkUrl opts segments =
+mkUrl indent opts segments =
   (T.intercalate newLine . catMaybes)
     [ if T.null (urlPrefix opts) then
         Nothing
       else
-        Just $ "\"" <> urlPrefix opts <> "\""
+        Just $ quote <> urlPrefix opts <> quote
     , if null segments then
         Nothing
       else
-        Just $ "\"/\" ++ "
-               <> T.intercalate (newLine <> "\"/\" ++ ")
+        Just $ quote <> "/" <> quote <> " ++ "
+               <> T.intercalate (newLine <> quote <> "/" <> quote <> " ++ ")
                                 (map segmentToText segments)
     ]
   where
     newLine =
-      "\n          ++ "
+      cr <> indent <> "++ "
 
     segmentToText :: F.Segment ElmDatatype -> Text
     segmentToText s =
@@ -360,7 +352,7 @@ mkLetRequest indent opts request =
        T.decodeUtf8 (request ^. F.reqMethod)
 
     url =
-      mkUrl opts (request ^. F.reqUrl . F.path)
+      mkUrl (indent <> "      ") opts (request ^. F.reqUrl . F.path)
 
     body =
       case request ^. F.reqBody of
