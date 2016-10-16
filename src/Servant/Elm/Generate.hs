@@ -3,7 +3,6 @@
 module Servant.Elm.Generate where
 
 import           Control.Lens        (view, (^.))
-import           Data.Bifunctor      (first)
 import           Data.List           (intercalate, nub)
 import           Data.Maybe          (catMaybes)
 import           Data.Proxy          (Proxy)
@@ -128,9 +127,7 @@ supporting definitions.
 -}
 generateElmForRequest :: ElmOptions -> F.Req ElmDatatype -> [String]
 generateElmForRequest opts request =
-  typeSignatureDefs
-  ++ bodyEncoderDefs
-  ++ responseDecoderDefs
+  supportingFunctions
   ++ [funcDef]
   where
     funcDef =
@@ -148,7 +145,7 @@ generateElmForRequest opts request =
     fnName =
       T.unpack (F.camelCase (request ^. F.reqFuncName))
 
-    (typeSignature, typeSignatureDefs) =
+    typeSignature =
       mkTypeSignature opts request
 
     fnNameArgs =
@@ -157,69 +154,51 @@ generateElmForRequest opts request =
     letParams =
       mkLetParams "    " opts request
 
-    (letRequest, bodyEncoderDefs) =
+    letRequest =
       mkLetRequest "    " opts request
 
-    (httpRequest, responseDecoderDefs) =
+    (httpRequest, supportingFunctions) =
       mkHttpRequest "    " opts request
 
 
 mkTypeSignature
   :: ElmOptions
   -> F.Req ElmDatatype
-  -> ( String
-       -- The type signature
-     , [String]
-       -- Supporting type definitions
-     )
+  ->  String
 mkTypeSignature opts request =
-  collect
+    intercalate " -> "
     ( urlCaptureTypes
     ++ queryTypes
     ++ catMaybes [bodyType, returnType])
   where
-    collect :: [(String, [String])] -> (String, [String])
-    collect xs =
-      ( intercalate " -> " (map fst xs)
-      , concatMap snd xs
-      )
+    getElmName :: ElmDatatype -> String
+    getElmName eType =
+      T.unpack $ Elm.toElmTypeRefWith (elmExportOptions opts) eType
 
-    getElmNameAndSource :: ElmDatatype -> (String, [String])
-    getElmNameAndSource eType =
-      ( T.unpack $ Elm.toElmTypeRefWith (elmExportOptions opts) eType
-            -- , [T.unpack $ Elm.toElmTypeSourceWith (elmExportOptions opts) eType])
-      , [])
-
-    urlCaptureTypes :: [(String, [String])]
+    urlCaptureTypes :: [String]
     urlCaptureTypes =
-        [ getElmNameAndSource (F.captureArg cap ^. F.argType)
+        [ getElmName (F.captureArg cap ^. F.argType)
         | cap <- request ^. F.reqUrl . F.path
         , F.isCapture cap
         ]
 
-    queryTypes :: [(String, [String])]
+    queryTypes :: [String]
     queryTypes =
       [ case arg ^. F.queryArgType of
           F.Normal ->
-            getElmNameAndSource (Elm.ElmPrimitive . Elm.EMaybe $ arg ^. F.queryArgName . F.argType)
+            getElmName (Elm.ElmPrimitive . Elm.EMaybe $ arg ^. F.queryArgName . F.argType)
           _ ->
-            getElmNameAndSource (arg ^. F.queryArgName . F.argType)
+            getElmName (arg ^. F.queryArgName . F.argType)
       | arg <- request ^. F.reqUrl . F.queryStr
       ]
 
-    bodyType :: Maybe (String, [String])
+    bodyType :: Maybe String
     bodyType =
-        getElmNameAndSource <$> (request ^. F.reqBody)
+        getElmName <$> (request ^. F.reqBody)
 
-    mkReturnType :: ElmDatatype -> (String, [String])
-    mkReturnType eType =
-      first
-        (\typeName -> "Task.Task Http.Error (" ++ typeName ++ ")")
-        (getElmNameAndSource eType)
-
-    returnType :: Maybe (String, [String])
+    returnType :: Maybe String
     returnType =
-      mkReturnType <$> (request ^. F.reqReturnType)
+      (\typeName -> "Task.Task Http.Error (" ++ typeName ++ ")") . getElmName <$> (request ^. F.reqReturnType)
 
 
 mkArgsList
@@ -344,13 +323,9 @@ mkLetRequest
   :: String
   -> ElmOptions
   -> F.Req ElmDatatype
-  -> ( [String]
-       -- The source lines for the Elm request value.
-     , [String]
-       -- Supporting definitions for the body JSON encoder.
-     )
+  -> [String]
 mkLetRequest indent opts request =
-  ( map (indent ++)
+  map (indent ++)
       ([ "request ="
        , "  { verb ="
        , "      \"" ++ method ++ "\""
@@ -365,8 +340,6 @@ mkLetRequest indent opts request =
        , "  }"
        ]
       )
-  , bodyEncoderDefs
-  )
   where
     method =
        T.unpack (T.decodeUtf8 (request ^. F.reqMethod))
@@ -374,19 +347,17 @@ mkLetRequest indent opts request =
     url =
       mkUrl opts (request ^. F.reqUrl . F.path)
 
-    (body, bodyEncoderDefs) =
+    body =
       case request ^. F.reqBody of
         Nothing ->
-          ( "Http.empty", [] )
+          "Http.empty"
 
         Just elmTypeExpr ->
-          let encoderName =
-                T.unpack $ Elm.toElmEncoderRefWith (elmExportOptions opts) elmTypeExpr
+          let
+            encoderName =
+              T.unpack $ Elm.toElmEncoderRefWith (elmExportOptions opts) elmTypeExpr
           in
-               ( "Http.string (Json.Encode.encode 0 (" ++ encoderName ++ " body))"
-                -- , [T.unpack $ Elm.toElmEncoderSourceWith (elmExportOptions opts) elmTypeExpr]
-               , []
-                )
+            "Http.string (Json.Encode.encode 0 (" ++ encoderName ++ " body))"
 
 
 mkQueryParams
@@ -415,23 +386,21 @@ mkHttpRequest
   -> ([String], [String])
 mkHttpRequest indent opts request =
   ( map (indent ++) elmLines
-  , responseDecoderDefs
+  , supportingFunctions
   )
   where
-    (elmLines, responseDecoderDefs) =
+    (elmLines, supportingFunctions) =
       case request ^. F.reqReturnType of
         Just elmTypeExpr | isEmptyType opts elmTypeExpr ->
             (emptyResponseRequest (T.unpack $ Elm.toElmTypeRefWith (elmExportOptions opts) elmTypeExpr)
-            , [ --T.unpack $ Elm.toElmTypeSourceWith (elmExportOptions opts) elmTypeExpr
-               emptyResponseHandlerSrc
-               , handleResponseSrc
-               , promoteErrorSrc
-               ]
+            , [ emptyResponseHandlerSrc
+              , handleResponseSrc
+              , promoteErrorSrc
+              ]
             )
 
         Just elmTypeExpr ->
           ( jsonRequest (T.unpack $ Elm.toElmDecoderRefWith (elmExportOptions opts) elmTypeExpr)
-          -- , [T.unpack $ Elm.toElmDecoderSourceWith (elmExportOptions opts) elmTypeExpr]
           , []
           )
 
