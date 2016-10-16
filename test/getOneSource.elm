@@ -13,5 +13,5 @@ getOne =
       }
   in
     Http.fromJson
-      Json.Decode.int
+      int
       (Http.send Http.defaultSettings request)

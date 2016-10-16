@@ -3,12 +3,12 @@
 
 module Servant.Elm.Orphans where
 
-import           Elm          (ElmType, ElmTypeExpr, toElmType)
+import           Elm          (ElmType, ElmDatatype, toElmType)
 import           GHC.Generics (Generic)
 import           Servant.API  (NoContent (NoContent))
 
 
-instance ElmType ElmTypeExpr where
+instance ElmType ElmDatatype where
   toElmType = id
 
 

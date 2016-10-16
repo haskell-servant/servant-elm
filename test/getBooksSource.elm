@@ -1,4 +1,4 @@
-getBooks : Bool -> Maybe (String) -> Maybe (Int) -> List (Maybe Bool) -> Task.Task Http.Error (List (Book))
+getBooks : Bool -> Maybe String -> Maybe Int -> List (Maybe Bool) -> Task.Task Http.Error (List Book)
 getBooks published sort year filters =
   let
     params =
@@ -33,5 +33,5 @@ getBooks published sort year filters =
       }
   in
     Http.fromJson
-      (Json.Decode.list decodeBook)
+      (list decodeBook)
       (Http.send Http.defaultSettings request)

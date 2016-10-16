@@ -1,4 +1,4 @@
-{-# LANGUAGE QuasiQuotes   #-}
+{-# LANGUAGE QuasiQuotes       #-}
 
 module CompileSpec where
 
@@ -6,20 +6,22 @@ import           Test.Hspec
 import           Test.Mockery.Directory
 
 import           Control.Exception
-import           Control.Monad (when)
+import           Control.Monad                (when)
 import           Data.List
 import           Data.String.Interpolate
 import           Data.String.Interpolate.Util
+import qualified Data.Text                    as T
+import           Elm                          (toElmDecoderSource,
+                                               toElmEncoderSource,
+                                               toElmTypeSource)
 import           GenerateSpec
+import           Servant.API                  (NoContent)
 import           Servant.Elm
-import           System.Directory
-  ( canonicalizePath
-  , createDirectoryIfMissing
-  , doesDirectoryExist
-  , getCurrentDirectory
-  , removeFile
-  , setCurrentDirectory
-  )
+import           System.Directory             (canonicalizePath,
+                                               createDirectoryIfMissing,
+                                               doesDirectoryExist,
+                                               getCurrentDirectory, removeFile,
+                                               setCurrentDirectory)
 import           System.Process
 
 spec :: Test.Hspec.Spec
@@ -30,6 +32,11 @@ spec = do
         let generated =
               intercalate "\n\n" $
                 defElmImports :
+                [ T.unpack $ toElmTypeSource (Proxy :: Proxy NoContent)
+                , T.unpack $ toElmTypeSource (Proxy :: Proxy Book)
+                , T.unpack $ toElmDecoderSource (Proxy :: Proxy Book)
+                , T.unpack $ toElmEncoderSource (Proxy :: Proxy Book)
+                ] ++
                 generateElmForAPI testApi
         writeFile "Api.elm" generated
         callCommand "elm-make Api.elm --output api.js"
@@ -61,7 +68,8 @@ createCache = do
           "dependencies": {
               "elm-lang/core": "4.0.1 <= v < 5.0.0",
               "elm-community/json-extra": "1.0.0 <= v < 2.0.0",
-              "evancz/elm-http": "3.0.1 <= v < 4.0.0"
+              "evancz/elm-http": "3.0.1 <= v < 4.0.0",
+              "NoRedInk/elm-decode-pipeline": "2.0.0 <= v < 3.0.0"
           },
           "elm-version": "0.17.0 <= v < 0.18.0"
       }

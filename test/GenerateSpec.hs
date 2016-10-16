@@ -38,7 +38,6 @@ type TestApi =
   :<|> "books"   :> ReqBody '[JSON] Book
                  :> PostNoContent '[JSON] NoContent
   :<|> "nothing" :> GetNoContent '[JSON] NoContent
-  :<|> "nothing" :> Put '[JSON] () -- old way to specify no content
 
 testApi :: Proxy TestApi
 testApi = Proxy
@@ -50,19 +49,14 @@ spec = do
       expected <- mapM readFile
         [ "test/getOneSource.elm"
         , "test/postTwoSource.elm"
-        , "test/bookTypeSource.elm"
-        , "test/decodeBookSource.elm"
         , "test/getBooksByIdSource.elm"
         , "test/getBooksByTitleSource.elm"
         , "test/getBooksSource.elm"
-        , "test/noContentTypeSource.elm"
-        , "test/encodeBookSource.elm"
         , "test/emptyResponseHandlerSource.elm"
         , "test/handleResponseSource.elm"
         , "test/promoteErrorSource.elm"
         , "test/postBooksSource.elm"
         , "test/getNothingSource.elm"
-        , "test/putNothingSource.elm"
         ]
 
       let generated = map (++ "\n") (generateElmForAPI testApi)

@@ -1,21 +1,20 @@
 # For more information, see: https://github.com/commercialhaskell/stack/blob/release/doc/yaml_configuration.md
 
 # Specifies the GHC version and set of packages available (e.g., lts-3.5, nightly-2015-09-21, ghc-7.10.2)
-resolver: lts-6.17
+resolver: lts-7.2
 
 # Local packages, usually specified by relative directory name
 packages:
 - '.'
+# - location: ../elm-export
 - location:
     git: https://www.github.com/mattjbray/elm-export
-    commit: 46a0db4ed5710c2c9fa26a5f79aff16e312efd91
+    commit: 71a3a66749b9a6dcec84487353a368e29fab8a5e
   extra-dep: True
 
 # Packages to be pulled from upstream that are not in the resolver (e.g., acme-missiles-0.3)
 extra-deps:
-- servant-0.8.1
-- servant-foreign-0.8.1
-- servant-server-0.8.1
+  []
 
 # Override default flag values for local packages and extra-deps
 flags: {}

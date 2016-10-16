@@ -13,5 +13,5 @@ postTwo body =
       }
   in
     Http.fromJson
-      (Json.Decode.maybe Json.Decode.int)
+      (maybe int)
       (Http.send Http.defaultSettings request)

@@ -3,13 +3,13 @@
 module Servant.Elm.Generate where
 
 import           Control.Lens        (view, (^.))
-import           Data.Bifunctor      (bimap, first)
+import           Data.Bifunctor      (first)
 import           Data.List           (intercalate, nub)
 import           Data.Maybe          (catMaybes)
 import           Data.Proxy          (Proxy)
 import qualified Data.Text           as T
 import qualified Data.Text.Encoding  as T
-import           Elm                 (ElmTypeExpr)
+import           Elm                 (ElmDatatype)
 import qualified Elm
 import           Servant.API         (NoContent (..))
 import           Servant.Elm.Foreign (LangElm, getEndpoints)
@@ -29,9 +29,9 @@ data ElmOptions = ElmOptions
     urlPrefix             :: String
   , elmExportOptions      :: Elm.Options
     -- ^ Options to pass to elm-export
-  , emptyResponseElmTypes :: [ElmTypeExpr]
+  , emptyResponseElmTypes :: [ElmDatatype]
     -- ^ Types that represent an empty Http response.
-  , stringElmTypes        :: [ElmTypeExpr]
+  , stringElmTypes        :: [ElmDatatype]
     -- ^ Types that represent a String.
   }
 
@@ -46,7 +46,7 @@ The default options are:
 > , elmExportOptions =
 >     Elm.defaultOptions
 > , emptyResponseElmTypes =
->     [ toElmType (), toElmType NoContent ]
+>     [ toElmType NoContent ]
 > , stringElmTypes =
 >     [ toElmType "" ]
 > }
@@ -56,8 +56,7 @@ defElmOptions = ElmOptions
   { urlPrefix = ""
   , elmExportOptions = Elm.defaultOptions
   , emptyResponseElmTypes =
-      [ Elm.toElmType ()
-      , Elm.toElmType NoContent
+      [ Elm.toElmType NoContent
       ]
   , stringElmTypes =
       [ Elm.toElmType ""
@@ -72,8 +71,8 @@ You probably want to include this at the top of your generated Elm module.
 
 The default required imports are:
 
-> import Json.Decode exposing ((:=))
-> import Json.Decode.Extra exposing ((|:))
+> import Json.Decode exposing (..)
+> import Json.Decode.Pipeline exposing (..)
 > import Json.Encode
 > import Http
 > import String
@@ -82,8 +81,8 @@ The default required imports are:
 defElmImports :: String
 defElmImports =
   unlines
-    [ "import Json.Decode exposing ((:=))"
-    , "import Json.Decode.Extra exposing ((|:))"
+    [ "import Json.Decode exposing (..)"
+    , "import Json.Decode.Pipeline exposing (..)"
     , "import Json.Encode"
     , "import Http"
     , "import String"
@@ -94,17 +93,15 @@ defElmImports =
 {-|
 Generate Elm code for the API with default options.
 
-Returns a list of Elm code definitions with everything you need to query your
-Servant API from Elm: type definitions, JSON decoders, JSON encoders, and query
-functions.
+Returns a list of Elm functions to query your Servant API from Elm.
 
 You could spit these out to a file and call them from your Elm code, but you
 would be better off creating a 'Spec' with the result and using 'specsToDir',
 which handles the module name for you.
 -}
 generateElmForAPI
-  :: ( F.HasForeign LangElm ElmTypeExpr api
-     , F.GenerateList ElmTypeExpr (F.Foreign ElmTypeExpr api))
+  :: ( F.HasForeign LangElm ElmDatatype api
+     , F.GenerateList ElmDatatype (F.Foreign ElmDatatype api))
   => Proxy api
   -> [String]
 generateElmForAPI =
@@ -115,16 +112,21 @@ generateElmForAPI =
 Generate Elm code for the API with custom options.
 -}
 generateElmForAPIWith
-  :: ( F.HasForeign LangElm ElmTypeExpr api
-     , F.GenerateList ElmTypeExpr (F.Foreign ElmTypeExpr api))
+  :: ( F.HasForeign LangElm ElmDatatype api
+     , F.GenerateList ElmDatatype (F.Foreign ElmDatatype api))
   => ElmOptions
   -> Proxy api
   -> [String]
 generateElmForAPIWith opts =
   nub . concatMap (generateElmForRequest opts) . getEndpoints
 
+{-|
+Generate an Elm function for one endpoint.
 
-generateElmForRequest :: ElmOptions -> F.Req ElmTypeExpr -> [String]
+This function returns a list because the query function may require some
+supporting definitions.
+-}
+generateElmForRequest :: ElmOptions -> F.Req ElmDatatype -> [String]
 generateElmForRequest opts request =
   typeSignatureDefs
   ++ bodyEncoderDefs
@@ -164,19 +166,17 @@ generateElmForRequest opts request =
 
 mkTypeSignature
   :: ElmOptions
-  -> F.Req ElmTypeExpr
+  -> F.Req ElmDatatype
   -> ( String
        -- The type signature
      , [String]
        -- Supporting type definitions
      )
 mkTypeSignature opts request =
-  (collect . catMaybes)
-    [ urlCaptureTypes
-    , queryTypes
-    , bodyType
-    , returnType
-    ]
+  collect
+    ( urlCaptureTypes
+    ++ queryTypes
+    ++ catMaybes [bodyType, returnType])
   where
     collect :: [(String, [String])] -> (String, [String])
     collect xs =
@@ -184,68 +184,46 @@ mkTypeSignature opts request =
       , concatMap snd xs
       )
 
-    urlCaptureArgs :: [F.Arg ElmTypeExpr]
-    urlCaptureArgs =
-      [ F.captureArg cap
-      | cap <- request ^. F.reqUrl . F.path
-      , F.isCapture cap
-      ]
+    getElmNameAndSource :: ElmDatatype -> (String, [String])
+    getElmNameAndSource eType =
+      ( T.unpack $ Elm.toElmTypeRefWith (elmExportOptions opts) eType
+            -- , [T.unpack $ Elm.toElmTypeSourceWith (elmExportOptions opts) eType])
+      , [])
 
-    urlCaptureTypes :: Maybe (String, [String])
+    urlCaptureTypes :: [(String, [String])]
     urlCaptureTypes =
-      if null urlCaptureArgs then
-        Nothing
-      else
-        Just $ collect
-          [ Elm.toElmTypeSourceDefsWith
-              (elmExportOptions opts)
-              (arg ^. F.argType)
-          | arg <- urlCaptureArgs
-          ]
+        [ getElmNameAndSource (F.captureArg cap ^. F.argType)
+        | cap <- request ^. F.reqUrl . F.path
+        , F.isCapture cap
+        ]
 
-    queryArgToElmType :: F.QueryArg ElmTypeExpr -> (String, [String])
-    queryArgToElmType arg =
-      let
-        (eType, eTypeDefs) =
-          Elm.toElmTypeSourceDefsWith
-            (elmExportOptions opts)
-            (arg ^. F.queryArgName . F.argType)
-      in
-        ( case arg ^. F.queryArgType of
-            F.Normal ->
-              "Maybe (" ++ eType ++ ")"
-            _ ->
-              eType
-        , eTypeDefs
-        )
-
-    queryTypes :: Maybe (String, [String])
+    queryTypes :: [(String, [String])]
     queryTypes =
-      if null (request ^. F.reqUrl . F.queryStr) then
-        Nothing
-      else
-        Just . collect $
-          map queryArgToElmType (request ^. F.reqUrl . F.queryStr)
+      [ case arg ^. F.queryArgType of
+          F.Normal ->
+            getElmNameAndSource (Elm.ElmPrimitive . Elm.EMaybe $ arg ^. F.queryArgName . F.argType)
+          _ ->
+            getElmNameAndSource (arg ^. F.queryArgName . F.argType)
+      | arg <- request ^. F.reqUrl . F.queryStr
+      ]
 
     bodyType :: Maybe (String, [String])
     bodyType =
-      fmap
-        (Elm.toElmTypeSourceDefsWith (elmExportOptions opts))
-        (request ^. F.reqBody)
+        getElmNameAndSource <$> (request ^. F.reqBody)
 
-    mkReturnType :: ElmTypeExpr -> (String, [String])
-    mkReturnType elmTypeExpr =
+    mkReturnType :: ElmDatatype -> (String, [String])
+    mkReturnType eType =
       first
-        (\eType -> "Task.Task Http.Error (" ++ eType ++ ")")
-        (Elm.toElmTypeSourceDefsWith (elmExportOptions opts) elmTypeExpr)
+        (\typeName -> "Task.Task Http.Error (" ++ typeName ++ ")")
+        (getElmNameAndSource eType)
 
     returnType :: Maybe (String, [String])
     returnType =
-      fmap mkReturnType (request ^. F.reqReturnType)
+      mkReturnType <$> (request ^. F.reqReturnType)
 
 
 mkArgsList
-  :: F.Req ElmTypeExpr
+  :: F.Req ElmDatatype
   -> [String]
 mkArgsList request =
   -- URL Captures
@@ -267,7 +245,7 @@ mkArgsList request =
 
 mkUrl
   :: ElmOptions
-  -> [F.Segment ElmTypeExpr]
+  -> [F.Segment ElmDatatype]
   -> String
 mkUrl opts segments =
   (intercalate newLine . catMaybes)
@@ -288,7 +266,7 @@ mkUrl opts segments =
       else
         Just x
 
-    segmentToStr :: F.Segment ElmTypeExpr -> String
+    segmentToStr :: F.Segment ElmDatatype -> String
     segmentToStr s =
       case F.unSegment s of
         F.Static path ->
@@ -308,7 +286,7 @@ mkUrl opts segments =
 mkLetParams
   :: String
   -> ElmOptions
-  -> F.Req ElmTypeExpr
+  -> F.Req ElmDatatype
   -> [String]
 mkLetParams indent opts request =
   if null (request ^. F.reqUrl . F.queryStr) then
@@ -324,7 +302,7 @@ mkLetParams indent opts request =
     params :: [String]
     params = map paramToStr (request ^. F.reqUrl . F.queryStr)
 
-    paramToStr :: F.QueryArg ElmTypeExpr -> String
+    paramToStr :: F.QueryArg ElmDatatype -> String
     paramToStr qarg =
       case qarg ^. F.queryArgType of
         F.Normal ->
@@ -365,7 +343,7 @@ mkLetParams indent opts request =
 mkLetRequest
   :: String
   -> ElmOptions
-  -> F.Req ElmTypeExpr
+  -> F.Req ElmDatatype
   -> ( [String]
        -- The source lines for the Elm request value.
      , [String]
@@ -402,15 +380,18 @@ mkLetRequest indent opts request =
           ( "Http.empty", [] )
 
         Just elmTypeExpr ->
-          first
-            (\encoderName ->
-               "Http.string (Json.Encode.encode 0 (" ++ encoderName ++ " body))")
-            (Elm.toElmEncoderSourceDefsWith (elmExportOptions opts) elmTypeExpr)
+          let encoderName =
+                T.unpack $ Elm.toElmEncoderRefWith (elmExportOptions opts) elmTypeExpr
+          in
+               ( "Http.string (Json.Encode.encode 0 (" ++ encoderName ++ " body))"
+                -- , [T.unpack $ Elm.toElmEncoderSourceWith (elmExportOptions opts) elmTypeExpr]
+               , []
+                )
 
 
 mkQueryParams
   :: String
-  -> F.Req ElmTypeExpr
+  -> F.Req ElmDatatype
   -> [String]
 mkQueryParams indent request =
   if null (request ^. F.reqUrl . F.queryStr) then
@@ -430,7 +411,7 @@ Otherwise, construct an HTTP request that expects an empty response.
 mkHttpRequest
   :: String
   -> ElmOptions
-  -> F.Req ElmTypeExpr
+  -> F.Req ElmDatatype
   -> ([String], [String])
 mkHttpRequest indent opts request =
   ( map (indent ++) elmLines
@@ -440,16 +421,19 @@ mkHttpRequest indent opts request =
     (elmLines, responseDecoderDefs) =
       case request ^. F.reqReturnType of
         Just elmTypeExpr | isEmptyType opts elmTypeExpr ->
-          bimap
-            emptyResponseRequest
-            (++ [ emptyResponseHandlerSrc
-                , handleResponseSrc
-                , promoteErrorSrc
-                ])
-            (Elm.toElmTypeSourceDefsWith (elmExportOptions opts) elmTypeExpr)
+            (emptyResponseRequest (T.unpack $ Elm.toElmTypeRefWith (elmExportOptions opts) elmTypeExpr)
+            , [ --T.unpack $ Elm.toElmTypeSourceWith (elmExportOptions opts) elmTypeExpr
+               emptyResponseHandlerSrc
+               , handleResponseSrc
+               , promoteErrorSrc
+               ]
+            )
 
         Just elmTypeExpr ->
-          first jsonRequest (Elm.toElmDecoderSourceDefsWith (elmExportOptions opts) elmTypeExpr)
+          ( jsonRequest (T.unpack $ Elm.toElmDecoderRefWith (elmExportOptions opts) elmTypeExpr)
+          -- , [T.unpack $ Elm.toElmDecoderSourceWith (elmExportOptions opts) elmTypeExpr]
+          , []
+          )
 
         Nothing ->
           error "mkHttpRequest: no reqReturnType?"
@@ -504,7 +488,7 @@ mkHttpRequest indent opts request =
 {- | Determines whether we construct an Elm function that expects an empty
 response body.
 -}
-isEmptyType :: ElmOptions -> ElmTypeExpr -> Bool
+isEmptyType :: ElmOptions -> ElmDatatype -> Bool
 isEmptyType opts elmTypeExpr =
   elmTypeExpr `elem` emptyResponseElmTypes opts
 
@@ -512,6 +496,6 @@ isEmptyType opts elmTypeExpr =
 {- | Determines whether we call `toString` on URL captures and query params of
 this type in Elm.
 -}
-isElmStringType :: ElmOptions -> ElmTypeExpr -> Bool
+isElmStringType :: ElmOptions -> ElmDatatype -> Bool
 isElmStringType opts elmTypeExpr =
   elmTypeExpr `elem` stringElmTypes opts
