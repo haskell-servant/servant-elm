@@ -1,19 +1,27 @@
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE OverloadedStrings     #-}
 module Servant.Elm.Generate where
 
 import           Control.Lens        (view, (^.))
-import           Data.List           (intercalate, nub)
+import           Data.List           (nub)
 import           Data.Maybe          (catMaybes)
+import           Data.Monoid         ((<>))
 import           Data.Proxy          (Proxy)
+import           Data.Text           (Text)
 import qualified Data.Text           as T
 import qualified Data.Text.Encoding  as T
 import           Elm                 (ElmDatatype)
 import qualified Elm
+import           Formatting          (Format, now, sformat, stext, (%))
 import           Servant.API         (NoContent (..))
 import           Servant.Elm.Foreign (LangElm, getEndpoints)
 import           Servant.Elm.Orphans ()
 import qualified Servant.Foreign     as F
+
+
+cr :: Format r r
+cr = now "\n"
 
 
 {-|
@@ -25,7 +33,7 @@ data ElmOptions = ElmOptions
 
     Example: @"https://mydomain.com/api/v1"@
     -}
-    urlPrefix             :: String
+    urlPrefix             :: T.Text
   , elmExportOptions      :: Elm.Options
     -- ^ Options to pass to elm-export
   , emptyResponseElmTypes :: [ElmDatatype]
@@ -58,7 +66,7 @@ defElmOptions = ElmOptions
       [ Elm.toElmType NoContent
       ]
   , stringElmTypes =
-      [ Elm.toElmType ""
+      [ Elm.toElmType ("" :: String)
       ]
   }
 
@@ -77,9 +85,9 @@ The default required imports are:
 > import String
 > import Task
 -}
-defElmImports :: String
+defElmImports :: Text
 defElmImports =
-  unlines
+  T.unlines
     [ "import Json.Decode exposing (..)"
     , "import Json.Decode.Pipeline exposing (..)"
     , "import Json.Encode"
@@ -102,7 +110,7 @@ generateElmForAPI
   :: ( F.HasForeign LangElm ElmDatatype api
      , F.GenerateList ElmDatatype (F.Foreign ElmDatatype api))
   => Proxy api
-  -> [String]
+  -> [Text]
 generateElmForAPI =
   generateElmForAPIWith defElmOptions
 
@@ -115,7 +123,7 @@ generateElmForAPIWith
      , F.GenerateList ElmDatatype (F.Foreign ElmDatatype api))
   => ElmOptions
   -> Proxy api
-  -> [String]
+  -> [Text]
 generateElmForAPIWith opts =
   nub . concatMap (generateElmForRequest opts) . getEndpoints
 
@@ -125,31 +133,40 @@ Generate an Elm function for one endpoint.
 This function returns a list because the query function may require some
 supporting definitions.
 -}
-generateElmForRequest :: ElmOptions -> F.Req ElmDatatype -> [String]
+generateElmForRequest :: ElmOptions -> F.Req ElmDatatype -> [Text]
 generateElmForRequest opts request =
   supportingFunctions
   ++ [funcDef]
   where
     funcDef =
-      (intercalate "\n" . filter (not . null))
-        ([ fnName ++ " : " ++ typeSignature
-         , fnNameArgs ++ " ="
-         , "  let"
-         ]
-         ++ letParams
-         ++ letRequest
-         ++ [ "  in" ]
-         ++ httpRequest
-         )
+      sformat
+        (stext % " : " % stext % cr %
+         stext % " =" % cr %
+         "  let" % cr %
+         -- stext % cr %
+         stext %
+         stext % cr %
+         "  in" % cr %
+         stext
+        )
+        fnName
+        typeSignature
+        fnNameArgs
+        (case letParams of
+           Just x -> x <> "\n"
+           Nothing -> ""
+        )
+        letRequest
+        httpRequest
 
     fnName =
-      T.unpack (F.camelCase (request ^. F.reqFuncName))
+      (F.camelCase (request ^. F.reqFuncName))
 
     typeSignature =
       mkTypeSignature opts request
 
     fnNameArgs =
-      unwords (fnName : mkArgsList request)
+      T.unwords (fnName : mkArgsList request)
 
     letParams =
       mkLetParams "    " opts request
@@ -164,25 +181,25 @@ generateElmForRequest opts request =
 mkTypeSignature
   :: ElmOptions
   -> F.Req ElmDatatype
-  ->  String
+  ->  Text
 mkTypeSignature opts request =
-    intercalate " -> "
+    T.intercalate " -> "
     ( urlCaptureTypes
     ++ queryTypes
     ++ catMaybes [bodyType, returnType])
   where
-    getElmName :: ElmDatatype -> String
+    getElmName :: ElmDatatype -> Text
     getElmName eType =
-      T.unpack $ Elm.toElmTypeRefWith (elmExportOptions opts) eType
+      Elm.toElmTypeRefWith (elmExportOptions opts) eType
 
-    urlCaptureTypes :: [String]
+    urlCaptureTypes :: [Text]
     urlCaptureTypes =
         [ getElmName (F.captureArg cap ^. F.argType)
         | cap <- request ^. F.reqUrl . F.path
         , F.isCapture cap
         ]
 
-    queryTypes :: [String]
+    queryTypes :: [Text]
     queryTypes =
       [ case arg ^. F.queryArgType of
           F.Normal ->
@@ -192,27 +209,27 @@ mkTypeSignature opts request =
       | arg <- request ^. F.reqUrl . F.queryStr
       ]
 
-    bodyType :: Maybe String
+    bodyType :: Maybe Text
     bodyType =
         getElmName <$> (request ^. F.reqBody)
 
-    returnType :: Maybe String
+    returnType :: Maybe Text
     returnType =
-      (\typeName -> "Task.Task Http.Error (" ++ typeName ++ ")") . getElmName <$> (request ^. F.reqReturnType)
+      (sformat ("Task.Task Http.Error (" % stext % ")")) . getElmName <$> (request ^. F.reqReturnType)
 
 
 mkArgsList
   :: F.Req ElmDatatype
-  -> [String]
+  -> [Text]
 mkArgsList request =
   -- URL Captures
-  [ T.unpack . F.unPathSegment $ F.captureArg segment ^. F.argName
+  [ F.unPathSegment $ F.captureArg segment ^. F.argName
   | segment <- request ^. F.reqUrl . F.path
   , F.isCapture segment
   ]
   ++
   -- Query params
-  [ T.unpack . F.unPathSegment $ arg ^. F.queryArgName . F.argName
+  [ F.unPathSegment $ arg ^. F.queryArgName . F.argName
   | arg <- request ^. F.reqUrl . F.queryStr
   ]
   ++
@@ -225,31 +242,29 @@ mkArgsList request =
 mkUrl
   :: ElmOptions
   -> [F.Segment ElmDatatype]
-  -> String
+  -> Text
 mkUrl opts segments =
-  (intercalate newLine . catMaybes)
-    [ nullOr (urlPrefix opts) $
-        "\"" ++ urlPrefix opts ++ "\""
-    , nullOr segments $
-        "\"/\" ++ "
-        ++ intercalate (newLine ++ "\"/\" ++ ")
-              (map segmentToStr segments)
+  (T.intercalate newLine . catMaybes)
+    [ if T.null (urlPrefix opts) then
+        Nothing
+      else
+        Just $ "\"" <> urlPrefix opts <> "\""
+    , if null segments then
+        Nothing
+      else
+        Just $ "\"/\" ++ "
+               <> T.intercalate (newLine <> "\"/\" ++ ")
+                                (map segmentToText segments)
     ]
   where
     newLine =
       "\n          ++ "
 
-    nullOr t x =
-      if null t then
-         Nothing
-      else
-        Just x
-
-    segmentToStr :: F.Segment ElmDatatype -> String
-    segmentToStr s =
+    segmentToText :: F.Segment ElmDatatype -> Text
+    segmentToText s =
       case F.unSegment s of
         F.Static path ->
-          "\"" ++ T.unpack (F.unPathSegment path) ++ "\""
+          "\"" <> F.unPathSegment path <> "\""
         F.Cap arg ->
           let
             -- Don't use "toString" on Elm Strings, otherwise we get extraneous quotes.
@@ -259,29 +274,29 @@ mkUrl opts segments =
               else
                 " |> toString"
           in
-            "(" ++ T.unpack (F.unPathSegment (arg ^. F.argName)) ++ toStringSrc ++ " |> Http.uriEncode)"
+            "(" <> (F.unPathSegment (arg ^. F.argName)) <> toStringSrc <> " |> Http.uriEncode)"
 
 
 mkLetParams
-  :: String
+  :: Text
   -> ElmOptions
   -> F.Req ElmDatatype
-  -> [String]
+  -> Maybe Text
 mkLetParams indent opts request =
   if null (request ^. F.reqUrl . F.queryStr) then
-    []
+    Nothing
   else
-    map (indent ++)
+    Just $ T.intercalate "\n" $ map (indent <>)
         [ "params ="
         , "  List.filter (not << String.isEmpty)"
-        , "    [ " ++ intercalate ("\n" ++ indent ++ "    , ") params
+        , "    [ " <> T.intercalate ("\n" <> indent <> "    , ") params
         , "    ]"
         ]
   where
-    params :: [String]
+    params :: [Text]
     params = map paramToStr (request ^. F.reqUrl . F.queryStr)
 
-    paramToStr :: F.QueryArg ElmDatatype -> String
+    paramToStr :: F.QueryArg ElmDatatype -> Text
     paramToStr qarg =
       case qarg ^. F.queryArgType of
         F.Normal ->
@@ -293,56 +308,56 @@ mkLetParams indent opts request =
               else
                 "toString >> "
           in
-            intercalate newLine
+            T.intercalate newLine
               [ name
-              , "  |> Maybe.map (" ++ toStringSrc ++ "Http.uriEncode >> (++) \"" ++ name ++ "=\")"
+              , "  |> Maybe.map (" <> toStringSrc <> "Http.uriEncode >> (++) \"" <> name <> "=\")"
               , "  |> Maybe.withDefault \"\""
               ]
 
         F.Flag ->
-          intercalate newLine
-            ["if " ++ name ++ " then"
-            , "  \"" ++ name ++ "=\""
+          T.intercalate newLine
+            ["if " <> name <> " then"
+            , "  \"" <> name <> "=\""
             , "else"
             , "  \"\""
             ]
 
         F.List ->
-          intercalate newLine
+          T.intercalate newLine
             [ name
-            , "  |> List.map (\\val -> \"" ++ name ++ "[]=\" ++ (val |> toString |> Http.uriEncode))"
+            , "  |> List.map (\\val -> \"" <> name <> "[]=\" ++ (val |> toString |> Http.uriEncode))"
             , "  |> String.join \"&\""
             ]
       where
         name =
-          T.unpack . F.unPathSegment . view (F.queryArgName . F.argName) $ qarg
+          F.unPathSegment . view (F.queryArgName . F.argName) $ qarg
         newLine = "\n          "
 
 
 mkLetRequest
-  :: String
+  :: Text
   -> ElmOptions
   -> F.Req ElmDatatype
-  -> [String]
+  -> Text
 mkLetRequest indent opts request =
-  map (indent ++)
+  T.intercalate "\n" $ map (indent <>)
       ([ "request ="
        , "  { verb ="
-       , "      \"" ++ method ++ "\""
+       , "      \"" <> method <> "\""
        , "  , headers ="
        , "      [(\"Content-Type\", \"application/json\")]"
        , "  , url ="
-       , "      " ++ url
+       , "      " <> url
        ]
-       ++ mkQueryParams "      " request ++
-       [ "  , body ="
-       , "      " ++ body
+       ++ mkQueryParams "      " request
+       ++ [ "  , body ="
+       , "      " <> body
        , "  }"
        ]
       )
   where
     method =
-       T.unpack (T.decodeUtf8 (request ^. F.reqMethod))
+       T.decodeUtf8 (request ^. F.reqMethod)
 
     url =
       mkUrl opts (request ^. F.reqUrl . F.path)
@@ -355,20 +370,20 @@ mkLetRequest indent opts request =
         Just elmTypeExpr ->
           let
             encoderName =
-              T.unpack $ Elm.toElmEncoderRefWith (elmExportOptions opts) elmTypeExpr
+              Elm.toElmEncoderRefWith (elmExportOptions opts) elmTypeExpr
           in
-            "Http.string (Json.Encode.encode 0 (" ++ encoderName ++ " body))"
+            sformat ("Http.string (Json.Encode.encode 0 (" % stext % " body))") encoderName
 
 
 mkQueryParams
-  :: String
+  :: Text
   -> F.Req ElmDatatype
-  -> [String]
+  -> [Text]
 mkQueryParams indent request =
   if null (request ^. F.reqUrl . F.queryStr) then
     []
   else
-    map (indent ++)
+    map (indent <>)
     [ "++ if List.isEmpty params then"
     , "     \"\""
     , "   else"
@@ -380,19 +395,19 @@ mkQueryParams indent request =
 Otherwise, construct an HTTP request that expects an empty response.
 -}
 mkHttpRequest
-  :: String
+  :: Text
   -> ElmOptions
   -> F.Req ElmDatatype
-  -> ([String], [String])
+  -> (Text, [Text])
 mkHttpRequest indent opts request =
-  ( map (indent ++) elmLines
+  ( T.intercalate "\n" $ map (indent <>) elmLines
   , supportingFunctions
   )
   where
     (elmLines, supportingFunctions) =
       case request ^. F.reqReturnType of
         Just elmTypeExpr | isEmptyType opts elmTypeExpr ->
-            (emptyResponseRequest (T.unpack $ Elm.toElmTypeRefWith (elmExportOptions opts) elmTypeExpr)
+            (emptyResponseRequest (Elm.toElmTypeRefWith (elmExportOptions opts) elmTypeExpr)
             , [ emptyResponseHandlerSrc
               , handleResponseSrc
               , promoteErrorSrc
@@ -400,7 +415,7 @@ mkHttpRequest indent opts request =
             )
 
         Just elmTypeExpr ->
-          ( jsonRequest (T.unpack $ Elm.toElmDecoderRefWith (elmExportOptions opts) elmTypeExpr)
+          ( jsonRequest (Elm.toElmDecoderRefWith (elmExportOptions opts) elmTypeExpr)
           , []
           )
 
@@ -409,7 +424,7 @@ mkHttpRequest indent opts request =
 
     jsonRequest decoder =
       [ "Http.fromJson"
-      , "  " ++ decoder
+      , "  " <> decoder
       , "  (Http.send Http.defaultSettings request)"
       ]
 
@@ -417,11 +432,11 @@ mkHttpRequest indent opts request =
       [ "Task.mapError promoteError"
       , "  (Http.send Http.defaultSettings request)"
       , "    `Task.andThen`"
-      , "      handleResponse (emptyResponseHandler " ++ elmType ++ ")"
+      , "      handleResponse (emptyResponseHandler " <> elmType <> ")"
       ]
 
     emptyResponseHandlerSrc =
-      intercalate "\n"
+      T.intercalate "\n"
         [ "emptyResponseHandler : a -> String -> Task.Task Http.Error a"
         , "emptyResponseHandler x str ="
         , "  if String.isEmpty str then"
@@ -431,7 +446,7 @@ mkHttpRequest indent opts request =
         ]
 
     handleResponseSrc =
-      intercalate "\n"
+      T.intercalate "\n"
         [ "handleResponse : (String -> Task.Task Http.Error a) -> Http.Response -> Task.Task Http.Error a"
         , "handleResponse handle response ="
         , "  if 200 <= response.status && response.status < 300 then"
@@ -445,7 +460,7 @@ mkHttpRequest indent opts request =
         ]
 
     promoteErrorSrc =
-      intercalate "\n"
+      T.intercalate "\n"
         [ "promoteError : Http.RawError -> Http.Error"
         , "promoteError rawError ="
         , "  case rawError of"

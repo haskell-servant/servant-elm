@@ -1,6 +1,7 @@
-{-# LANGUAGE DataKinds     #-}
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE DataKinds         #-}
+{-# LANGUAGE DeriveGeneric     #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TypeOperators     #-}
 
 module GenerateSpec where
 
@@ -8,7 +9,8 @@ import           Test.Hspec
 
 import           Control.Monad (zipWithM_)
 import           Data.Aeson    (ToJSON)
-import           Data.Default  (Default, def)
+import           Data.Monoid   ((<>))
+import qualified Data.Text.IO  as T
 import           GHC.Generics  (Generic)
 import           Servant.API
 import           Servant.Elm
@@ -46,7 +48,7 @@ spec :: Test.Hspec.Spec
 spec = do
   describe "encoding a simple api" $ do
     it "does it" $ do
-      expected <- mapM readFile
+      expected <- mapM T.readFile
         [ "test/getOneSource.elm"
         , "test/postTwoSource.elm"
         , "test/getBooksByIdSource.elm"
@@ -59,11 +61,11 @@ spec = do
         , "test/getNothingSource.elm"
         ]
 
-      let generated = map (++ "\n") (generateElmForAPI testApi)
+      let generated = map (<> "\n") (generateElmForAPI testApi)
 
       generated `itemsShouldBe` expected
 
-itemsShouldBe :: (Default a, Eq a, Show a) => [a] -> [a] -> IO ()
+itemsShouldBe :: (Monoid a, Eq a, Show a) => [a] -> [a] -> IO ()
 itemsShouldBe actual expected =
-  zipWithM_ shouldBe (actual   ++ replicate (length expected - length actual) def)
-                     (expected ++ replicate (length actual - length expected) def)
+  zipWithM_ shouldBe (actual   ++ replicate (length expected - length actual) mempty)
+                     (expected ++ replicate (length actual - length expected) mempty)

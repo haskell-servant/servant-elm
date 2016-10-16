@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes       #-}
 
 module CompileSpec where
@@ -7,10 +8,10 @@ import           Test.Mockery.Directory
 
 import           Control.Exception
 import           Control.Monad                (when)
-import           Data.List
 import           Data.String.Interpolate
 import           Data.String.Interpolate.Util
 import qualified Data.Text                    as T
+import qualified Data.Text.IO                 as T
 import           Elm                          (toElmDecoderSource,
                                                toElmEncoderSource,
                                                toElmTypeSource)
@@ -30,15 +31,15 @@ spec = do
     it "creates compilable javascript" $ do
       inTempElmDir $ do
         let generated =
-              intercalate "\n\n" $
+              T.intercalate "\n\n" $
                 defElmImports :
-                [ T.unpack $ toElmTypeSource (Proxy :: Proxy NoContent)
-                , T.unpack $ toElmTypeSource (Proxy :: Proxy Book)
-                , T.unpack $ toElmDecoderSource (Proxy :: Proxy Book)
-                , T.unpack $ toElmEncoderSource (Proxy :: Proxy Book)
+                [ toElmTypeSource (Proxy :: Proxy NoContent)
+                , toElmTypeSource (Proxy :: Proxy Book)
+                , toElmDecoderSource (Proxy :: Proxy Book)
+                , toElmEncoderSource (Proxy :: Proxy Book)
                 ] ++
                 generateElmForAPI testApi
-        writeFile "Api.elm" generated
+        T.writeFile "Api.elm" generated
         callCommand "elm-make Api.elm --output api.js"
 
 inTempElmDir :: IO a -> IO a

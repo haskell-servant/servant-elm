@@ -4,8 +4,7 @@
 module Servant.Elm.Orphans where
 
 import           Elm          (ElmType, ElmDatatype, toElmType)
-import           GHC.Generics (Generic)
-import           Servant.API  (NoContent (NoContent))
+import           Servant.API  (NoContent)
 
 
 instance ElmType ElmDatatype where
