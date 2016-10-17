@@ -1,7 +1,7 @@
-module Generated.MyApi where
+module Generated.MyApi exposing (..)
 
-import Json.Decode exposing ((:=))
-import Json.Decode.Extra exposing ((|:))
+import Json.Decode exposing (..)
+import Json.Decode.Pipeline exposing (..)
 import Json.Encode
 import Http
 import String
@@ -9,19 +9,13 @@ import Task
 
 
 type alias Book =
-  { name : String
-  }
+    { name : String
+    }
 
-decodeBook : Json.Decode.Decoder Book
+decodeBook : Decoder Book
 decodeBook =
-  Json.Decode.succeed Book
-    |: ("name" := Json.Decode.string)
-
-encodeBook : Book -> Json.Encode.Value
-encodeBook x =
-  Json.Encode.object
-    [ ( "name", Json.Encode.string x.name )
-    ]
+    decode Book
+        |> required "name" string
 
 getBooksByBookId : Int -> Task.Task Http.Error (Book)
 getBooksByBookId bookId =

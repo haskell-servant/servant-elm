@@ -1,57 +1,48 @@
-module Main where
+module Main exposing (..)
 
 import Generated.GiphyApi as Api
 
-import Effects
+import Html.App as Html
 import Html exposing (div, img, input, button, text)
 import Html.Attributes exposing (placeholder, src, value)
-import Html.Events exposing (onClick, on, targetValue)
-import StartApp
+import Html.Events exposing (onClick, onInput, targetValue)
 import String
 import Task
 
-app =
-  StartApp.start
+main : Program Never
+main =
+  Html.program
     { init = init
     , view = view
     , update = update
-    , inputs = []
+    , subscriptions = always Sub.none
     }
-
-main =
-  app.html
-
-port tasks : Signal (Task.Task Effects.Never ())
-port tasks =
-  app.tasks
 
 type alias Model =
   { url : Maybe String
   , topic : Maybe String
   }
 
-init : (Model, Effects.Effects Action)
+init : (Model, Cmd Msg)
 init =
   ( { url = Nothing
     , topic = Nothing
     }
-  , Effects.none)
+  , Cmd.none)
 
-type Action
+type Msg
   = FetchGif
   | NewGif (Maybe Api.Gif)
   | SetTopic String
 
-update : Action -> Model -> (Model, Effects.Effects Action)
+update : Msg -> Model -> (Model, Cmd Msg)
 update action model =
   case action of
     FetchGif ->
       let
         effects =
           Api.getRandom (Just "dc6zaTOxFJmzC") model.topic
-             |> Task.toMaybe
-             |> Task.map NewGif
-             |> Effects.task
+             |> Task.perform (always (NewGif Nothing)) (NewGif << Just)
       in
         ( { model
               | url = Nothing
@@ -63,7 +54,7 @@ update action model =
             | url =
                 Maybe.map (.data >> .image_url) mGif
         }
-      , Effects.none)
+      , Cmd.none)
 
     SetTopic topic ->
       ( { model
@@ -73,26 +64,21 @@ update action model =
                 else
                   Just topic
         }
-      , Effects.none)
+      , Cmd.none)
 
-view : Signal.Address Action -> Model -> Html.Html
-view address model =
+view : Model -> Html.Html Msg
+view model =
   div []
       [ div []
           [ input
-              [ onInput address SetTopic
+              [ onInput SetTopic
               , value (Maybe.withDefault "" model.topic)
               , placeholder "topic"
               ]
               []
           , button
-              [ onClick address FetchGif ]
+              [ onClick FetchGif ]
               [ text "click me" ]
           ]
       , img [ src (Maybe.withDefault "" model.url) ] []
       ]
-
-
-onInput : Signal.Address a -> (String -> a) -> Html.Attribute
-onInput address contentToValue =
-  on "input" targetValue (\str -> Signal.message address (contentToValue str))

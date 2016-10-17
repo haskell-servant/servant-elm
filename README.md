@@ -13,23 +13,18 @@ Elm type generation coutesy of [krisajenkins/elm-export](https://github.com/kris
 
 ```yaml
 ...
-resolver: lts-5.10
+resolver: lts-7.2
 
 packages:
 - '.'
 - location:
     git: https://www.github.com/mattjbray/elm-export
-    commit: 3dfafc7a717003ff4374119ff6f60e5b56868d8f
+    commit: ae5aa012f17732d48b6f19ffc4a52bdbe8f42aba
   extra-dep: True
 - location:
     git: https://www.github.com/mattjbray/servant-elm
     commit: 36c90557d17d237e621cdcb4912ae9e4f25a9e59
   extra-dep: True
-
-extra-deps:
-- servant-0.5
-- servant-foreign-0.5
-- servant-server-0.5
 ```
 
 ## Example
@@ -37,15 +32,17 @@ extra-deps:
 First, some language pragmas and imports.
 
 ```haskell
-{-# LANGUAGE DataKinds     #-}
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE DataKinds         #-}
+{-# LANGUAGE DeriveGeneric     #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TypeOperators     #-}
 
+import           Elm          (Spec (Spec), specsToDir, toElmDecoderSource,
+                               toElmTypeSource)
 import           GHC.Generics (Generic)
 import           Servant.API  ((:>), Capture, Get, JSON)
-import           Servant.Elm  (ElmType, Proxy (Proxy), Spec (Spec),
-                               defElmImports, generateElmForAPI, specsToDir,
-                               specsToDir)
+import           Servant.Elm  (ElmType, Proxy (Proxy), defElmImports,
+                               generateElmForAPI)
 ```
 
 We have some Haskell-defined types and our Servant API.
@@ -66,7 +63,9 @@ Now we can generate Elm functions to query the API:
 spec :: Spec
 spec = Spec ["Generated", "MyApi"]
             (defElmImports
-             : generateElmForAPI (Proxy :: Proxy BooksApi))
+             : toElmTypeSource    (Proxy :: Proxy Book)
+             : toElmDecoderSource (Proxy :: Proxy Book)
+             : generateElmForAPI  (Proxy :: Proxy BooksApi))
 
 main :: IO ()
 main = specsToDir [spec] "my-elm-dir"
@@ -83,10 +82,10 @@ $
 Here's what was generated:
 
 ```elm
-module Generated.MyApi where
+module Generated.MyApi exposing (..)
 
-import Json.Decode exposing ((:=))
-import Json.Decode.Extra exposing ((|:))
+import Json.Decode exposing (..)
+import Json.Decode.Pipeline exposing (..)
 import Json.Encode
 import Http
 import String
@@ -94,19 +93,13 @@ import Task
 
 
 type alias Book =
-  { name : String
-  }
+    { name : String
+    }
 
-decodeBook : Json.Decode.Decoder Book
+decodeBook : Decoder Book
 decodeBook =
-  Json.Decode.succeed Book
-    |: ("name" := Json.Decode.string)
-
-encodeBook : Book -> Json.Encode.Value
-encodeBook x =
-  Json.Encode.object
-    [ ( "name", Json.Encode.string x.name )
-    ]
+    decode Book
+        |> required "name" string
 
 getBooksByBookId : Int -> Task.Task Http.Error (Book)
 getBooksByBookId bookId =

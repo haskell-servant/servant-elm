@@ -1,7 +1,7 @@
-module Generated.BooksApi where
+module Generated.BooksApi exposing (..)
 
-import Json.Decode exposing ((:=))
-import Json.Decode.Extra exposing ((|:))
+import Json.Decode exposing (..)
+import Json.Decode.Pipeline exposing (..)
 import Json.Encode
 import Http
 import String
@@ -9,19 +9,19 @@ import Task
 
 
 type alias Book =
-  { name : String
-  }
+    { name : String
+    }
 
-decodeBook : Json.Decode.Decoder Book
+decodeBook : Decoder Book
 decodeBook =
-  Json.Decode.succeed Book
-    |: ("name" := Json.Decode.string)
+    decode Book
+        |> required "name" string
 
 encodeBook : Book -> Json.Encode.Value
 encodeBook x =
-  Json.Encode.object
-    [ ( "name", Json.Encode.string x.name )
-    ]
+    Json.Encode.object
+        [ ( "name", Json.Encode.string x.name )
+        ]
 
 postBooks : Book -> Task.Task Http.Error (Book)
 postBooks body =
@@ -42,7 +42,7 @@ postBooks body =
       decodeBook
       (Http.send Http.defaultSettings request)
 
-getBooks : Task.Task Http.Error (List (Book))
+getBooks : Task.Task Http.Error (List Book)
 getBooks =
   let
     request =
@@ -58,7 +58,7 @@ getBooks =
       }
   in
     Http.fromJson
-      (Json.Decode.list decodeBook)
+      (list decodeBook)
       (Http.send Http.defaultSettings request)
 
 getBooksByBookId : Int -> Task.Task Http.Error (Book)

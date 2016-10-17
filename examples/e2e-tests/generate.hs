@@ -1,14 +1,17 @@
-{-# LANGUAGE DataKinds      #-}
-{-# LANGUAGE DeriveAnyClass #-}
-{-# LANGUAGE DeriveGeneric  #-}
-{-# LANGUAGE TypeOperators  #-}
+{-# LANGUAGE DataKinds         #-}
+{-# LANGUAGE DeriveAnyClass    #-}
+{-# LANGUAGE DeriveGeneric     #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TypeOperators     #-}
 
+import           Elm          (Spec (Spec), specsToDir, toElmDecoderSource,
+                               toElmEncoderSource, toElmTypeSource)
 import           GHC.Generics (Generic)
 import           Servant.API  ((:<|>), (:>), Capture, Get, GetNoContent, JSON,
                                NoContent, Post, QueryParam, ReqBody)
 import           Servant.Elm  (ElmOptions (..), ElmType, Proxy (Proxy),
-                               Spec (Spec), defElmImports, defElmOptions,
-                               generateElmForAPIWith, specsToDir)
+                               defElmImports, defElmOptions,
+                               generateElmForAPIWith)
 
 
 myElmOpts :: ElmOptions
@@ -56,6 +59,18 @@ spec :: Spec
 spec =
   Spec ["Generated", "Api"]
     (defElmImports
+     : toElmTypeSource    (Proxy :: Proxy Response)
+     : toElmDecoderSource (Proxy :: Proxy Response)
+     : toElmTypeSource    (Proxy :: Proxy NoContent)
+     : toElmTypeSource    (Proxy :: Proxy MessageBody)
+     : toElmEncoderSource (Proxy :: Proxy MessageBody)
+     : toElmDecoderSource (Proxy :: Proxy MessageBody)
+     : toElmTypeSource    (Proxy :: Proxy ResponseWithJson)
+     : toElmDecoderSource (Proxy :: Proxy ResponseWithJson)
+     : toElmTypeSource    (Proxy :: Proxy QueryArgs)
+     : toElmDecoderSource (Proxy :: Proxy QueryArgs)
+     : toElmTypeSource    (Proxy :: Proxy ResponseWithArgs)
+     : toElmDecoderSource (Proxy :: Proxy ResponseWithArgs)
      : generateElmForAPIWith
          myElmOpts
          (Proxy :: Proxy Api))

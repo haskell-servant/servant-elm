@@ -1,12 +1,15 @@
-{-# LANGUAGE DataKinds     #-}
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE DataKinds         #-}
+{-# LANGUAGE DeriveGeneric     #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TypeOperators     #-}
 
+import           Elm          (Spec (Spec), specsToDir, toElmDecoderSource,
+                               toElmEncoderSource, toElmTypeSource)
 import           GHC.Generics (Generic)
 import           Servant.API  ((:<|>), (:>), Capture, Get, JSON, Post, ReqBody)
 import           Servant.Elm  (ElmOptions (..), ElmType, Proxy (Proxy),
-                               Spec (Spec), defElmImports, defElmOptions,
-                               generateElmForAPIWith, specsToDir)
+                               defElmImports, defElmOptions,
+                               generateElmForAPIWith)
 
 data Book = Book
   { name :: String
@@ -24,6 +27,9 @@ myElmOpts = defElmOptions { urlPrefix = "http://localhost:8000" }
 spec :: Spec
 spec = Spec ["Generated", "BooksApi"]
             (defElmImports
+             : toElmTypeSource    (Proxy :: Proxy Book)
+             : toElmDecoderSource (Proxy :: Proxy Book)
+             : toElmEncoderSource (Proxy :: Proxy Book)
              : generateElmForAPIWith myElmOpts (Proxy :: Proxy BooksApi))
 
 main :: IO ()

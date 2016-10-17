@@ -1,5 +1,9 @@
 .PHONY: all
-all: examples
+all: test examples
+
+.PHONY: test
+test:
+	stack test
 
 .PHONY: examples
 examples: build-with-examples-flag books-example e2e-tests-example giphy-example readme-example

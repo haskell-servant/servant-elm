@@ -1,7 +1,7 @@
-module Generated.GiphyApi where
+module Generated.GiphyApi exposing (..)
 
-import Json.Decode exposing ((:=))
-import Json.Decode.Extra exposing ((|:))
+import Json.Decode exposing (..)
+import Json.Decode.Pipeline exposing (..)
 import Json.Encode
 import Http
 import String
@@ -9,24 +9,24 @@ import Task
 
 
 type alias Gif =
-  { data : GifData
-  }
+    { data : GifData
+    }
 
 type alias GifData =
-  { image_url : String
-  }
+    { image_url : String
+    }
 
-decodeGif : Json.Decode.Decoder Gif
+decodeGif : Decoder Gif
 decodeGif =
-  Json.Decode.succeed Gif
-    |: ("data" := decodeGifData)
+    decode Gif
+        |> required "data" decodeGifData
 
-decodeGifData : Json.Decode.Decoder GifData
+decodeGifData : Decoder GifData
 decodeGifData =
-  Json.Decode.succeed GifData
-    |: ("image_url" := Json.Decode.string)
+    decode GifData
+        |> required "image_url" string
 
-getRandom : Maybe (String) -> Maybe (String) -> Task.Task Http.Error (Gif)
+getRandom : Maybe String -> Maybe String -> Task.Task Http.Error (Gif)
 getRandom api_key tag =
   let
     params =
