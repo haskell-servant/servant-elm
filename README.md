@@ -23,7 +23,7 @@ packages:
   extra-dep: True
 - location:
     git: https://www.github.com/mattjbray/servant-elm
-    commit: 36c90557d17d237e621cdcb4912ae9e4f25a9e59
+    commit: 8854758c7f08f751e2f2628158ec3ae67c8b70c6
   extra-dep: True
 ```
 
