@@ -8,7 +8,7 @@ Elm type generation coutesy of [krisajenkins/elm-export](https://github.com/kris
 
 ## Installation
 
-Until `elm-export` is released, `servant-elm` requires stack. Add this to your
+`servant-elm` currently relies on a [forked version](https://github.com/mattjbray/elm-export) of `elm-export`. Until we can get the required features merged upstream, `servant-elm` requires stack. Add this to your
 `stack.yaml` file:
 
 ```yaml
