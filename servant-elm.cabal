@@ -22,7 +22,7 @@ flag examples
 library
   hs-source-dirs:      src
   exposed-modules:     Servant.Elm
-  other-modules:       Servant.Elm.Foreign
+                     , Servant.Elm.Foreign
                      , Servant.Elm.Generate
                      , Servant.Elm.Orphans
   build-depends:       base >= 4.7 && < 5
