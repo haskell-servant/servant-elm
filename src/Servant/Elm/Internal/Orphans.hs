@@ -1,10 +1,10 @@
 {-# LANGUAGE DeriveGeneric      #-}
 {-# LANGUAGE StandaloneDeriving #-}
 
-module Servant.Elm.Orphans where
+module Servant.Elm.Internal.Orphans where
 
-import           Elm          (ElmType, ElmDatatype, toElmType)
-import           Servant.API  (NoContent)
+import           Elm         (ElmDatatype, ElmType, toElmType)
+import           Servant.API (NoContent)
 
 
 instance ElmType ElmDatatype where

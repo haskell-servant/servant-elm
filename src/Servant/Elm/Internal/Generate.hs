@@ -1,23 +1,23 @@
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings     #-}
-module Servant.Elm.Generate where
+module Servant.Elm.Internal.Generate where
 
-import           Control.Lens        (view, to, (^.))
-import           Data.List           (nub)
-import           Data.Maybe          (catMaybes)
-import           Data.Monoid         ((<>))
-import           Data.Proxy          (Proxy)
-import           Data.Text           (Text)
-import qualified Data.Text           as T
-import qualified Data.Text.Encoding  as T
-import           Elm                 (ElmDatatype)
+import           Control.Lens                 (to, view, (^.))
+import           Data.List                    (nub)
+import           Data.Maybe                   (catMaybes)
+import           Data.Monoid                  ((<>))
+import           Data.Proxy                   (Proxy)
+import           Data.Text                    (Text)
+import qualified Data.Text                    as T
+import qualified Data.Text.Encoding           as T
+import           Elm                          (ElmDatatype)
 import qualified Elm
-import           Formatting          (sformat, stext, (%))
-import           Servant.API         (NoContent (..))
-import           Servant.Elm.Foreign (LangElm, getEndpoints)
-import           Servant.Elm.Orphans ()
-import qualified Servant.Foreign     as F
+import           Formatting                   (sformat, stext, (%))
+import           Servant.API                  (NoContent (..))
+import           Servant.Elm.Internal.Foreign (LangElm, getEndpoints)
+import           Servant.Elm.Internal.Orphans ()
+import qualified Servant.Foreign              as F
 
 
 {-|

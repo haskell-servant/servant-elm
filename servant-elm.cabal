@@ -22,9 +22,9 @@ flag examples
 library
   hs-source-dirs:      src
   exposed-modules:     Servant.Elm
-  other-modules:       Servant.Elm.Foreign
-                     , Servant.Elm.Generate
-                     , Servant.Elm.Orphans
+                     , Servant.Elm.Internal.Foreign
+                     , Servant.Elm.Internal.Generate
+                     , Servant.Elm.Internal.Orphans
   build-depends:       base >= 4.7 && < 5
                      , formatting
                      , lens

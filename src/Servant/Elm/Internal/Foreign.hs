@@ -4,7 +4,7 @@
 {-# LANGUAGE ScopedTypeVariables   #-}
 {-# LANGUAGE TypeFamilies          #-}
 
-module Servant.Elm.Foreign where
+module Servant.Elm.Internal.Foreign where
 
 import           Data.Proxy      (Proxy (Proxy))
 import           Elm             (ElmDatatype, ElmType, toElmType)

@@ -25,9 +25,11 @@ module Servant.Elm
        , Proxy(Proxy)
        ) where
 
-import           Servant.Elm.Generate (ElmOptions (..), defElmImports,
-                                       defElmOptions, generateElmForAPI,
-                                       generateElmForAPIWith)
+import           Servant.Elm.Internal.Generate (ElmOptions (..), defElmImports,
+                                                defElmOptions,
+                                                generateElmForAPI,
+                                                generateElmForAPIWith)
 
-import           Data.Proxy           (Proxy (Proxy))
-import           Elm                  (ElmType, Spec (Spec), specsToDir)
+import           Data.Proxy                    (Proxy (Proxy))
+import           Elm                           (ElmType, Spec (Spec),
+                                                specsToDir)
