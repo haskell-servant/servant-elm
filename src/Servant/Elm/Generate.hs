@@ -255,12 +255,12 @@ mkUrl indent opts segments =
     [ if T.null (urlPrefix opts) then
         Nothing
       else
-        Just $ quote <> urlPrefix opts <> quote
+        Just $ inQuotes (urlPrefix opts)
     , if null segments then
         Nothing
       else
-        Just $ quote <> "/" <> quote <> " ++ "
-               <> T.intercalate (newLine <> quote <> "/" <> quote <> " ++ ")
+        Just $ inQuotes "/" <> " ++ "
+               <> T.intercalate (newLine <> inQuotes "/" <> " ++ ")
                                 (map segmentToText segments)
     ]
   where
