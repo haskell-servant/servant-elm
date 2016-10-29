@@ -40,6 +40,9 @@ type TestApi =
   :<|> "books"   :> ReqBody '[JSON] Book
                  :> PostNoContent '[JSON] NoContent
   :<|> "nothing" :> GetNoContent '[JSON] NoContent
+  :<|> "with-a-header" :> Header "myStringHeader" String
+                       :> Header "myIntHeader" Int
+                       :> Get '[JSON] String
 
 testApi :: Proxy TestApi
 testApi = Proxy
@@ -59,6 +62,7 @@ spec = do
         , "test/promoteErrorSource.elm"
         , "test/postBooksSource.elm"
         , "test/getNothingSource.elm"
+        , "test/getWithaheaderSource.elm"
         ]
 
       let generated = map (<> "\n") (generateElmForAPI testApi)

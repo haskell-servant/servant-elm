@@ -129,6 +129,9 @@ cr = "\n"
 quote :: Text
 quote = "\""
 
+inQuotes :: Text -> Text
+inQuotes s = quote <> s <> quote
+
 {-|
 Generate an Elm function for one endpoint.
 
@@ -174,13 +177,20 @@ mkTypeSignature
   -> Text
 mkTypeSignature opts request =
     T.intercalate " -> "
-    ( urlCaptureTypes
+    ( headerTypes
+    ++ urlCaptureTypes
     ++ queryTypes
     ++ catMaybes [bodyType, returnType])
   where
     elmTypeRef :: ElmDatatype -> Text
     elmTypeRef eType =
       Elm.toElmTypeRefWith (elmExportOptions opts) eType
+
+    headerTypes :: [Text]
+    headerTypes =
+      [ header ^. F.headerArg . F.argType . to elmTypeRef
+      | header <- request ^. F.reqHeaders
+      ]
 
     urlCaptureTypes :: [Text]
     urlCaptureTypes =
@@ -215,6 +225,11 @@ mkArgsList
   :: F.Req ElmDatatype
   -> [Text]
 mkArgsList request =
+  -- Headers
+  [ header ^. F.headerArg . F.argName . to F.unPathSegment
+  | header <- request ^. F.reqHeaders
+  ]
+  ++
   -- URL Captures
   [ F.captureArg segment ^. F.argName . to F.unPathSegment
   | segment <- request ^. F.reqUrl . F.path
@@ -337,7 +352,7 @@ mkLetRequest indent opts request =
        , "  { verb ="
        , "      \"" <> method <> "\""
        , "  , headers ="
-       , "      [(\"Content-Type\", \"application/json\")]"
+       , "      [(\"Content-Type\", \"application/json\")" <> headers <> "]"
        , "  , url ="
        , "      " <> url
        ]
@@ -350,6 +365,19 @@ mkLetRequest indent opts request =
   where
     method =
        T.decodeUtf8 (request ^. F.reqMethod)
+
+    headers =
+      T.concat . map ((cr <> indent <> "      ,") <>) $
+        ["(" <> inQuotes headerName <> ", " <>
+         (if isElmStringType opts (header ^. F.headerArg . F.argType) then
+            ""
+           else
+            "toString "
+                ) <>
+         headerName <> ")"
+        | header <- request ^. F.reqHeaders
+        , headerName <- [header ^. F.headerArg . F.argName . to F.unPathSegment]
+        ]
 
     url =
       mkUrl (indent <> "      ") opts (request ^. F.reqUrl . F.path)
