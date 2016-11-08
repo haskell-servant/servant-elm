@@ -1,4 +1,4 @@
-postTwo : String -> Task.Task Http.Error (Maybe Int)
+postTwo : String -> Task.Task Http.Error (Maybe (Int))
 postTwo body =
   let
     request =

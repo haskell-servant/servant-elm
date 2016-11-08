@@ -9,7 +9,7 @@ import Task
 
 
 type alias Gif =
-    { data : GifData
+    { data :GifData
     }
 
 type alias GifData =
@@ -26,7 +26,7 @@ decodeGifData =
     decode GifData
         |> required "image_url" string
 
-getRandom : Maybe String -> Maybe String -> Task.Task Http.Error (Gif)
+getRandom : Maybe (String) -> Maybe (String) -> Task.Task Http.Error (Gif)
 getRandom api_key tag =
   let
     params =

@@ -1,4 +1,4 @@
-getBooks : Bool -> Maybe String -> Maybe Int -> List (Maybe Bool) -> Task.Task Http.Error (List Book)
+getBooks : Bool -> Maybe (String) -> Maybe (Int) -> List (Maybe (Bool)) -> Task.Task Http.Error (List (Book))
 getBooks published sort year filters =
   let
     params =

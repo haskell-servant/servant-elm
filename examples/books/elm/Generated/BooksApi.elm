@@ -42,7 +42,7 @@ postBooks body =
       decodeBook
       (Http.send Http.defaultSettings request)
 
-getBooks : Task.Task Http.Error (List Book)
+getBooks : Task.Task Http.Error (List (Book))
 getBooks =
   let
     request =

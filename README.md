@@ -8,24 +8,7 @@ Elm type generation coutesy of [krisajenkins/elm-export](https://github.com/kris
 
 ## Installation
 
-`servant-elm` currently relies on a [forked version](https://github.com/mattjbray/elm-export) of `elm-export`. Until we can get the required features merged upstream, `servant-elm` requires stack. Add this to your
-`stack.yaml` file:
-
-```yaml
-...
-resolver: lts-7.2
-
-packages:
-- '.'
-- location:
-    git: https://www.github.com/mattjbray/elm-export
-    commit: ae5aa012f17732d48b6f19ffc4a52bdbe8f42aba
-  extra-dep: True
-- location:
-    git: https://www.github.com/mattjbray/servant-elm
-    commit: 8854758c7f08f751e2f2628158ec3ae67c8b70c6
-  extra-dep: True
-```
+Servant Elm is [available on Hackage](http://hackage.haskell.org/package/servant-elm).
 
 ## Example
 
@@ -146,9 +129,3 @@ $ cd examples/e2e-tests
 $ elm-reactor
 # Open http://localhost:8000/elm/Main.elm
 ```
-
-## TODO
-
-* Encode captures and query params?
-* Option to not use elm-export: generate functions that take a decoder and
-  String arguments.

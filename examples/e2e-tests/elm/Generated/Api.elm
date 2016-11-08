@@ -36,7 +36,7 @@ decodeMessageBody =
         |> required "message" string
 
 type alias ResponseWithJson =
-    { json : MessageBody
+    { json :MessageBody
     }
 
 decodeResponseWithJson : Decoder ResponseWithJson
@@ -54,7 +54,7 @@ decodeQueryArgs =
         |> required "q" string
 
 type alias ResponseWithArgs =
-    { args : QueryArgs
+    { args :QueryArgs
     }
 
 decodeResponseWithArgs : Decoder ResponseWithArgs
@@ -145,7 +145,7 @@ postPost body =
       decodeResponseWithJson
       (Http.send Http.defaultSettings request)
 
-getGet : Maybe String -> Task.Task Http.Error (ResponseWithArgs)
+getGet : Maybe (String) -> Task.Task Http.Error (ResponseWithArgs)
 getGet q =
   let
     params =
