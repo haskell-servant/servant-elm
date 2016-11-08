@@ -1,4 +1,4 @@
-0.2.0.1
+0.2.0.0
 -------
 * Use Text throughout the API.
 * We no longer auto-generate Elm sources for the types, encoders and decoders
@@ -6,6 +6,7 @@
   explicitly. See the tests and examples for usage.
 * Allow setting options to pass to `elm-export`.
 * Update to `servant-0.8` (purcell).
+* Basic support for custom headers.
 * Fix: `String` query params were being wrapped in double-quotes.
 * Test: verify that the generated code can be compiled by Elm (soenkehahn)
 
