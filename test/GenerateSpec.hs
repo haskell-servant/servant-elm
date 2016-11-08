@@ -52,17 +52,17 @@ spec = do
   describe "encoding a simple api" $ do
     it "does it" $ do
       expected <- mapM T.readFile
-        [ "test/getOneSource.elm"
-        , "test/postTwoSource.elm"
-        , "test/getBooksByIdSource.elm"
-        , "test/getBooksByTitleSource.elm"
-        , "test/getBooksSource.elm"
-        , "test/emptyResponseHandlerSource.elm"
-        , "test/handleResponseSource.elm"
-        , "test/promoteErrorSource.elm"
-        , "test/postBooksSource.elm"
-        , "test/getNothingSource.elm"
-        , "test/getWithaheaderSource.elm"
+        [ "test/elm-sources/getOneSource.elm"
+        , "test/elm-sources/postTwoSource.elm"
+        , "test/elm-sources/getBooksByIdSource.elm"
+        , "test/elm-sources/getBooksByTitleSource.elm"
+        , "test/elm-sources/getBooksSource.elm"
+        , "test/elm-sources/emptyResponseHandlerSource.elm"
+        , "test/elm-sources/handleResponseSource.elm"
+        , "test/elm-sources/promoteErrorSource.elm"
+        , "test/elm-sources/postBooksSource.elm"
+        , "test/elm-sources/getNothingSource.elm"
+        , "test/elm-sources/getWithaheaderSource.elm"
         ]
 
       let generated = map (<> "\n") (generateElmForAPI testApi)
