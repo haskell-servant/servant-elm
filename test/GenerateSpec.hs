@@ -40,6 +40,7 @@ type TestApi =
   :<|> "books"   :> ReqBody '[JSON] Book
                  :> PostNoContent '[JSON] NoContent
   :<|> "nothing" :> GetNoContent '[JSON] NoContent
+  :<|> "nothing" :> Put '[JSON] () -- old way to specify no content
   :<|> "with-a-header" :> Header "myStringHeader" String
                        :> Header "myIntHeader" Int
                        :> Get '[JSON] String
@@ -62,6 +63,7 @@ spec = do
         , "test/elm-sources/promoteErrorSource.elm"
         , "test/elm-sources/postBooksSource.elm"
         , "test/elm-sources/getNothingSource.elm"
+        , "test/elm-sources/putNothingSource.elm"
         , "test/elm-sources/getWithaheaderSource.elm"
         ]
 

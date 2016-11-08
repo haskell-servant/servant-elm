@@ -60,6 +60,7 @@ defElmOptions = ElmOptions
   , elmExportOptions = Elm.defaultOptions
   , emptyResponseElmTypes =
       [ Elm.toElmType NoContent
+      , Elm.toElmType ()
       ]
   , stringElmTypes =
       [ Elm.toElmType ("" :: String)
