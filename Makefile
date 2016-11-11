@@ -43,7 +43,7 @@ examples/readme-example/my-elm-dir/Generated/MyApi.elm: examples/readme-example/
 
 .PHONY: clean
 clean:
-	rm examples/books/elm/Generated/BooksApi.elm && \
-	rm examples/e2e-tests/elm/Generated/Api.elm && \
-	rm examples/giphy/elm/Generated/GiphyApi.elm && \
-	rm examples/readme-example/my-elm-dir/Generated/MyApi.elm
+	rm -f examples/books/elm/Generated/BooksApi.elm \
+	      examples/e2e-tests/elm/Generated/Api.elm \
+	      examples/giphy/elm/Generated/GiphyApi.elm \
+	      examples/readme-example/my-elm-dir/Generated/MyApi.elm
