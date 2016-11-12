@@ -44,8 +44,10 @@ getRandom api_key tag =
       , headers =
           [("Content-Type", "application/json")]
       , url =
-          "http://api.giphy.com/v1/gifs"
-          ++ "/" ++ "random"
+          String.join "/"
+            [ "http://api.giphy.com/v1/gifs"
+            , "random"
+            ]
           ++ if List.isEmpty params then
                ""
              else

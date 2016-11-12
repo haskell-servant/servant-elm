@@ -7,7 +7,10 @@ postTwo body =
       , headers =
           [("Content-Type", "application/json")]
       , url =
-          "/" ++ "two"
+          String.join "/"
+            [ ""
+            , "two"
+            ]
       , body =
           Http.string (Json.Encode.encode 0 (Json.Encode.string body))
       }

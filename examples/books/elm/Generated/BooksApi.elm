@@ -32,8 +32,10 @@ postBooks body =
       , headers =
           [("Content-Type", "application/json")]
       , url =
-          "http://localhost:8000"
-          ++ "/" ++ "books"
+          String.join "/"
+            [ "http://localhost:8000"
+            , "books"
+            ]
       , body =
           Http.string (Json.Encode.encode 0 (encodeBook body))
       }
@@ -51,8 +53,10 @@ getBooks =
       , headers =
           [("Content-Type", "application/json")]
       , url =
-          "http://localhost:8000"
-          ++ "/" ++ "books"
+          String.join "/"
+            [ "http://localhost:8000"
+            , "books"
+            ]
       , body =
           Http.empty
       }
@@ -70,9 +74,11 @@ getBooksByBookId bookId =
       , headers =
           [("Content-Type", "application/json")]
       , url =
-          "http://localhost:8000"
-          ++ "/" ++ "books"
-          ++ "/" ++ (bookId |> toString |> Http.uriEncode)
+          String.join "/"
+            [ "http://localhost:8000"
+            , "books"
+            , bookId |> toString |> Http.uriEncode
+            ]
       , body =
           Http.empty
       }

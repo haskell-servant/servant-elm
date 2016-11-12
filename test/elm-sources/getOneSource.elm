@@ -7,7 +7,10 @@ getOne =
       , headers =
           [("Content-Type", "application/json")]
       , url =
-          "/" ++ "one"
+          String.join "/"
+            [ ""
+            , "one"
+            ]
       , body =
           Http.empty
       }

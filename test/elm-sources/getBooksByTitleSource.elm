@@ -7,8 +7,11 @@ getBooksByTitle title =
       , headers =
           [("Content-Type", "application/json")]
       , url =
-          "/" ++ "books"
-          ++ "/" ++ (title |> Http.uriEncode)
+          String.join "/"
+            [ ""
+            , "books"
+            , title |> Http.uriEncode
+            ]
       , body =
           Http.empty
       }

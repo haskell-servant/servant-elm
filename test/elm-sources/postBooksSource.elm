@@ -7,7 +7,10 @@ postBooks body =
       , headers =
           [("Content-Type", "application/json")]
       , url =
-          "/" ++ "books"
+          String.join "/"
+            [ ""
+            , "books"
+            ]
       , body =
           Http.string (Json.Encode.encode 0 (encodeBook body))
       }

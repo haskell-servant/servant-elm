@@ -7,8 +7,11 @@ getBooksById id =
       , headers =
           [("Content-Type", "application/json")]
       , url =
-          "/" ++ "books"
-          ++ "/" ++ (id |> toString |> Http.uriEncode)
+          String.join "/"
+            [ ""
+            , "books"
+            , id |> toString |> Http.uriEncode
+            ]
       , body =
           Http.empty
       }

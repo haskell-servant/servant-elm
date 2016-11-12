@@ -23,7 +23,10 @@ getBooks published sort year filters =
       , headers =
           [("Content-Type", "application/json")]
       , url =
-          "/" ++ "books"
+          String.join "/"
+            [ ""
+            , "books"
+            ]
           ++ if List.isEmpty params then
                ""
              else

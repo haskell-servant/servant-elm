@@ -7,7 +7,10 @@ putNothing =
       , headers =
           [("Content-Type", "application/json")]
       , url =
-          "/" ++ "nothing"
+          String.join "/"
+            [ ""
+            , "nothing"
+            ]
       , body =
           Http.empty
       }

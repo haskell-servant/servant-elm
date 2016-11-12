@@ -71,8 +71,10 @@ getIp =
       , headers =
           [("Content-Type", "application/json")]
       , url =
-          "https://httpbin.org"
-          ++ "/" ++ "ip"
+          String.join "/"
+            [ "https://httpbin.org"
+            , "ip"
+            ]
       , body =
           Http.empty
       }
@@ -114,9 +116,11 @@ getStatus204 =
       , headers =
           [("Content-Type", "application/json")]
       , url =
-          "https://httpbin.org"
-          ++ "/" ++ "status"
-          ++ "/" ++ "204"
+          String.join "/"
+            [ "https://httpbin.org"
+            , "status"
+            , "204"
+            ]
       , body =
           Http.empty
       }
@@ -135,8 +139,10 @@ postPost body =
       , headers =
           [("Content-Type", "application/json")]
       , url =
-          "https://httpbin.org"
-          ++ "/" ++ "post"
+          String.join "/"
+            [ "https://httpbin.org"
+            , "post"
+            ]
       , body =
           Http.string (Json.Encode.encode 0 (encodeMessageBody body))
       }
@@ -160,8 +166,10 @@ getGet q =
       , headers =
           [("Content-Type", "application/json")]
       , url =
-          "https://httpbin.org"
-          ++ "/" ++ "get"
+          String.join "/"
+            [ "https://httpbin.org"
+            , "get"
+            ]
           ++ if List.isEmpty params then
                ""
              else
@@ -183,8 +191,10 @@ getByPath path =
       , headers =
           [("Content-Type", "application/json")]
       , url =
-          "https://httpbin.org"
-          ++ "/" ++ (path |> Http.uriEncode)
+          String.join "/"
+            [ "https://httpbin.org"
+            , path |> Http.uriEncode
+            ]
       , body =
           Http.empty
       }

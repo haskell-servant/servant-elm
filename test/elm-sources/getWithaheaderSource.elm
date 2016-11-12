@@ -9,7 +9,10 @@ getWithaheader myStringHeader myIntHeader =
           ,("myStringHeader", myStringHeader)
           ,("myIntHeader", toString myIntHeader)]
       , url =
-          "/" ++ "with-a-header"
+          String.join "/"
+            [ ""
+            , "with-a-header"
+            ]
       , body =
           Http.empty
       }
