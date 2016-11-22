@@ -81,7 +81,6 @@ The default required imports are:
 > import Json.Encode
 > import Http
 > import String
-> import Task
 -}
 defElmImports :: Text
 defElmImports =
@@ -91,7 +90,6 @@ defElmImports =
     , "import Json.Encode"
     , "import Http"
     , "import String"
-    , "import Task"
     ]
 
 

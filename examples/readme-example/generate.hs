@@ -11,8 +11,8 @@ import           Servant.Elm  (ElmType, Proxy (Proxy), defElmImports,
                                generateElmForAPI)
 
 data Book = Book
-  { name :: String
-  } deriving (Generic)
+    { name :: String
+    } deriving ((Generic))
 
 instance ElmType Book
 
