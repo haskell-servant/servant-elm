@@ -1,21 +1,33 @@
-postBooks : Book -> Task.Task Http.Error (NoContent)
+module PostBooksSource exposing (..)
+
+import Http
+
+
+postBooks : Book -> Http.Request (NoContent)
 postBooks body =
-  let
-    request =
-      { verb =
-          "POST"
-      , headers =
-          [("Content-Type", "application/json")]
-      , url =
-          String.join "/"
-            [ ""
-            , "books"
+    Http.request
+        { method =
+            "POST"
+        , headers =
+            [ Http.header "Content-Type" "application/json"
             ]
-      , body =
-          Http.string (Json.Encode.encode 0 (encodeBook body))
-      }
-  in
-    Task.mapError promoteError
-      (Http.send Http.defaultSettings request)
-        `Task.andThen`
-          handleResponse (emptyResponseHandler NoContent)
+        , url =
+            String.join "/"
+                [ ""
+                , "books"
+                ]
+        , body =
+            Http.jsonBody (encodeBook body)
+        , expect =
+            Http.expectStringResponse
+                (\{ body } ->
+                    if String.isEmpty body then
+                        Ok NoContent
+                    else
+                        Err "Expected the response body to be empty"
+                )
+        , timeout =
+            Nothing
+        , withCredentials =
+            False
+        }

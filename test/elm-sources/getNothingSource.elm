@@ -1,21 +1,33 @@
-getNothing : Task.Task Http.Error (NoContent)
+module GetNothingSource exposing (..)
+
+import Http
+
+
+getNothing : Http.Request (NoContent)
 getNothing =
-  let
-    request =
-      { verb =
-          "GET"
-      , headers =
-          [("Content-Type", "application/json")]
-      , url =
-          String.join "/"
-            [ ""
-            , "nothing"
+    Http.request
+        { method =
+            "GET"
+        , headers =
+            [ Http.header "Content-Type" "application/json"
             ]
-      , body =
-          Http.empty
-      }
-  in
-    Task.mapError promoteError
-      (Http.send Http.defaultSettings request)
-        `Task.andThen`
-          handleResponse (emptyResponseHandler NoContent)
+        , url =
+            String.join "/"
+                [ ""
+                , "nothing"
+                ]
+        , body =
+            Http.emptyBody
+        , expect =
+            Http.expectStringResponse
+                (\{ body } ->
+                    if String.isEmpty body then
+                        Ok NoContent
+                    else
+                        Err "Expected the response body to be empty"
+                )
+        , timeout =
+            Nothing
+        , withCredentials =
+            False
+        }

@@ -123,30 +123,32 @@ generateElmForAPIWith
   -> Proxy api
   -> [Text]
 generateElmForAPIWith opts =
-  nub . map docToText . concatMap (generateElmForRequest opts) . getEndpoints
+  nub . map docToText . map (generateElmForRequest opts) . getEndpoints
+
+i :: Int
+i = 4
 
 {-|
 Generate an Elm function for one endpoint.
-
-This function returns a list because the query function may require some
-supporting definitions.
 -}
-generateElmForRequest :: ElmOptions -> F.Req ElmDatatype -> [Doc]
+generateElmForRequest :: ElmOptions -> F.Req ElmDatatype -> Doc
 generateElmForRequest opts request =
-  supportingFunctions ++ [funcDef]
+  funcDef
   where
     funcDef =
       vsep
         [ fnName <+> ":" <+> typeSignature
         , fnName <+> args <+> equals
-        , indent 2
-            (vsep ["let"
-                  , indent 2
-                      ((maybe empty (<> line) letParams) <>
-                       letRequest)
-                  , "in"
-                  , indent 2 httpRequest
-                  ])
+        , case letParams of
+            Just params ->
+              indent i
+              (vsep ["let"
+                    , indent i params
+                    , "in"
+                    , indent i elmRequest
+                    ])
+            Nothing ->
+              indent i elmRequest
         ]
 
     fnName =
@@ -161,11 +163,8 @@ generateElmForRequest opts request =
     letParams =
       mkLetParams opts request
 
-    letRequest =
-      mkLetRequest opts request
-
-    (httpRequest, supportingFunctions) =
-      mkHttpRequest opts request
+    elmRequest =
+      mkRequest opts request
 
 
 mkTypeSignature :: ElmOptions -> F.Req ElmDatatype -> Doc
@@ -214,7 +213,7 @@ mkTypeSignature opts request =
     returnType :: Maybe Doc
     returnType = do
       result <- fmap elmTypeRef $ request ^. F.reqReturnType
-      pure ("Task.Task Http.Error" <+> parens result)
+      pure ("Http.Request" <+> parens result)
 
 
 mkArgs
@@ -246,8 +245,8 @@ mkLetParams opts request =
     Nothing
   else
     Just $ "params =" <$>
-           indent 2 ("List.filter (not << String.isEmpty)" <$>
-                      indent 2 (elmList params))
+           indent i ("List.filter (not << String.isEmpty)" <$>
+                      indent i (elmList params))
   where
     params :: [Doc]
     params = map paramToDoc (request ^. F.reqUrl . F.queryStr)
@@ -266,7 +265,7 @@ mkLetParams opts request =
                 "toString >> "
           in
               name <$>
-              indent 4 ("|> Maybe.map" <+> parens (toStringSrc <> "Http.uriEncode >> (++)" <+> dquotes (name <> equals)) <$>
+              indent 4 ("|> Maybe.map" <+> parens (toStringSrc <> "Http.encodeUri >> (++)" <+> dquotes (name <> equals)) <$>
                         "|> Maybe.withDefault" <+> dquotes empty)
 
         F.Flag ->
@@ -277,42 +276,48 @@ mkLetParams opts request =
 
         F.List ->
             name <$>
-            indent 4 ("|> List.map" <+> parens (backslash <> "val ->" <+> dquotes (name <> "[]=") <+> "++ (val |> toString |> Http.uriEncode)") <$>
+            indent 4 ("|> List.map" <+> parens (backslash <> "val ->" <+> dquotes (name <> "[]=") <+> "++ (val |> toString |> Http.encodeUri)") <$>
                       "|> String.join" <+> dquotes "&")
       where
         name =
           qarg ^. F.queryArgName . F.argName . to (stext . F.unPathSegment)
 
 
-mkLetRequest :: ElmOptions -> F.Req ElmDatatype -> Doc
-mkLetRequest opts request =
-  "request =" <$>
-  indent 2
+mkRequest :: ElmOptions -> F.Req ElmDatatype -> Doc
+mkRequest opts request =
+  "Http.request" <$>
+  indent i
     (elmRecord
-       [ "verb =" <$>
-         indent 4 (dquotes method)
+       [ "method =" <$>
+         indent i (dquotes method)
        , "headers =" <$>
-         indent 4
-           (list (contentType : headers))
+         indent i
+           (elmList (contentType : headers))
        , "url =" <$>
-         indent 4 url
+         indent i url
        , "body =" <$>
-         indent 4 body
+         indent i body
+       , "expect =" <$>
+         indent i expect
+       , "timeout =" <$>
+         indent i "Nothing"
+       , "withCredentials =" <$>
+         indent i "False"
        ])
   where
     method =
        request ^. F.reqMethod . to (stext . T.decodeUtf8)
 
     contentType =
-      parens (dquotes "Content-Type" <> comma <+> dquotes "application/json")
+      "Http.header" <+> dquotes "Content-Type" <+> dquotes "application/json"
 
     headers =
-        [parens (dquotes headerName <> comma <+>
+        [("Http.header" <+> dquotes headerName <+>
                  (if isElmStringType opts (header ^. F.headerArg . F.argType) then
-                     ""
+                     headerName
                    else
-                     "toString "
-                  ) <> headerName)
+                     parens ("toString " <> headerName)
+                  ))
         | header <- request ^. F.reqHeaders
         , headerName <- [header ^. F.headerArg . F.argName . to (stext . F.unPathSegment)]
         ]
@@ -324,20 +329,40 @@ mkLetRequest opts request =
     body =
       case request ^. F.reqBody of
         Nothing ->
-          "Http.empty"
+          "Http.emptyBody"
 
         Just elmTypeExpr ->
           let
             encoderName =
               Elm.toElmEncoderRefWith (elmExportOptions opts) elmTypeExpr
           in
-            "Http.string" <+> parens ("Json.Encode.encode 0" <+> parens (stext encoderName <+> "body"))
+            "Http.jsonBody" <+> parens (stext encoderName <+> "body")
+
+    expect =
+      case request ^. F.reqReturnType of
+        Just elmTypeExpr | isEmptyType opts elmTypeExpr ->
+          let elmConstructor =
+                Elm.toElmTypeRefWith (elmExportOptions opts) elmTypeExpr
+          in
+            "Http.expectStringResponse" <$>
+            indent i (parens (backslash <> braces " body " <+> "->" <$>
+                              indent i ("if String.isEmpty body then" <$>
+                                        indent i "Ok" <+> stext elmConstructor <$>
+                                        "else" <$>
+                                        indent i ("Err" <+> dquotes "Expected the response body to be empty")) <> line))
+
+
+        Just elmTypeExpr ->
+          "Http.expectJson" <+> stext (Elm.toElmDecoderRefWith (elmExportOptions opts) elmTypeExpr)
+
+        Nothing ->
+          error "mkHttpRequest: no reqReturnType?"
 
 
 mkUrl :: ElmOptions -> [F.Segment ElmDatatype] -> Doc
 mkUrl opts segments =
   "String.join" <+> dquotes "/" <$>
-  (indent 2 . elmList)
+  (indent i . elmList)
     ( dquotes (stext (urlPrefix opts))
     : map segmentToDoc segments)
   where
@@ -356,7 +381,7 @@ mkUrl opts segments =
               else
                 " |> toString"
           in
-            (arg ^. F.argName . to (stext . F.unPathSegment )) <> toStringSrc <> " |> Http.uriEncode"
+            (arg ^. F.argName . to (stext . F.unPathSegment )) <> toStringSrc <> " |> Http.encodeUri"
 
 
 mkQueryParams
@@ -367,88 +392,9 @@ mkQueryParams request =
     empty
   else
     line <> "++" <+> align ("if List.isEmpty params then" <$>
-                            indent 2 (dquotes empty) <$>
+                            indent i (dquotes empty) <$>
                             "else" <$>
-                            indent 2 (dquotes "?" <+> "++ String.join" <+> dquotes "&" <+> "params"))
-
-
-{-| If the return type has a decoder, construct the request using Http.fromJson.
-Otherwise, construct an HTTP request that expects an empty response.
--}
-mkHttpRequest
-  :: ElmOptions
-  -> F.Req ElmDatatype
-  -> (Doc, [Doc])
-mkHttpRequest opts request =
-  ( elmRequest
-  , supportingFunctions
-  )
-  where
-    (elmRequest, supportingFunctions) =
-      case request ^. F.reqReturnType of
-        Just elmTypeExpr | isEmptyType opts elmTypeExpr ->
-            (emptyResponseRequest (Elm.toElmTypeRefWith (elmExportOptions opts) elmTypeExpr)
-            , [ emptyResponseHandlerSrc
-              , handleResponseSrc
-              , promoteErrorSrc
-              ]
-            )
-
-        Just elmTypeExpr ->
-          ( jsonRequest (Elm.toElmDecoderRefWith (elmExportOptions opts) elmTypeExpr)
-          , []
-          )
-
-        Nothing ->
-          error "mkHttpRequest: no reqReturnType?"
-
-    jsonRequest decoder =
-      vsep
-        [ "Http.fromJson"
-        , "  " <> stext decoder
-        , "  (Http.send Http.defaultSettings request)"
-        ]
-
-    emptyResponseRequest elmType =
-      vsep
-        [ "Task.mapError promoteError"
-        , "  (Http.send Http.defaultSettings request)"
-        , "    `Task.andThen`"
-        , "      handleResponse (emptyResponseHandler " <> stext elmType <> ")"
-        ]
-
-    emptyResponseHandlerSrc =
-      vsep
-        [ "emptyResponseHandler : a -> String -> Task.Task Http.Error a"
-        , "emptyResponseHandler x str ="
-        , "  if String.isEmpty str then"
-        , "    Task.succeed x"
-        , "  else"
-        , "    Task.fail (Http.UnexpectedPayload str)"
-        ]
-
-    handleResponseSrc =
-      vsep
-        [ "handleResponse : (String -> Task.Task Http.Error a) -> Http.Response -> Task.Task Http.Error a"
-        , "handleResponse handle response ="
-        , "  if 200 <= response.status && response.status < 300 then"
-        , "    case response.value of"
-        , "      Http.Text str ->"
-        , "        handle str"
-        , "      _ ->"
-        , "        Task.fail (Http.UnexpectedPayload \"Response body is a blob, expecting a string.\")"
-        , "  else"
-        , "    Task.fail (Http.BadResponse response.status response.statusText)"
-        ]
-
-    promoteErrorSrc =
-      vsep
-        [ "promoteError : Http.RawError -> Http.Error"
-        , "promoteError rawError ="
-        , "  case rawError of"
-        , "    Http.RawTimeout -> Http.Timeout"
-        , "    Http.RawNetworkError -> Http.NetworkError"
-        ]
+                            indent i (dquotes "?" <+> "++ String.join" <+> dquotes "&" <+> "params"))
 
 
 {- | Determines whether we construct an Elm function that expects an empty
