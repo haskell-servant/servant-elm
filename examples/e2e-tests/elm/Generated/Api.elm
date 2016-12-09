@@ -67,8 +67,7 @@ getIp =
         { method =
             "GET"
         , headers =
-            [ Http.header "Content-Type" "application/json"
-            ]
+            []
         , url =
             String.join "/"
                 [ "https://httpbin.org"
@@ -90,8 +89,7 @@ getStatus204 =
         { method =
             "GET"
         , headers =
-            [ Http.header "Content-Type" "application/json"
-            ]
+            []
         , url =
             String.join "/"
                 [ "https://httpbin.org"
@@ -120,8 +118,7 @@ postPost body =
         { method =
             "POST"
         , headers =
-            [ Http.header "Content-Type" "application/json"
-            ]
+            []
         , url =
             String.join "/"
                 [ "https://httpbin.org"
@@ -151,8 +148,7 @@ getGet q =
             { method =
                 "GET"
             , headers =
-                [ Http.header "Content-Type" "application/json"
-                ]
+                []
             , url =
                 String.join "/"
                     [ "https://httpbin.org"
@@ -178,8 +174,7 @@ getByPath path =
         { method =
             "GET"
         , headers =
-            [ Http.header "Content-Type" "application/json"
-            ]
+            []
         , url =
             String.join "/"
                 [ "https://httpbin.org"

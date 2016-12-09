@@ -42,8 +42,7 @@ getRandom api_key tag =
             { method =
                 "GET"
             , headers =
-                [ Http.header "Content-Type" "application/json"
-                ]
+                []
             , url =
                 String.join "/"
                     [ "http://api.giphy.com/v1/gifs"

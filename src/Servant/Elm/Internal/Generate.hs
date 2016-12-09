@@ -290,7 +290,7 @@ mkRequest opts request =
          indent i (dquotes method)
        , "headers =" <$>
          indent i
-           (elmList (contentType : headers))
+           (elmList headers)
        , "url =" <$>
          indent i url
        , "body =" <$>
@@ -305,9 +305,6 @@ mkRequest opts request =
   where
     method =
        request ^. F.reqMethod . to (stext . T.decodeUtf8)
-
-    contentType =
-      "Http.header" <+> dquotes "Content-Type" <+> dquotes "application/json"
 
     headers =
         [("Http.header" <+> dquotes headerName <+>
@@ -425,4 +422,5 @@ elmRecord :: [Doc] -> Doc
 elmRecord = encloseSep (lbrace <> space) (line <> rbrace) (comma <> space)
 
 elmList :: [Doc] -> Doc
+elmList [] = lbracket <> rbracket
 elmList ds = lbracket <+> hsep (punctuate (line <> comma) ds) <$> rbracket

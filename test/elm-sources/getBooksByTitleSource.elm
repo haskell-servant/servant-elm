@@ -9,8 +9,7 @@ getBooksByTitle title =
         { method =
             "GET"
         , headers =
-            [ Http.header "Content-Type" "application/json"
-            ]
+            []
         , url =
             String.join "/"
                 [ ""

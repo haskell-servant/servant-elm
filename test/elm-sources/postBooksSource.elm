@@ -9,8 +9,7 @@ postBooks body =
         { method =
             "POST"
         , headers =
-            [ Http.header "Content-Type" "application/json"
-            ]
+            []
         , url =
             String.join "/"
                 [ ""

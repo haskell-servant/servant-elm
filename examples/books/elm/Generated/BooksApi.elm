@@ -28,8 +28,7 @@ postBooks body =
         { method =
             "POST"
         , headers =
-            [ Http.header "Content-Type" "application/json"
-            ]
+            []
         , url =
             String.join "/"
                 [ "http://localhost:8000"
@@ -51,8 +50,7 @@ getBooks =
         { method =
             "GET"
         , headers =
-            [ Http.header "Content-Type" "application/json"
-            ]
+            []
         , url =
             String.join "/"
                 [ "http://localhost:8000"
@@ -74,8 +72,7 @@ getBooksByBookId bookId =
         { method =
             "GET"
         , headers =
-            [ Http.header "Content-Type" "application/json"
-            ]
+            []
         , url =
             String.join "/"
                 [ "http://localhost:8000"
