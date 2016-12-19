@@ -1,22 +1,29 @@
-getWithaheader : String -> Int -> Task.Task Http.Error (String)
+module GetWithAHeaderSource exposing (..)
+
+import Http
+import Json.Decode exposing (..)
+
+
+getWithaheader : String -> Int -> Http.Request (String)
 getWithaheader myStringHeader myIntHeader =
-  let
-    request =
-      { verb =
-          "GET"
-      , headers =
-          [("Content-Type", "application/json")
-          ,("myStringHeader", myStringHeader)
-          ,("myIntHeader", toString myIntHeader)]
-      , url =
-          String.join "/"
-            [ ""
-            , "with-a-header"
+    Http.request
+        { method =
+            "GET"
+        , headers =
+            [ Http.header "myStringHeader" myStringHeader
+            , Http.header "myIntHeader" (toString myIntHeader)
             ]
-      , body =
-          Http.empty
-      }
-  in
-    Http.fromJson
-      string
-      (Http.send Http.defaultSettings request)
+        , url =
+            String.join "/"
+                [ ""
+                , "with-a-header"
+                ]
+        , body =
+            Http.emptyBody
+        , expect =
+            Http.expectJson string
+        , timeout =
+            Nothing
+        , withCredentials =
+            False
+        }

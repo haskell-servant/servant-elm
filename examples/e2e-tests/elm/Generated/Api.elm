@@ -5,7 +5,6 @@ import Json.Decode.Pipeline exposing (..)
 import Json.Encode
 import Http
 import String
-import Task
 
 
 type alias Response =
@@ -62,143 +61,131 @@ decodeResponseWithArgs =
     decode ResponseWithArgs
         |> required "args" decodeQueryArgs
 
-getIp : Task.Task Http.Error (Response)
+getIp : Http.Request (Response)
 getIp =
-  let
-    request =
-      { verb =
-          "GET"
-      , headers =
-          [("Content-Type", "application/json")]
-      , url =
-          String.join "/"
-            [ "https://httpbin.org"
-            , "ip"
-            ]
-      , body =
-          Http.empty
-      }
-  in
-    Http.fromJson
-      decodeResponse
-      (Http.send Http.defaultSettings request)
+    Http.request
+        { method =
+            "GET"
+        , headers =
+            []
+        , url =
+            String.join "/"
+                [ "https://httpbin.org"
+                , "ip"
+                ]
+        , body =
+            Http.emptyBody
+        , expect =
+            Http.expectJson decodeResponse
+        , timeout =
+            Nothing
+        , withCredentials =
+            False
+        }
 
-emptyResponseHandler : a -> String -> Task.Task Http.Error a
-emptyResponseHandler x str =
-  if String.isEmpty str then
-    Task.succeed x
-  else
-    Task.fail (Http.UnexpectedPayload str)
-
-handleResponse : (String -> Task.Task Http.Error a) -> Http.Response -> Task.Task Http.Error a
-handleResponse handle response =
-  if 200 <= response.status && response.status < 300 then
-    case response.value of
-      Http.Text str ->
-        handle str
-      _ ->
-        Task.fail (Http.UnexpectedPayload "Response body is a blob, expecting a string.")
-  else
-    Task.fail (Http.BadResponse response.status response.statusText)
-
-promoteError : Http.RawError -> Http.Error
-promoteError rawError =
-  case rawError of
-    Http.RawTimeout -> Http.Timeout
-    Http.RawNetworkError -> Http.NetworkError
-
-getStatus204 : Task.Task Http.Error (NoContent)
+getStatus204 : Http.Request (NoContent)
 getStatus204 =
-  let
-    request =
-      { verb =
-          "GET"
-      , headers =
-          [("Content-Type", "application/json")]
-      , url =
-          String.join "/"
-            [ "https://httpbin.org"
-            , "status"
-            , "204"
-            ]
-      , body =
-          Http.empty
-      }
-  in
-    Task.mapError promoteError
-      (Http.send Http.defaultSettings request)
-        `Task.andThen`
-          handleResponse (emptyResponseHandler NoContent)
+    Http.request
+        { method =
+            "GET"
+        , headers =
+            []
+        , url =
+            String.join "/"
+                [ "https://httpbin.org"
+                , "status"
+                , "204"
+                ]
+        , body =
+            Http.emptyBody
+        , expect =
+            Http.expectStringResponse
+                (\{ body } ->
+                    if String.isEmpty body then
+                        Ok NoContent
+                    else
+                        Err "Expected the response body to be empty"
+                )
+        , timeout =
+            Nothing
+        , withCredentials =
+            False
+        }
 
-postPost : MessageBody -> Task.Task Http.Error (ResponseWithJson)
+postPost : MessageBody -> Http.Request (ResponseWithJson)
 postPost body =
-  let
-    request =
-      { verb =
-          "POST"
-      , headers =
-          [("Content-Type", "application/json")]
-      , url =
-          String.join "/"
-            [ "https://httpbin.org"
-            , "post"
-            ]
-      , body =
-          Http.string (Json.Encode.encode 0 (encodeMessageBody body))
-      }
-  in
-    Http.fromJson
-      decodeResponseWithJson
-      (Http.send Http.defaultSettings request)
+    Http.request
+        { method =
+            "POST"
+        , headers =
+            []
+        , url =
+            String.join "/"
+                [ "https://httpbin.org"
+                , "post"
+                ]
+        , body =
+            Http.jsonBody (encodeMessageBody body)
+        , expect =
+            Http.expectJson decodeResponseWithJson
+        , timeout =
+            Nothing
+        , withCredentials =
+            False
+        }
 
-getGet : Maybe (String) -> Task.Task Http.Error (ResponseWithArgs)
+getGet : Maybe (String) -> Http.Request (ResponseWithArgs)
 getGet q =
-  let
-    params =
-      List.filter (not << String.isEmpty)
-        [ q
-            |> Maybe.map (Http.uriEncode >> (++) "q=")
-            |> Maybe.withDefault ""
-        ]
-    request =
-      { verb =
-          "GET"
-      , headers =
-          [("Content-Type", "application/json")]
-      , url =
-          String.join "/"
-            [ "https://httpbin.org"
-            , "get"
-            ]
-          ++ if List.isEmpty params then
-               ""
-             else
-               "?" ++ String.join "&" params
-      , body =
-          Http.empty
-      }
-  in
-    Http.fromJson
-      decodeResponseWithArgs
-      (Http.send Http.defaultSettings request)
+    let
+        params =
+            List.filter (not << String.isEmpty)
+                [ q
+                    |> Maybe.map (Http.encodeUri >> (++) "q=")
+                    |> Maybe.withDefault ""
+                ]
+    in
+        Http.request
+            { method =
+                "GET"
+            , headers =
+                []
+            , url =
+                String.join "/"
+                    [ "https://httpbin.org"
+                    , "get"
+                    ]
+                ++ if List.isEmpty params then
+                       ""
+                   else
+                       "?" ++ String.join "&" params
+            , body =
+                Http.emptyBody
+            , expect =
+                Http.expectJson decodeResponseWithArgs
+            , timeout =
+                Nothing
+            , withCredentials =
+                False
+            }
 
-getByPath : String -> Task.Task Http.Error (Response)
+getByPath : String -> Http.Request (Response)
 getByPath path =
-  let
-    request =
-      { verb =
-          "GET"
-      , headers =
-          [("Content-Type", "application/json")]
-      , url =
-          String.join "/"
-            [ "https://httpbin.org"
-            , path |> Http.uriEncode
-            ]
-      , body =
-          Http.empty
-      }
-  in
-    Http.fromJson
-      decodeResponse
-      (Http.send Http.defaultSettings request)
+    Http.request
+        { method =
+            "GET"
+        , headers =
+            []
+        , url =
+            String.join "/"
+                [ "https://httpbin.org"
+                , path |> Http.encodeUri
+                ]
+        , body =
+            Http.emptyBody
+        , expect =
+            Http.expectJson decodeResponse
+        , timeout =
+            Nothing
+        , withCredentials =
+            False
+        }

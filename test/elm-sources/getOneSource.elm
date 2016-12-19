@@ -1,20 +1,27 @@
-getOne : Task.Task Http.Error (Int)
+module GetOneSource exposing (..)
+
+import Http
+import Json.Decode exposing (..)
+
+
+getOne : Http.Request (Int)
 getOne =
-  let
-    request =
-      { verb =
-          "GET"
-      , headers =
-          [("Content-Type", "application/json")]
-      , url =
-          String.join "/"
-            [ ""
-            , "one"
-            ]
-      , body =
-          Http.empty
-      }
-  in
-    Http.fromJson
-      int
-      (Http.send Http.defaultSettings request)
+    Http.request
+        { method =
+            "GET"
+        , headers =
+            []
+        , url =
+            String.join "/"
+                [ ""
+                , "one"
+                ]
+        , body =
+            Http.emptyBody
+        , expect =
+            Http.expectJson int
+        , timeout =
+            Nothing
+        , withCredentials =
+            False
+        }

@@ -67,12 +67,12 @@ createCache = do
           ],
           "exposed-modules": [],
           "dependencies": {
-              "elm-lang/core": "4.0.1 <= v < 5.0.0",
-              "elm-community/json-extra": "1.0.0 <= v < 2.0.0",
-              "evancz/elm-http": "3.0.1 <= v < 4.0.0",
-              "NoRedInk/elm-decode-pipeline": "2.0.0 <= v < 3.0.0"
+              "elm-lang/core": "5.0.0 <= v < 6.0.0",
+              "elm-community/json-extra": "2.0.0 <= v < 3.0.0",
+              "elm-lang/http": "1.0.0 <= v < 2.0.0",
+              "NoRedInk/elm-decode-pipeline": "3.0.0 <= v < 4.0.0"
           },
-          "elm-version": "0.17.0 <= v < 0.18.0"
+          "elm-version": "0.18.0 <= v < 0.19.0"
       }
     |]
     callCommand "elm-package install --yes"

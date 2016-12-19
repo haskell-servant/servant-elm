@@ -41,7 +41,9 @@ test-suite servant-elm-test
   main-is:             Spec.hs
   other-modules:       CompileSpec
                      , GenerateSpec
-  build-depends:       aeson >= 0.9
+  build-depends:       Diff
+                     , HUnit
+                     , aeson >= 0.9
                      , base
                      , data-default
                      , directory

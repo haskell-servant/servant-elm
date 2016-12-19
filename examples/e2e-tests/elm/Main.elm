@@ -2,12 +2,10 @@ module Main exposing (..)
 
 import Generated.Api as Api
 import Html exposing (div, img, input, button, text, li, ul, h1, dl, dd, dt)
-import Html.App as Html
 import Http
-import Task
 
 
-main : Program Never
+main : Program Never Model Msg
 main =
     Html.program
         { init = init
@@ -60,31 +58,31 @@ type Msg
 fetchStatus204 : Cmd Msg
 fetchStatus204 =
     Api.getStatus204
-        |> Task.perform (SetSuccessStatus204 << Err) (SetSuccessStatus204 << Ok)
+        |> Http.send SetSuccessStatus204
 
 
 fetchIp : Cmd Msg
 fetchIp =
     Api.getIp
-        |> Task.perform (SetSuccessIp << Err) (SetSuccessIp << Ok)
+        |> Http.send SetSuccessIp
 
 
 postPost : Cmd Msg
 postPost =
     Api.postPost { message = "Hello World" }
-        |> Task.perform (SetSuccessPost << Err) (SetSuccessPost << Ok)
+        |> Http.send SetSuccessPost
 
 
 getGet : Cmd Msg
 getGet =
     Api.getGet (Just "Hello World")
-        |> Task.perform (CheckSuccessGet << Err) (CheckSuccessGet << Ok)
+        |> Http.send CheckSuccessGet
 
 
 getByPath : Cmd Msg
 getByPath =
     Api.getByPath "get"
-        |> Task.perform (SetSuccessGetByPath << Err) (SetSuccessGetByPath << Ok)
+        |> Http.send SetSuccessGetByPath
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )

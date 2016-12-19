@@ -5,7 +5,6 @@ import Json.Decode.Pipeline exposing (..)
 import Json.Encode
 import Http
 import String
-import Task
 
 
 type alias Book =
@@ -17,24 +16,25 @@ decodeBook =
     decode Book
         |> required "name" string
 
-getBooksByBookId : Int -> Task.Task Http.Error (Book)
+getBooksByBookId : Int -> Http.Request (Book)
 getBooksByBookId bookId =
-  let
-    request =
-      { verb =
-          "GET"
-      , headers =
-          [("Content-Type", "application/json")]
-      , url =
-          String.join "/"
-            [ ""
-            , "books"
-            , bookId |> toString |> Http.uriEncode
-            ]
-      , body =
-          Http.empty
-      }
-  in
-    Http.fromJson
-      decodeBook
-      (Http.send Http.defaultSettings request)
+    Http.request
+        { method =
+            "GET"
+        , headers =
+            []
+        , url =
+            String.join "/"
+                [ ""
+                , "books"
+                , bookId |> toString |> Http.encodeUri
+                ]
+        , body =
+            Http.emptyBody
+        , expect =
+            Http.expectJson decodeBook
+        , timeout =
+            Nothing
+        , withCredentials =
+            False
+        }

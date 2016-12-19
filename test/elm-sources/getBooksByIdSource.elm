@@ -1,21 +1,27 @@
-getBooksById : Int -> Task.Task Http.Error (Book)
+module GetBooksByIdSource exposing (..)
+
+import Http
+
+
+getBooksById : Int -> Http.Request (Book)
 getBooksById id =
-  let
-    request =
-      { verb =
-          "GET"
-      , headers =
-          [("Content-Type", "application/json")]
-      , url =
-          String.join "/"
-            [ ""
-            , "books"
-            , id |> toString |> Http.uriEncode
-            ]
-      , body =
-          Http.empty
-      }
-  in
-    Http.fromJson
-      decodeBook
-      (Http.send Http.defaultSettings request)
+    Http.request
+        { method =
+            "GET"
+        , headers =
+            []
+        , url =
+            String.join "/"
+                [ ""
+                , "books"
+                , id |> toString |> Http.encodeUri
+                ]
+        , body =
+            Http.emptyBody
+        , expect =
+            Http.expectJson decodeBook
+        , timeout =
+            Nothing
+        , withCredentials =
+            False
+        }

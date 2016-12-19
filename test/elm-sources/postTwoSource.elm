@@ -1,20 +1,28 @@
-postTwo : String -> Task.Task Http.Error (Maybe (Int))
+module PostTwoSource exposing (..)
+
+import Http
+import Json.Decode exposing (..)
+import Json.Encode
+
+
+postTwo : String -> Http.Request (Maybe (Int))
 postTwo body =
-  let
-    request =
-      { verb =
-          "POST"
-      , headers =
-          [("Content-Type", "application/json")]
-      , url =
-          String.join "/"
-            [ ""
-            , "two"
-            ]
-      , body =
-          Http.string (Json.Encode.encode 0 (Json.Encode.string body))
-      }
-  in
-    Http.fromJson
-      (maybe int)
-      (Http.send Http.defaultSettings request)
+    Http.request
+        { method =
+            "POST"
+        , headers =
+            []
+        , url =
+            String.join "/"
+                [ ""
+                , "two"
+                ]
+        , body =
+            Http.jsonBody (Json.Encode.string body)
+        , expect =
+            Http.expectJson (maybe int)
+        , timeout =
+            Nothing
+        , withCredentials =
+            False
+        }
