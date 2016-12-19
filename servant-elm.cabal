@@ -1,5 +1,5 @@
 name:                servant-elm
-version:             0.2.0.0
+version:             0.3.0.0
 synopsis:            Automatically derive Elm functions to query servant webservices.
 description:         Please see README.md
 homepage:            http://github.com/mattjbray/servant-elm#readme
@@ -13,6 +13,8 @@ build-type:          Simple
 extra-source-files:
   CHANGELOG.md
   README.md
+  test/elm-sources/elm-package.json
+  test/elm-sources/*.elm
 cabal-version:       >=1.10
 
 flag examples

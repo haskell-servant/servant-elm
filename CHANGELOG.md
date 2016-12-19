@@ -1,3 +1,8 @@
+0.3.0.0
+-------
+* Update for Elm 0.18 and the new elm-lang/http library.
+* Generated Elm functions now return an `Http.Request` value.
+
 0.2.0.0
 -------
 * Use Text throughout the API.
