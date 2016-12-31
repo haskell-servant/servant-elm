@@ -1,3 +1,8 @@
+0.4.0.0
+-------
+(Not yet released.)
+* Allow passing the base URL dynamically in Elm.
+
 0.3.0.1
 -------
 * Prefix generated function arguments to ensure valid Elm identifiers (#21)
