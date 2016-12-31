@@ -29,25 +29,34 @@ instance ElmType Book
 
 
 type TestApi =
-        "one"           :> Get '[JSON] Int
-    :<|> "two"           :> ReqBody '[JSON] String
-                        :> Post '[JSON] (Maybe Int)
-    :<|> "books"         :> Capture "id" Int
-                        :> Get '[JSON] Book
-    :<|> "books"         :> Capture "title" String
-                        :> Get '[JSON] Book
-    :<|> "books"         :> QueryFlag "published"
-                        :> QueryParam "sort" String
-                        :> QueryParam "year" Int
-                        :> QueryParams "filters" (Maybe Bool)
-                        :> Get '[JSON] [Book]
-    :<|> "books"         :> ReqBody '[JSON] Book
-                        :> PostNoContent '[JSON] NoContent
-    :<|> "nothing"       :> GetNoContent '[JSON] NoContent
-    :<|> "nothing"       :> Put '[JSON] () -- old way to specify no content
-    :<|> "with-a-header" :> Header "myStringHeader" String
-                        :> Header "myIntHeader" Int
-                        :> Get '[JSON] String
+       "one"
+         :> Get '[JSON] Int
+  :<|> "two"
+         :> ReqBody '[JSON] String
+         :> Post '[JSON] (Maybe Int)
+  :<|> "books"
+         :> Capture "id" Int
+         :> Get '[JSON] Book
+  :<|> "books"
+         :> Capture "title" String
+         :> Get '[JSON] Book
+  :<|> "books"
+         :> QueryFlag "published"
+         :> QueryParam "sort" String
+         :> QueryParam "year" Int
+         :> QueryParams "filters" (Maybe Bool)
+         :> Get '[JSON] [Book]
+  :<|> "books"
+         :> ReqBody '[JSON] Book
+         :> PostNoContent '[JSON] NoContent
+  :<|> "nothing"
+         :> GetNoContent '[JSON] NoContent
+  :<|> "nothing"
+         :> Put '[JSON] () -- old way to specify no content
+  :<|> "with-a-header"
+         :> Header "myStringHeader" String
+         :> Header "myIntHeader" Int
+         :> Get '[JSON] String
 
 testApi :: Proxy TestApi
 testApi = Proxy
