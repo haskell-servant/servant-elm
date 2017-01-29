@@ -4,7 +4,7 @@ import Http
 
 
 getBooksById : Int -> Http.Request (Book)
-getBooksById id =
+getBooksById capture_id =
     Http.request
         { method =
             "GET"
@@ -14,7 +14,7 @@ getBooksById id =
             String.join "/"
                 [ ""
                 , "books"
-                , id |> toString |> Http.encodeUri
+                , capture_id |> toString |> Http.encodeUri
                 ]
         , body =
             Http.emptyBody

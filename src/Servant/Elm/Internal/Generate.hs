@@ -214,26 +214,49 @@ mkTypeSignature opts request =
       pure ("Http.Request" <+> parens result)
 
 
+elmHeaderArg :: F.HeaderArg ElmDatatype -> Doc
+elmHeaderArg header =
+  "header_" <>
+  header ^. F.headerArg . F.argName . to (stext . F.unPathSegment)
+
+
+elmCaptureArg :: F.Segment ElmDatatype -> Doc
+elmCaptureArg segment =
+  "capture_" <>
+  F.captureArg segment ^. F.argName . to (stext . F.unPathSegment)
+
+
+elmQueryArg :: F.QueryArg ElmDatatype -> Doc
+elmQueryArg arg =
+  "query_" <>
+  arg ^. F.queryArgName . F.argName . to (stext . F.unPathSegment)
+
+
+elmBodyArg :: Doc
+elmBodyArg =
+  "body"
+
+
 mkArgs
   :: F.Req ElmDatatype
   -> Doc
 mkArgs request =
   (hsep . concat) $
     [ -- Headers
-      [ header ^. F.headerArg . F.argName . to (stext . F.unPathSegment)
+      [ elmHeaderArg header
       | header <- request ^. F.reqHeaders
       ]
     , -- URL Captures
-      [ F.captureArg segment ^. F.argName . to (stext . F.unPathSegment)
+      [ elmCaptureArg segment
       | segment <- request ^. F.reqUrl . F.path
       , F.isCapture segment
       ]
     , -- Query params
-      [ arg ^. F.queryArgName . F.argName . to (stext . F.unPathSegment)
+      [ elmQueryArg arg
       | arg <- request ^. F.reqUrl . F.queryStr
       ]
     , -- Request body
-      maybe [] (const ["body"]) (request ^. F.reqBody)
+      maybe [] (const [elmBodyArg]) (request ^. F.reqBody)
     ]
 
 
@@ -278,7 +301,7 @@ mkLetParams opts request =
                       "|> String.join" <+> dquotes "&")
       where
         name =
-          qarg ^. F.queryArgName . F.argName . to (stext . F.unPathSegment)
+          elmQueryArg qarg
 
 
 mkRequest :: ElmOptions -> F.Req ElmDatatype -> Doc
@@ -309,12 +332,13 @@ mkRequest opts request =
     headers =
         [("Http.header" <+> dquotes headerName <+>
                  (if isElmStringType opts (header ^. F.headerArg . F.argType) then
-                     headerName
+                     headerArgName
                    else
-                     parens ("toString " <> headerName)
+                     parens ("toString " <> headerArgName)
                   ))
         | header <- request ^. F.reqHeaders
         , headerName <- [header ^. F.headerArg . F.argName . to (stext . F.unPathSegment)]
+        , headerArgName <- [elmHeaderArg header]
         ]
 
     url =
@@ -331,7 +355,7 @@ mkRequest opts request =
             encoderName =
               Elm.toElmEncoderRefWith (elmExportOptions opts) elmTypeExpr
           in
-            "Http.jsonBody" <+> parens (stext encoderName <+> "body")
+            "Http.jsonBody" <+> parens (stext encoderName <+> elmBodyArg)
 
     expect =
       case request ^. F.reqReturnType of
@@ -376,7 +400,7 @@ mkUrl opts segments =
               else
                 " |> toString"
           in
-            (arg ^. F.argName . to (stext . F.unPathSegment )) <> toStringSrc <> " |> Http.encodeUri"
+            (elmCaptureArg s) <> toStringSrc <> " |> Http.encodeUri"
 
 
 mkQueryParams

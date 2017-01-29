@@ -4,7 +4,7 @@ import Http
 
 
 getBooksByTitle : String -> Http.Request (Book)
-getBooksByTitle title =
+getBooksByTitle capture_title =
     Http.request
         { method =
             "GET"
@@ -14,7 +14,7 @@ getBooksByTitle title =
             String.join "/"
                 [ ""
                 , "books"
-                , title |> Http.encodeUri
+                , capture_title |> Http.encodeUri
                 ]
         , body =
             Http.emptyBody

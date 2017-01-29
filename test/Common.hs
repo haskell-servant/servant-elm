@@ -45,7 +45,7 @@ type TestApi =
          :> Put '[JSON] () -- old way to specify no content
   :<|> "with-a-header"
          :> Header "myStringHeader" String
-         :> Header "myIntHeader" Int
+         :> Header "MyIntHeader" Int
          :> Get '[JSON] String
 
 testApi :: Proxy TestApi
