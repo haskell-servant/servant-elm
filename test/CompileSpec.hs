@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes       #-}
 
-module CompileSpec where
+module Main where
 
 import           Test.Hspec
 import           Test.Mockery.Directory
@@ -15,7 +15,6 @@ import qualified Data.Text.IO                 as T
 import           Elm                          (toElmDecoderSource,
                                                toElmEncoderSource,
                                                toElmTypeSource)
-import           GenerateSpec
 import           Servant.API                  (NoContent)
 import           Servant.Elm
 import           System.Directory             (canonicalizePath,
@@ -24,6 +23,12 @@ import           System.Directory             (canonicalizePath,
                                                getCurrentDirectory, removeFile,
                                                setCurrentDirectory)
 import           System.Process
+
+import Common (Book, testApi)
+
+main :: IO ()
+main =
+  hspec spec
 
 spec :: Test.Hspec.Spec
 spec = do

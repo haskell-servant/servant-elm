@@ -3,7 +3,7 @@ all: test examples
 
 .PHONY: test
 test:
-	stack test
+	stack test --flag servant-elm:integration
 
 .PHONY: examples
 examples: build-with-examples-flag books-example e2e-tests-example giphy-example readme-example
