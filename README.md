@@ -118,6 +118,7 @@ for an example project using this library.
 $ git clone https://github.com/mattjbray/servant-elm.git
 $ cd servant-elm
 $ stack test
+$ stack test --flag servant-elm:integration
 ```
 
 To build all examples:

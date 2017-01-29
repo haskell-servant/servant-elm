@@ -1,3 +1,8 @@
+0.3.0.1
+-------
+* Prefix generated function arguments to ensure valid Elm identifiers (#21)
+* Put integration tests behind a Cabal flag. (#22)
+
 0.3.0.0
 -------
 * Update for Elm 0.18 and the new elm-lang/http library.
