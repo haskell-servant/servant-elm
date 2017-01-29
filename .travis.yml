@@ -13,7 +13,7 @@ addons:
 # The different configurations we want to test. You could also do things like
 # change flags or use --stack-yaml to point to a different file.
 env:
-- ARGS="--resolver lts --flag servant-elm:integration"
+- ARGS="--resolver lts"
 
 before_install:
 # Download and unpack the stack executable
@@ -26,7 +26,7 @@ before_install:
 # This line does all of the work: installs GHC if necessary, build the library,
 # executables, and test suites, and runs the test suites. --no-terminal works
 # around some quirks in Travis's terminal implementation.
-script: stack $ARGS --no-terminal --install-ghc test --haddock
+script: stack $ARGS --no-terminal --install-ghc test --haddock --flag servant-elm:integration
 
 # Caching so the next build will be fast too.
 cache:
