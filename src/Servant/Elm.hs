@@ -15,6 +15,7 @@ module Servant.Elm
        ( generateElmForAPI
        , generateElmForAPIWith
        , ElmOptions(..)
+       , UrlPrefix(..)
        , defElmOptions
        , defElmImports
        -- * Convenience re-exports from the "Elm" module
@@ -25,8 +26,8 @@ module Servant.Elm
        , Proxy(Proxy)
        ) where
 
-import           Servant.Elm.Internal.Generate (ElmOptions (..), defElmImports,
-                                                defElmOptions,
+import           Servant.Elm.Internal.Generate (ElmOptions (..), UrlPrefix (..),
+                                                defElmImports, defElmOptions,
                                                 generateElmForAPI,
                                                 generateElmForAPIWith)
 
