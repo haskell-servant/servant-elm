@@ -3,6 +3,7 @@
 {-# LANGUAGE TypeOperators #-}
 module Common where
 
+import           Data.Text    (Text)
 import           Data.Aeson   (ToJSON)
 import           Data.Proxy   (Proxy(Proxy))
 import           Elm          (ElmType)
@@ -28,7 +29,7 @@ type TestApi =
          :> Capture "id" Int
          :> Get '[JSON] Book
   :<|> "books"
-         :> Capture "title" String
+         :> Capture "title" Text
          :> Get '[JSON] Book
   :<|> "books"
          :> QueryFlag "published"
