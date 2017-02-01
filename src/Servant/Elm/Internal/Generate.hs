@@ -73,6 +73,7 @@ defElmOptions = ElmOptions
       ]
   , stringElmTypes =
       [ Elm.toElmType ("" :: String)
+      , Elm.toElmType ("" :: T.Text)
       ]
   }
 
