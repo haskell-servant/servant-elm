@@ -307,7 +307,7 @@ mkLetParams opts request =
                 "toString >> "
           in
               name <$>
-              indent 4 ("|> Maybe.map" <+> parens (toStringSrc <> "Http.encodeUri >> (++)" <+> dquotes (name <> equals)) <$>
+              indent 4 ("|> Maybe.map" <+> parens (toStringSrc <> "Http.encodeUri >> (++)" <+> dquotes (elmName <> equals)) <$>
                         "|> Maybe.withDefault" <+> dquotes empty)
 
         F.Flag ->
@@ -321,8 +321,8 @@ mkLetParams opts request =
             indent 4 ("|> List.map" <+> parens (backslash <> "val ->" <+> dquotes (name <> "[]=") <+> "++ (val |> toString |> Http.encodeUri)") <$>
                       "|> String.join" <+> dquotes "&")
       where
-        name =
-          elmQueryArg qarg
+        name = elmQueryArg qarg
+        elmName= qarg ^. F.queryArgName . F.argName . to (stext . F.unPathSegment)
 
 
 mkRequest :: ElmOptions -> F.Req ElmDatatype -> Doc
