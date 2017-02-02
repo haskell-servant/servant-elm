@@ -14,10 +14,10 @@ getBooks query_published query_sort query_year query_filters =
                   else
                     ""
                 , query_sort
-                    |> Maybe.map (Http.encodeUri >> (++) "query_sort=")
+                    |> Maybe.map (Http.encodeUri >> (++) "sort=")
                     |> Maybe.withDefault ""
                 , query_year
-                    |> Maybe.map (toString >> Http.encodeUri >> (++) "query_year=")
+                    |> Maybe.map (toString >> Http.encodeUri >> (++) "year=")
                     |> Maybe.withDefault ""
                 , query_filters
                     |> List.map (\val -> "query_filters[]=" ++ (val |> toString |> Http.encodeUri))
