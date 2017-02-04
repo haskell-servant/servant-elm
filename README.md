@@ -84,18 +84,17 @@ decodeBook =
         |> required "name" string
 
 getBooksByBookId : Int -> Http.Request (Book)
-getBooksByBookId bookId =
+getBooksByBookId capture_bookId =
     Http.request
         { method =
             "GET"
         , headers =
-            [ Http.header "Content-Type" "application/json"
-            ]
+            []
         , url =
             String.join "/"
                 [ ""
                 , "books"
-                , bookId |> toString |> Http.encodeUri
+                , capture_bookId |> toString |> Http.encodeUri
                 ]
         , body =
             Http.emptyBody

@@ -9,7 +9,7 @@ import           Elm          (Options, Spec (Spec), defaultOptions,
                                toElmDecoderSourceWith, toElmTypeSourceWith)
 import           GHC.Generics (Generic)
 import           Servant.API  ((:>), Get, JSON, QueryParam)
-import           Servant.Elm  (ElmOptions (..), ElmType, Proxy (Proxy),
+import           Servant.Elm  (ElmOptions (..), ElmType, Proxy (Proxy), UrlPrefix(Static),
                                defElmImports, defElmOptions,
                                generateElmForAPIWith)
 
@@ -40,7 +40,7 @@ myElmOpts :: ElmOptions
 myElmOpts =
   defElmOptions
     { urlPrefix =
-        "http://api.giphy.com/v1/gifs"
+        Static "http://api.giphy.com/v1/gifs"
     , elmExportOptions =
         options
     }

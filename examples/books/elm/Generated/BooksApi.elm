@@ -67,7 +67,7 @@ getBooks =
         }
 
 getBooksByBookId : Int -> Http.Request (Book)
-getBooksByBookId bookId =
+getBooksByBookId capture_bookId =
     Http.request
         { method =
             "GET"
@@ -77,7 +77,7 @@ getBooksByBookId bookId =
             String.join "/"
                 [ "http://localhost:8000"
                 , "books"
-                , bookId |> toString |> Http.encodeUri
+                , capture_bookId |> toString |> Http.encodeUri
                 ]
         , body =
             Http.emptyBody

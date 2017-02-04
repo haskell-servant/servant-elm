@@ -8,7 +8,7 @@ import String
 
 
 type alias Gif =
-    { data :GifData
+    { data : GifData
     }
 
 type alias GifData =
@@ -26,14 +26,14 @@ decodeGifData =
         |> required "image_url" string
 
 getRandom : Maybe (String) -> Maybe (String) -> Http.Request (Gif)
-getRandom api_key tag =
+getRandom query_api_key query_tag =
     let
         params =
             List.filter (not << String.isEmpty)
-                [ api_key
+                [ query_api_key
                     |> Maybe.map (Http.encodeUri >> (++) "api_key=")
                     |> Maybe.withDefault ""
-                , tag
+                , query_tag
                     |> Maybe.map (Http.encodeUri >> (++) "tag=")
                     |> Maybe.withDefault ""
                 ]

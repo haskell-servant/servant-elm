@@ -35,7 +35,7 @@ decodeMessageBody =
         |> required "message" string
 
 type alias ResponseWithJson =
-    { json :MessageBody
+    { json : MessageBody
     }
 
 decodeResponseWithJson : Decoder ResponseWithJson
@@ -53,7 +53,7 @@ decodeQueryArgs =
         |> required "q" string
 
 type alias ResponseWithArgs =
-    { args :QueryArgs
+    { args : QueryArgs
     }
 
 decodeResponseWithArgs : Decoder ResponseWithArgs
@@ -135,11 +135,11 @@ postPost body =
         }
 
 getGet : Maybe (String) -> Http.Request (ResponseWithArgs)
-getGet q =
+getGet query_q =
     let
         params =
             List.filter (not << String.isEmpty)
-                [ q
+                [ query_q
                     |> Maybe.map (Http.encodeUri >> (++) "q=")
                     |> Maybe.withDefault ""
                 ]
@@ -169,7 +169,7 @@ getGet q =
             }
 
 getByPath : String -> Http.Request (Response)
-getByPath path =
+getByPath capture_path =
     Http.request
         { method =
             "GET"
@@ -178,7 +178,7 @@ getByPath path =
         , url =
             String.join "/"
                 [ "https://httpbin.org"
-                , path |> Http.encodeUri
+                , capture_path |> Http.encodeUri
                 ]
         , body =
             Http.emptyBody

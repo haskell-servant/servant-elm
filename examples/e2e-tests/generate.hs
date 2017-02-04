@@ -10,12 +10,12 @@ import           GHC.Generics (Generic)
 import           Servant.API  ((:<|>), (:>), Capture, Get, GetNoContent, JSON,
                                NoContent, Post, QueryParam, ReqBody)
 import           Servant.Elm  (ElmOptions (..), ElmType, Proxy (Proxy),
-                               defElmImports, defElmOptions,
+                               UrlPrefix (Static), defElmImports, defElmOptions,
                                generateElmForAPIWith)
 
 
 myElmOpts :: ElmOptions
-myElmOpts = defElmOptions { urlPrefix =  "https://httpbin.org" }
+myElmOpts = defElmOptions { urlPrefix = Static "https://httpbin.org" }
 
 
 data MessageBody = MessageBody

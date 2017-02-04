@@ -1,7 +1,8 @@
 0.4.0.0
 -------
-(Not yet released.)
-* Allow passing the base URL dynamically in Elm.
+* Allow passing the base URL dynamically in Elm. (#20)
+* Don't use `toString` on `Text` parameters. (domenkozar) (#23, #24)
+* Fix query parameter generation. (domenkozar) (#25)
 
 0.3.0.1
 -------
