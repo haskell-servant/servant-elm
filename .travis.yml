@@ -23,10 +23,14 @@ before_install:
 # install elm
 - npm install -g elm@0.18.0
 
+install:
+# Build dependencies
+- stack $ARGS --no-terminal --install-ghc test --only-dependencies --flag servant-elm:integration
+
 # This line does all of the work: installs GHC if necessary, build the library,
 # executables, and test suites, and runs the test suites. --no-terminal works
 # around some quirks in Travis's terminal implementation.
-script: stack $ARGS --no-terminal --install-ghc test --haddock --flag servant-elm:integration
+script: stack $ARGS --no-terminal --install-ghc test --haddock --no-haddock-deps --flag servant-elm:integration
 
 # Caching so the next build will be fast too.
 cache:
