@@ -159,7 +159,7 @@ generateElmForRequest opts request =
         ]
 
     fnName =
-      request ^. F.reqFuncName . to F.camelCase . to stext
+      request ^. F.reqFuncName . to (T.replace "-" "" . F.camelCase) . to stext
 
     typeSignature =
       mkTypeSignature opts request
