@@ -1,3 +1,8 @@
+0.4.0.1
+-------
+* Remove hyphens from generated function names. (servant-foreign-0.10 no longer
+  does this for us.)
+
 0.4.0.0
 -------
 * Allow passing the base URL dynamically in Elm. (#20)
