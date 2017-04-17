@@ -233,7 +233,7 @@ mkTypeSignature opts request =
 elmHeaderArg :: F.HeaderArg ElmDatatype -> Doc
 elmHeaderArg header =
   "header_" <>
-  header ^. F.headerArg . F.argName . to (stext . F.unPathSegment)
+  header ^. F.headerArg . F.argName . to (stext . T.replace "-" "_" . F.unPathSegment)
 
 
 elmCaptureArg :: F.Segment ElmDatatype -> Doc
