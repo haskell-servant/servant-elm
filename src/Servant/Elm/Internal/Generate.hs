@@ -334,7 +334,7 @@ mkRequest opts request =
          indent i (dquotes method)
        , "headers =" <$>
          indent i
-           (elmList headers)
+           (elmListOfMaybes headers)
        , "url =" <$>
          indent i url
        , "body =" <$>
@@ -351,12 +351,12 @@ mkRequest opts request =
        request ^. F.reqMethod . to (stext . T.decodeUtf8)
 
     headers =
-        [("Http.header" <+> dquotes headerName <+>
+        [("Maybe.map (Http.header" <+> dquotes headerName <+> "<<" <+>
                  (if isElmStringType opts (header ^. F.headerArg . F.argType) then
-                     headerArgName
+                     "identity)"
                    else
-                     parens ("toString " <> headerArgName)
-                  ))
+                     "toString)"
+                  )) <+> headerArgName
         | header <- request ^. F.reqHeaders
         , headerName <- [header ^. F.headerArg . F.argName . to (stext . F.unPathSegment)]
         , headerArgName <- [elmHeaderArg header]
@@ -471,3 +471,7 @@ elmRecord = encloseSep (lbrace <> space) (line <> rbrace) (comma <> space)
 elmList :: [Doc] -> Doc
 elmList [] = lbracket <> rbracket
 elmList ds = lbracket <+> hsep (punctuate (line <> comma) ds) <$> rbracket
+
+elmListOfMaybes :: [Doc] -> Doc
+elmListOfMaybes [] = lbracket <> rbracket
+elmListOfMaybes ds = "List.filterMap identity" <+> elmList ds
