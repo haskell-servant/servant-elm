@@ -47,6 +47,7 @@ type TestApi =
   :<|> "nothing"
          :> Put '[JSON] () -- old way to specify no content
   :<|> "with-a-header"
+         :> Header "Cookie" String
          :> Header "myStringHeader" String
          :> Header "MyIntHeader" Int
          :> Header' '[Required] "MyRequiredStringHeader" String
