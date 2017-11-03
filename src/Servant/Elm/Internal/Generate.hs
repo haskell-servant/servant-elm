@@ -198,6 +198,7 @@ mkTypeSignature opts request =
     headerTypes =
       [ header ^. F.headerArg . F.argType . to elmTypeRef
       | header <- request ^. F.reqHeaders
+      , isNotCookie header
       ]
 
     urlCaptureTypes :: [Doc]
@@ -253,6 +254,14 @@ elmBodyArg =
   "body"
 
 
+isNotCookie :: F.HeaderArg f -> Bool
+isNotCookie header =
+   header
+     ^. F.headerArg
+      . F.argName
+      . to ((/= "cookie") . T.toLower . F.unPathSegment)
+
+
 mkArgs
   :: ElmOptions
   -> F.Req ElmDatatype
@@ -266,6 +275,7 @@ mkArgs opts request =
     , -- Headers
       [ elmHeaderArg header
       | header <- request ^. F.reqHeaders
+      , isNotCookie header
       ]
     , -- URL Captures
       [ elmCaptureArg segment
@@ -358,6 +368,7 @@ mkRequest opts request =
                      parens ("toString " <> headerArgName)
                   ))
         | header <- request ^. F.reqHeaders
+        , isNotCookie header 
         , headerName <- [header ^. F.headerArg . F.argName . to (stext . F.unPathSegment)]
         , headerArgName <- [elmHeaderArg header]
         ]
