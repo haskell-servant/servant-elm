@@ -1,3 +1,7 @@
+0.4.0.2
+-------
+* Fix generation for APIs with resonse headers.
+
 0.4.0.1
 -------
 * Remove hyphens from generated function names. (servant-foreign-0.10 no longer

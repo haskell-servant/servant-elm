@@ -63,6 +63,10 @@ spec = do
                           , ( "test/elm-sources/getWithaheaderSource.elm"
                             , "module GetWithAHeaderSource exposing (..)\n\n" <>
                               "import Http\n" <>
+                              "import Json.Decode exposing (..)\n\n\n")
+                          , ( "test/elm-sources/getWitharesponseheaderSource.elm"
+                            , "module GetWithAResponseHeaderSource exposing (..)\n\n" <>
+                              "import Http\n" <>
                               "import Json.Decode exposing (..)\n\n\n")]
                   let generated = map (<> "\n") (generateElmForAPI testApi)
                   generated `itemsShouldBe` expected

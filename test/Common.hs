@@ -3,14 +3,14 @@
 {-# LANGUAGE TypeOperators #-}
 module Common where
 
-import           Data.Text    (Text)
 import           Data.Aeson   (ToJSON)
-import           Data.Proxy   (Proxy(Proxy))
+import           Data.Proxy   (Proxy (Proxy))
+import           Data.Text    (Text)
 import           Elm          (ElmType)
 import           GHC.Generics (Generic)
 import           Servant.API  ((:<|>), (:>), Capture, Get, GetNoContent, Header,
-                               JSON, NoContent, Post, PostNoContent, Put,
-                               QueryFlag, QueryParam, QueryParams, ReqBody)
+                               Headers, JSON, NoContent, Post, PostNoContent,
+                               Put, QueryFlag, QueryParam, QueryParams, ReqBody)
 
 data Book = Book
     { title :: String
@@ -48,6 +48,8 @@ type TestApi =
          :> Header "myStringHeader" String
          :> Header "MyIntHeader" Int
          :> Get '[JSON] String
+  :<|> "with-a-response-header"
+         :> Get '[JSON] (Headers '[Header "myResponse" String] String)
 
 testApi :: Proxy TestApi
 testApi = Proxy
