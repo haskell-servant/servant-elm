@@ -1,6 +1,6 @@
 0.4.0.2
 -------
-* Fix generation for APIs with resonse headers.
+* Fix generation for APIs with response headers.
 
 0.4.0.1
 -------
