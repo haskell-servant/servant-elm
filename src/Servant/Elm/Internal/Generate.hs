@@ -12,7 +12,7 @@ import           Data.Text                    (Text)
 import qualified Data.Text                    as T
 import qualified Data.Text.Lazy               as L
 import qualified Data.Text.Encoding           as T
-import           Elm                          (ElmDatatype)
+import           Elm                          (ElmDatatype(..), ElmPrimitive(..))
 import qualified Elm
 import           Servant.API                  (NoContent (..))
 import           Servant.Elm.Internal.Foreign (LangElm, getEndpoints)
@@ -352,7 +352,7 @@ mkRequest opts request =
 
     headers =
         [("Maybe.map (Http.header" <+> dquotes headerName <+> "<<" <+>
-                 (if isElmStringType opts (header ^. F.headerArg . F.argType) then
+                 (if isElmMaybeStringType opts (header ^. F.headerArg . F.argType) then
                      "identity)"
                    else
                      "toString)"
@@ -453,6 +453,13 @@ this type in Elm.
 isElmStringType :: ElmOptions -> ElmDatatype -> Bool
 isElmStringType opts elmTypeExpr =
   elmTypeExpr `elem` stringElmTypes opts
+
+{- | Determines whether a type is 'Maybe String'.
+-}
+isElmMaybeStringType :: ElmOptions -> ElmDatatype -> Bool
+isElmMaybeStringType opts (ElmPrimitive (EMaybe elmTypeExpr)) = elmTypeExpr `elem` stringElmTypes opts
+isElmMaybeStringType _ _ = False
+
 
 
 -- Doc helpers
