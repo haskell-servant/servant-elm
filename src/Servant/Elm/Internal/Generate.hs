@@ -454,7 +454,7 @@ isElmStringType :: ElmOptions -> ElmDatatype -> Bool
 isElmStringType opts elmTypeExpr =
   elmTypeExpr `elem` stringElmTypes opts
 
-{- | Determines whether a type is 'Maybe String'.
+{- | Determines whether a type is 'Maybe a' where 'a' is something akin to a 'String'.
 -}
 isElmMaybeStringType :: ElmOptions -> ElmDatatype -> Bool
 isElmMaybeStringType opts (ElmPrimitive (EMaybe elmTypeExpr)) = elmTypeExpr `elem` stringElmTypes opts

@@ -4,14 +4,14 @@ import Http
 import Json.Decode exposing (..)
 
 
-getWithaheader : String -> Int -> Http.Request (String)
+getWithaheader : Maybe (String) -> Maybe (Int) -> Http.Request (String)
 getWithaheader header_myStringHeader header_MyIntHeader =
     Http.request
         { method =
             "GET"
         , headers =
-            [ Http.header "myStringHeader" header_myStringHeader
-            , Http.header "MyIntHeader" (toString header_MyIntHeader)
+            List.filterMap identity [ Maybe.map (Http.header "myStringHeader" << identity) header_myStringHeader
+            , Maybe.map (Http.header "MyIntHeader" << toString) header_MyIntHeader
             ]
         , url =
             String.join "/"
