@@ -209,15 +209,8 @@ mkTypeSignature opts request =
 
     queryTypes :: [Doc]
     queryTypes =
-      [ arg ^. F.queryArgName . F.argType . to (elmTypeRef . wrapper)
+      [ arg ^. F.queryArgName . F.argType . to elmTypeRef
       | arg <- request ^. F.reqUrl . F.queryStr
-      , wrapper <- [
-          case arg ^. F.queryArgType of
-            F.Normal ->
-              Elm.ElmPrimitive . Elm.EMaybe
-            _ ->
-              id
-          ]
       ]
 
     bodyType :: Maybe Doc
@@ -301,7 +294,7 @@ mkLetParams opts request =
           let
             -- Don't use "toString" on Elm Strings, otherwise we get extraneous quotes.
             toStringSrc =
-              if isElmStringType opts (qarg ^. F.queryArgName . F.argType) then
+              if isElmMaybeStringType opts (qarg ^. F.queryArgName . F.argType) then
                 ""
               else
                 "toString >> "
