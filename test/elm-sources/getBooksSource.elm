@@ -4,8 +4,8 @@ import Http
 import Json.Decode exposing (..)
 
 
-getBooks : Bool -> Maybe (String) -> Maybe (Int) -> List (Maybe (Bool)) -> Http.Request (List (Book))
-getBooks query_published query_sort query_year query_filters =
+getBooks : Bool -> Maybe (String) -> Maybe (Int) -> String -> List (Maybe (Bool)) -> Http.Request (List (Book))
+getBooks query_published query_sort query_year query_category query_filters =
     let
         params =
             List.filter (not << String.isEmpty)
@@ -18,6 +18,9 @@ getBooks query_published query_sort query_year query_filters =
                     |> Maybe.withDefault ""
                 , query_year
                     |> Maybe.map (toString >> Http.encodeUri >> (++) "year=")
+                    |> Maybe.withDefault ""
+                , Just query_category
+                    |> Maybe.map (Http.encodeUri >> (++) "category=")
                     |> Maybe.withDefault ""
                 , query_filters
                     |> List.map (\val -> "query_filters[]=" ++ (val |> toString |> Http.encodeUri))
