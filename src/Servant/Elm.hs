@@ -14,14 +14,17 @@ Basic usage:
 module Servant.Elm
        ( generateElmForAPI
        , generateElmForAPIWith
+       , generateElmModule
+       , generateElmModuleWith
        , ElmOptions(..)
        , UrlPrefix(..)
        , defElmOptions
        , defElmImports
        -- * Convenience re-exports from the "Elm" module
-       , Spec(Spec)
-       , ElmType
-       , specsToDir
+       , DefineElm (..)
+       , EType (..)
+       , defaultTypeAlterations
+       , toElmType
        -- * Convenience re-exports from "Data.Proxy"
        , Proxy(Proxy)
        ) where
@@ -29,8 +32,10 @@ module Servant.Elm
 import           Servant.Elm.Internal.Generate (ElmOptions (..), UrlPrefix (..),
                                                 defElmImports, defElmOptions,
                                                 generateElmForAPI,
-                                                generateElmForAPIWith)
+                                                generateElmForAPIWith,
+                                                generateElmModule,
+                                                generateElmModuleWith)
 
 import           Data.Proxy                    (Proxy (Proxy))
-import           Elm                           (ElmType, Spec (Spec),
-                                                specsToDir)
+import           Elm.TyRep                     (EType (..), toElmType)
+import           Elm.Module                    (DefineElm (..), defaultTypeAlterations)

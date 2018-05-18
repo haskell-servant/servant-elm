@@ -4,7 +4,7 @@ import Http
 import Json.Decode exposing (..)
 
 
-getOne : String -> Http.Request (Int)
+getOne : String -> Http.Request Int
 getOne urlBase =
     Http.request
         { method =
@@ -19,7 +19,7 @@ getOne urlBase =
         , body =
             Http.emptyBody
         , expect =
-            Http.expectJson int
+            Http.expectJson <| Json.Decode.int
         , timeout =
             Nothing
         , withCredentials =

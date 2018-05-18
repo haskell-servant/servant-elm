@@ -3,7 +3,7 @@ module GetNothingSource exposing (..)
 import Http
 
 
-getNothing : Http.Request (NoContent)
+getNothing : Http.Request NoContent
 getNothing =
     Http.request
         { method =

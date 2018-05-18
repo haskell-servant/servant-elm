@@ -3,7 +3,7 @@ module PutNothingSource exposing (..)
 import Http
 
 
-putNothing : Http.Request (())
+putNothing : Http.Request ()
 putNothing =
     Http.request
         { method =

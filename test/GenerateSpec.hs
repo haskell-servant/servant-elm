@@ -15,7 +15,7 @@ import qualified Data.Text.IO              as T
 import           Servant.API               ((:>), Get, JSON)
 import           Servant.Elm
 import           Test.Hspec                (Spec, describe, hspec, it)
-import           Test.HUnit                (Assertion, assertBool)
+import           Test.HUnit                (Assertion, assertEqual)
 
 import           Common                    (testApi)
 
@@ -68,7 +68,7 @@ spec = do
                             , "module GetWithAResponseHeaderSource exposing (..)\n\n" <>
                               "import Http\n" <>
                               "import Json.Decode exposing (..)\n\n\n")]
-                  let generated = map (<> "\n") (generateElmForAPI testApi)
+                  let generated = filter (not . T.null) (generateElmForAPI testApi)
                   generated `itemsShouldBe` expected
            it "with dynamic URLs" $
                do expected <-
@@ -99,10 +99,13 @@ itemsShouldBe actual expected =
 
 shouldBeDiff :: Text -> (String, Text, Text) -> Assertion
 shouldBeDiff a (fpath,header,b) =
-    assertBool
+    assertEqual
         ("< generated\n" <> "> " <> fpath <> "\n" <>
          Diff.ppDiff
              (Diff.getGroupedDiff
-                  (lines (T.unpack (header <> a)))
-                  (lines (T.unpack b))))
-        (header <> a == b)
+                  (lines (T.unpack actual))
+                  (lines (T.unpack expected))))
+        actual expected
+    where
+      actual = T.strip $ header <> a
+      expected = T.strip b

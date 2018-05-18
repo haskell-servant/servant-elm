@@ -1,29 +1,31 @@
 {-# LANGUAGE DataKinds         #-}
-{-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell   #-}
 {-# LANGUAGE TypeOperators     #-}
 
-import           Elm          (Spec (Spec), specsToDir, toElmDecoderSource,
-                               toElmTypeSource)
-import           GHC.Generics (Generic)
+import           Elm.Derive   (defaultOptions, deriveBoth)
+
 import           Servant.API  ((:>), Capture, Get, JSON)
-import           Servant.Elm  (ElmType, Proxy (Proxy), defElmImports,
-                               generateElmForAPI)
+import           Servant.Elm  (DefineElm (DefineElm), Proxy (Proxy), defElmImports, defElmOptions,
+                               generateElmModuleWith)
 
 data Book = Book
-    { name :: String
-    } deriving ((Generic))
+  { name :: String
+  }
 
-instance ElmType Book
+deriveBoth defaultOptions ''Book
 
 type BooksApi = "books" :> Capture "bookId" Int :> Get '[JSON] Book
 
-spec :: Spec
-spec = Spec ["Generated", "MyApi"]
-            (defElmImports
-             : toElmTypeSource    (Proxy :: Proxy Book)
-             : toElmDecoderSource (Proxy :: Proxy Book)
-             : generateElmForAPI  (Proxy :: Proxy BooksApi))
-
 main :: IO ()
-main = specsToDir [spec] "my-elm-dir"
+main =
+  generateElmModuleWith
+    defElmOptions
+    [ "Generated"
+    , "MyApi"
+    ]
+    defElmImports
+    "my-elm-dir"
+    [ DefineElm (Proxy :: Proxy Book)
+    ]
+    (Proxy :: Proxy BooksApi)

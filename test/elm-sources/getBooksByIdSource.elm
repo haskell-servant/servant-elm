@@ -3,7 +3,7 @@ module GetBooksByIdSource exposing (..)
 import Http
 
 
-getBooksById : Int -> Http.Request (Book)
+getBooksById : Int -> Http.Request Book
 getBooksById capture_id =
     Http.request
         { method =
@@ -19,7 +19,7 @@ getBooksById capture_id =
         , body =
             Http.emptyBody
         , expect =
-            Http.expectJson decodeBook
+            Http.expectJson <| jsonDecBook
         , timeout =
             Nothing
         , withCredentials =

@@ -16,16 +16,15 @@ First, some language pragmas and imports.
 
 ```haskell
 {-# LANGUAGE DataKinds         #-}
-{-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell   #-}
 {-# LANGUAGE TypeOperators     #-}
 
-import           Elm          (Spec (Spec), specsToDir, toElmDecoderSource,
-                               toElmTypeSource)
-import           GHC.Generics (Generic)
+import           Elm.Derive   (defaultOptions, deriveBoth)
+
 import           Servant.API  ((:>), Capture, Get, JSON)
-import           Servant.Elm  (ElmType, Proxy (Proxy), defElmImports,
-                               generateElmForAPI)
+import           Servant.Elm  (DefineElm (DefineElm), Proxy (Proxy), defElmImports, defElmOptions,
+                               generateElmModuleWith)
 ```
 
 We have some Haskell-defined types and our Servant API.
@@ -33,9 +32,9 @@ We have some Haskell-defined types and our Servant API.
 ```haskell
 data Book = Book
     { name :: String
-    } deriving (Generic)
+    }
 
-instance ElmType Book
+deriveBoth defaultOptions ''Book
 
 type BooksApi = "books" :> Capture "bookId" Int :> Get '[JSON] Book
 ```
@@ -43,15 +42,18 @@ type BooksApi = "books" :> Capture "bookId" Int :> Get '[JSON] Book
 Now we can generate Elm functions to query the API:
 
 ```haskell
-spec :: Spec
-spec = Spec ["Generated", "MyApi"]
-            (defElmImports
-             : toElmTypeSource    (Proxy :: Proxy Book)
-             : toElmDecoderSource (Proxy :: Proxy Book)
-             : generateElmForAPI  (Proxy :: Proxy BooksApi))
-
 main :: IO ()
-main = specsToDir [spec] "my-elm-dir"
+main =
+  generateElmModuleWith
+    defElmOptions
+    [ "Generated"
+    , "MyApi"
+    ]
+    defElmImports
+    "my-elm-dir"
+    [ DefineElm (Proxy :: Proxy Book)
+    ]
+    (Proxy :: Proxy BooksApi)
 ```
 
 Let's save this as `example.hs` and run it:
@@ -65,25 +67,31 @@ $
 Here's what was generated:
 
 ```elm
-module Generated.MyApi exposing (..)
+module Generated.MyApi exposing(..)
 
-import Json.Decode exposing (..)
-import Json.Decode.Pipeline exposing (..)
-import Json.Encode
+import Json.Decode
+import Json.Encode exposing (Value)
+-- The following module comes from bartavelle/json-helpers
+import Json.Helpers exposing (..)
+import Dict exposing (Dict)
+import Set
 import Http
 import String
 
+type alias Book  =
+   { name: String
+   }
 
-type alias Book =
-    { name : String
-    }
+jsonDecBook : Json.Decode.Decoder ( Book )
+jsonDecBook =
+   (Json.Decode.string) >>= \pname ->
+   Json.Decode.succeed {name = pname}
 
-decodeBook : Decoder Book
-decodeBook =
-    decode Book
-        |> required "name" string
+jsonEncBook : Book -> Value
+jsonEncBook  val =
+   Json.Encode.string val.name
 
-getBooksByBookId : Int -> Http.Request (Book)
+getBooksByBookId : Int -> Http.Request Book
 getBooksByBookId capture_bookId =
     Http.request
         { method =
@@ -99,7 +107,7 @@ getBooksByBookId capture_bookId =
         , body =
             Http.emptyBody
         , expect =
-            Http.expectJson decodeBook
+            Http.expectJson <| jsonDecBook
         , timeout =
             Nothing
         , withCredentials =

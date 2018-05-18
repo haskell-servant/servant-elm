@@ -3,7 +3,7 @@ module PostBooksSource exposing (..)
 import Http
 
 
-postBooks : Book -> Http.Request (NoContent)
+postBooks : Book -> Http.Request NoContent
 postBooks body =
     Http.request
         { method =
@@ -16,7 +16,7 @@ postBooks body =
                 , "books"
                 ]
         , body =
-            Http.jsonBody (encodeBook body)
+            Http.jsonBody (jsonEncBook body)
         , expect =
             Http.expectStringResponse
                 (\{ body } ->

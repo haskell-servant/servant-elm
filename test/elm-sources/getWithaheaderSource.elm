@@ -4,7 +4,7 @@ import Http
 import Json.Decode exposing (..)
 
 
-getWithaheader : Maybe (String) -> Maybe (Int) -> String -> Int -> Http.Request (String)
+getWithaheader : (Maybe String) -> (Maybe Int) -> String -> Int -> Http.Request String
 getWithaheader header_myStringHeader header_MyIntHeader header_MyRequiredStringHeader header_MyRequiredIntHeader =
     Http.request
         { method =
@@ -24,7 +24,7 @@ getWithaheader header_myStringHeader header_MyIntHeader header_MyRequiredStringH
         , body =
             Http.emptyBody
         , expect =
-            Http.expectJson string
+            Http.expectJson <| Json.Decode.string
         , timeout =
             Nothing
         , withCredentials =

@@ -1,3 +1,4 @@
+{-# LANGUAGE RecordWildCards       #-}
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings     #-}
@@ -5,21 +6,35 @@ module Servant.Elm.Internal.Generate where
 
 import           Prelude                      hiding ((<$>))
 import           Control.Lens                 (to, (^.))
-import           Data.List                    (nub)
+import           Data.List                    (intercalate, intersperse, nub)
 import           Data.Maybe                   (catMaybes)
-import           Data.Proxy                   (Proxy)
+import           Data.Proxy                   (Proxy(..))
 import           Data.Text                    (Text)
 import qualified Data.Text                    as T
 import qualified Data.Text.Lazy               as L
 import qualified Data.Text.Encoding           as T
-import           Elm                          (ElmDatatype(..), ElmPrimitive(..))
-import qualified Elm
-import           Servant.API                  (NoContent (..))
+import           Data.Text.IO                 as TIO
+
+import           Elm.Json (jsonParserForType, jsonSerForType)
+import qualified Elm.Module                   as Elm
+import           Elm.TyRep (ETCon(..), EType(..), toElmType)
+import           Elm.TyRender (renderElm)
+import           Elm.Versions (ElmVersion(Elm0p18))
+
 import           Servant.Elm.Internal.Foreign (LangElm, getEndpoints)
-import           Servant.Elm.Internal.Orphans ()
 import qualified Servant.Foreign              as F
+import           System.Directory (createDirectoryIfMissing)
 import           Text.PrettyPrint.Leijen.Text
 
+
+toElmTypeRefWith :: ElmOptions -> EType -> Text
+toElmTypeRefWith ElmOptions{..} = T.pack . renderElm . elmAlterations
+
+toElmDecoderRefWith :: ElmOptions -> EType -> Text
+toElmDecoderRefWith ElmOptions{..} = T.pack . jsonParserForType . elmAlterations
+
+toElmEncoderRefWith :: ElmOptions -> EType -> Text
+toElmEncoderRefWith ElmOptions{..} = T.pack . jsonSerForType . elmAlterations
 
 {-|
 Options to configure how code is generated.
@@ -34,11 +49,12 @@ data ElmOptions = ElmOptions
     argument.
     -}
     urlPrefix             :: UrlPrefix
-  , elmExportOptions      :: Elm.Options
+    -- * Alterations to perform on ETypes before code generation.
+  , elmAlterations        :: (EType -> EType)
     -- ^ Options to pass to elm-export
-  , emptyResponseElmTypes :: [ElmDatatype]
+  , emptyResponseElmTypes :: [EType]
     -- ^ Types that represent an empty Http response.
-  , stringElmTypes        :: [ElmDatatype]
+  , stringElmTypes        :: [EType]
     -- ^ Types that represent a String.
   }
 
@@ -47,6 +63,7 @@ data UrlPrefix
   = Static T.Text
   | Dynamic
 
+type Namespace = [String]
 
 {-|
 Default options for generating Elm code.
@@ -55,25 +72,27 @@ The default options are:
 
 > { urlPrefix =
 >     Static ""
-> , elmExportOptions =
->     Elm.defaultOptions
+> , elmAlterations =
+>     Elm.defaultTypeAlterations
 > , emptyResponseElmTypes =
->     [ toElmType NoContent ]
+>     [ getType (Proxy :: Proxy F.NoContent)
+>     , getType (Proxy :: Proxy ()) ]
 > , stringElmTypes =
->     [ toElmType "" ]
+>     [ getType (Proxy :: Proxy String)
+>     , getType (Proxy :: Proxy T.Text) ]
 > }
 -}
 defElmOptions :: ElmOptions
 defElmOptions = ElmOptions
   { urlPrefix = Static ""
-  , elmExportOptions = Elm.defaultOptions
+  , elmAlterations = Elm.defaultTypeAlterations
   , emptyResponseElmTypes =
-      [ Elm.toElmType NoContent
-      , Elm.toElmType ()
+      [ toElmType (Proxy :: Proxy F.NoContent)
+      , toElmType (Proxy :: Proxy ())
       ]
   , stringElmTypes =
-      [ Elm.toElmType ("" :: String)
-      , Elm.toElmType ("" :: T.Text)
+      [ toElmType (Proxy :: Proxy String)
+      , toElmType (Proxy :: Proxy T.Text)
       ]
   }
 
@@ -85,22 +104,73 @@ You probably want to include this at the top of your generated Elm module.
 
 The default required imports are:
 
-> import Json.Decode exposing (..)
-> import Json.Decode.Pipeline exposing (..)
-> import Json.Encode
+> import Json.Decode
+> import Json.Encode exposing (Value)
+> -- The following module comes from bartavelle/json-helpers
+> import Json.Helpers exposing (..)
+> import Dict exposing (Dict)
+> import Set
 > import Http
 > import String
 -}
 defElmImports :: Text
 defElmImports =
   T.unlines
-    [ "import Json.Decode exposing (..)"
-    , "import Json.Decode.Pipeline exposing (..)"
-    , "import Json.Encode"
+    [ "import Json.Decode"
+    , "import Json.Encode exposing (Value)"
+    , "-- The following module comes from bartavelle/json-helpers"
+    , "import Json.Helpers exposing (..)"
+    , "import Dict exposing (Dict)"
+    , "import Set"
     , "import Http"
     , "import String"
     ]
 
+{-|
+Helper to generate a complete Elm module given a list of Elm type definitions
+and an API.
+-}
+generateElmModuleWith ::
+     ( F.HasForeign LangElm EType api
+     , F.GenerateList EType (F.Foreign EType api)
+     )
+  => ElmOptions
+  -> Namespace
+  -> Text
+  -> FilePath
+  -> [Elm.DefineElm]
+  -> Proxy api
+  -> IO ()
+generateElmModuleWith options namespace imports rootDir typeDefs api = do
+  let out =
+        T.unlines $
+        [ T.pack $ Elm.moduleHeader Elm0p18 moduleName
+        , ""
+        , imports
+        , T.pack $ Elm.makeModuleContent typeDefs
+        ] ++
+        generateElmForAPIWith options api
+      moduleName = intercalate "." namespace
+      filePath = intercalate "/" $ rootDir:init namespace
+      fileName = intercalate "/" $ filePath:[last namespace ++ ".elm"]
+  createDirectoryIfMissing True filePath
+  TIO.writeFile fileName out
+
+{-|
+Calls generateElmModuleWith with @defElmOptions@.
+-}
+generateElmModule ::
+     ( F.HasForeign LangElm EType api
+     , F.GenerateList EType (F.Foreign EType api)
+     )
+  => Namespace
+  -> Text
+  -> FilePath
+  -> [Elm.DefineElm]
+  -> Proxy api
+  -> IO ()
+generateElmModule namespace imports filePath typeDefs api =
+  generateElmModuleWith defElmOptions namespace imports filePath typeDefs api
 
 {-|
 Generate Elm code for the API with default options.
@@ -112,8 +182,8 @@ would be better off creating a 'Spec' with the result and using 'specsToDir',
 which handles the module name for you.
 -}
 generateElmForAPI
-  :: ( F.HasForeign LangElm ElmDatatype api
-     , F.GenerateList ElmDatatype (F.Foreign ElmDatatype api))
+  :: ( F.HasForeign LangElm EType api
+     , F.GenerateList EType (F.Foreign EType api))
   => Proxy api
   -> [Text]
 generateElmForAPI =
@@ -124,12 +194,12 @@ generateElmForAPI =
 Generate Elm code for the API with custom options.
 -}
 generateElmForAPIWith
-  :: ( F.HasForeign LangElm ElmDatatype api
-     , F.GenerateList ElmDatatype (F.Foreign ElmDatatype api))
+  :: ( F.HasForeign LangElm EType api
+     , F.GenerateList EType (F.Foreign EType api))
   => ElmOptions
   -> Proxy api
   -> [Text]
-generateElmForAPIWith opts =
+generateElmForAPIWith opts = intersperse "" .
   nub . map docToText . map (generateElmForRequest opts) . getEndpoints
 
 i :: Int
@@ -138,7 +208,7 @@ i = 4
 {-|
 Generate an Elm function for one endpoint.
 -}
-generateElmForRequest :: ElmOptions -> F.Req ElmDatatype -> Doc
+generateElmForRequest :: ElmOptions -> F.Req EType -> Doc
 generateElmForRequest opts request =
   funcDef
   where
@@ -174,7 +244,7 @@ generateElmForRequest opts request =
       mkRequest opts request
 
 
-mkTypeSignature :: ElmOptions -> F.Req ElmDatatype -> Doc
+mkTypeSignature :: ElmOptions -> F.Req EType -> Doc
 mkTypeSignature opts request =
   (hsep . punctuate " ->" . concat)
     [ catMaybes [urlPrefixType]
@@ -190,9 +260,9 @@ mkTypeSignature opts request =
           Dynamic -> Just "String"
           Static _ -> Nothing
 
-    elmTypeRef :: ElmDatatype -> Doc
+    elmTypeRef :: EType -> Doc
     elmTypeRef eType =
-      stext (Elm.toElmTypeRefWith (elmExportOptions opts) eType)
+      stext (toElmTypeRefWith opts eType)
 
     headerTypes :: [Doc]
     headerTypes =
@@ -221,22 +291,22 @@ mkTypeSignature opts request =
     returnType :: Maybe Doc
     returnType = do
       result <- fmap elmTypeRef $ request ^. F.reqReturnType
-      pure ("Http.Request" <+> parens result)
+      pure ("Http.Request" <+> result)
 
 
-elmHeaderArg :: F.HeaderArg ElmDatatype -> Doc
+elmHeaderArg :: F.HeaderArg EType -> Doc
 elmHeaderArg header =
   "header_" <>
   header ^. F.headerArg . F.argName . to (stext . T.replace "-" "_" . F.unPathSegment)
 
 
-elmCaptureArg :: F.Segment ElmDatatype -> Doc
+elmCaptureArg :: F.Segment EType -> Doc
 elmCaptureArg segment =
   "capture_" <>
   F.captureArg segment ^. F.argName . to (stext . F.unPathSegment)
 
 
-elmQueryArg :: F.QueryArg ElmDatatype -> Doc
+elmQueryArg :: F.QueryArg EType -> Doc
 elmQueryArg arg =
   "query_" <>
   arg ^. F.queryArgName . F.argName . to (stext . F.unPathSegment)
@@ -257,7 +327,7 @@ isNotCookie header =
 
 mkArgs
   :: ElmOptions
-  -> F.Req ElmDatatype
+  -> F.Req EType
   -> Doc
 mkArgs opts request =
   (hsep . concat) $
@@ -284,7 +354,7 @@ mkArgs opts request =
     ]
 
 
-mkLetParams :: ElmOptions -> F.Req ElmDatatype -> Maybe Doc
+mkLetParams :: ElmOptions -> F.Req EType -> Maybe Doc
 mkLetParams opts request =
   if null (request ^. F.reqUrl . F.queryStr) then
     Nothing
@@ -296,7 +366,7 @@ mkLetParams opts request =
     params :: [Doc]
     params = map paramToDoc (request ^. F.reqUrl . F.queryStr)
 
-    paramToDoc :: F.QueryArg ElmDatatype -> Doc
+    paramToDoc :: F.QueryArg EType -> Doc
     paramToDoc qarg =
       -- something wrong with indentation here...
       case qarg ^. F.queryArgType of
@@ -330,7 +400,7 @@ mkLetParams opts request =
         elmName= qarg ^. F.queryArgName . F.argName . to (stext . F.unPathSegment)
 
 
-mkRequest :: ElmOptions -> F.Req ElmDatatype -> Doc
+mkRequest :: ElmOptions -> F.Req EType -> Doc
 mkRequest opts request =
   "Http.request" <$>
   indent i
@@ -388,7 +458,7 @@ mkRequest opts request =
         Just elmTypeExpr ->
           let
             encoderName =
-              Elm.toElmEncoderRefWith (elmExportOptions opts) elmTypeExpr
+              toElmEncoderRefWith opts elmTypeExpr
           in
             "Http.jsonBody" <+> parens (stext encoderName <+> elmBodyArg)
 
@@ -396,7 +466,7 @@ mkRequest opts request =
       case request ^. F.reqReturnType of
         Just elmTypeExpr | isEmptyType opts elmTypeExpr ->
           let elmConstructor =
-                Elm.toElmTypeRefWith (elmExportOptions opts) elmTypeExpr
+                toElmTypeRefWith opts elmTypeExpr
           in
             "Http.expectStringResponse" <$>
             indent i (parens (backslash <> braces " body " <+> "->" <$>
@@ -407,13 +477,13 @@ mkRequest opts request =
 
 
         Just elmTypeExpr ->
-          "Http.expectJson" <+> stext (Elm.toElmDecoderRefWith (elmExportOptions opts) elmTypeExpr)
+          "Http.expectJson <|" <+> stext (toElmDecoderRefWith opts elmTypeExpr)
 
         Nothing ->
           error "mkHttpRequest: no reqReturnType?"
 
 
-mkUrl :: ElmOptions -> [F.Segment ElmDatatype] -> Doc
+mkUrl :: ElmOptions -> [F.Segment EType] -> Doc
 mkUrl opts segments =
   "String.join" <+> dquotes "/" <$>
   (indent i . elmList)
@@ -423,7 +493,7 @@ mkUrl opts segments =
       : map segmentToDoc segments)
   where
 
-    segmentToDoc :: F.Segment ElmDatatype -> Doc
+    segmentToDoc :: F.Segment EType -> Doc
     segmentToDoc s =
       case F.unSegment s of
         F.Static path ->
@@ -441,7 +511,7 @@ mkUrl opts segments =
 
 
 mkQueryParams
-  :: F.Req ElmDatatype
+  :: F.Req EType
   -> Doc
 mkQueryParams request =
   if null (request ^. F.reqUrl . F.queryStr) then
@@ -456,7 +526,7 @@ mkQueryParams request =
 {- | Determines whether we construct an Elm function that expects an empty
 response body.
 -}
-isEmptyType :: ElmOptions -> ElmDatatype -> Bool
+isEmptyType :: ElmOptions -> EType -> Bool
 isEmptyType opts elmTypeExpr =
   elmTypeExpr `elem` emptyResponseElmTypes opts
 
@@ -464,18 +534,18 @@ isEmptyType opts elmTypeExpr =
 {- | Determines whether we call `toString` on URL captures and query params of
 this type in Elm.
 -}
-isElmStringType :: ElmOptions -> ElmDatatype -> Bool
+isElmStringType :: ElmOptions -> EType -> Bool
 isElmStringType opts elmTypeExpr =
   elmTypeExpr `elem` stringElmTypes opts
 
 {- | Determines whether a type is 'Maybe a' where 'a' is something akin to a 'String'.
 -}
-isElmMaybeStringType :: ElmOptions -> ElmDatatype -> Bool
-isElmMaybeStringType opts (ElmPrimitive (EMaybe elmTypeExpr)) = elmTypeExpr `elem` stringElmTypes opts
+isElmMaybeStringType :: ElmOptions -> EType -> Bool
+isElmMaybeStringType opts (ETyApp (ETyCon (ETCon "Maybe")) elmTypeExpr) = elmTypeExpr `elem` stringElmTypes opts
 isElmMaybeStringType _ _ = False
 
-isElmMaybeType :: ElmDatatype -> Bool
-isElmMaybeType (ElmPrimitive (EMaybe _)) = True
+isElmMaybeType :: EType -> Bool
+isElmMaybeType (ETyApp (ETyCon (ETCon "Maybe")) _) = True
 isElmMaybeType _ = False
 
 

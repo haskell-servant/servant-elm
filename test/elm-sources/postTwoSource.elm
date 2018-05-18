@@ -5,7 +5,7 @@ import Json.Decode exposing (..)
 import Json.Encode
 
 
-postTwo : String -> Http.Request (Maybe (Int))
+postTwo : String -> Http.Request (Maybe Int)
 postTwo body =
     Http.request
         { method =
@@ -20,7 +20,7 @@ postTwo body =
         , body =
             Http.jsonBody (Json.Encode.string body)
         , expect =
-            Http.expectJson (maybe int)
+            Http.expectJson <| Json.Decode.maybe (Json.Decode.int)
         , timeout =
             Nothing
         , withCredentials =

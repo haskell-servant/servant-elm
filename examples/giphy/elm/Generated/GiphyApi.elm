@@ -1,31 +1,48 @@
-module Generated.GiphyApi exposing (..)
+module Generated.GiphyApi exposing(..)
 
-import Json.Decode exposing (..)
-import Json.Decode.Pipeline exposing (..)
-import Json.Encode
+import Json.Decode
+import Json.Encode exposing (Value)
+-- The following module comes from bartavelle/json-helpers
+import Json.Helpers exposing (..)
+import Dict exposing (Dict)
+import Set
 import Http
 import String
 
+type alias Gif  =
+   { data: GifData
+   }
 
-type alias Gif =
-    { data : GifData
-    }
+jsonDecGif : Json.Decode.Decoder ( Gif )
+jsonDecGif =
+   ("data" := jsonDecGifData) >>= \pdata ->
+   Json.Decode.succeed {data = pdata}
 
-type alias GifData =
-    { image_url : String
-    }
+jsonEncGif : Gif -> Value
+jsonEncGif  val =
+   Json.Encode.object
+   [ ("data", jsonEncGifData val.data)
+   ]
 
-decodeGif : Decoder Gif
-decodeGif =
-    decode Gif
-        |> required "data" decodeGifData
 
-decodeGifData : Decoder GifData
-decodeGifData =
-    decode GifData
-        |> required "image_url" string
 
-getRandom : Maybe (String) -> Maybe (String) -> Http.Request (Gif)
+type alias GifData  =
+   { image_url: String
+   }
+
+jsonDecGifData : Json.Decode.Decoder ( GifData )
+jsonDecGifData =
+   ("image_url" := Json.Decode.string) >>= \pimage_url ->
+   Json.Decode.succeed {image_url = pimage_url}
+
+jsonEncGifData : GifData -> Value
+jsonEncGifData  val =
+   Json.Encode.object
+   [ ("image_url", Json.Encode.string val.image_url)
+   ]
+
+
+getRandom : (Maybe String) -> (Maybe String) -> Http.Request Gif
 getRandom query_api_key query_tag =
     let
         params =
@@ -55,7 +72,7 @@ getRandom query_api_key query_tag =
             , body =
                 Http.emptyBody
             , expect =
-                Http.expectJson decodeGif
+                Http.expectJson <| jsonDecGif
             , timeout =
                 Nothing
             , withCredentials =
