@@ -10,7 +10,7 @@ getBooks query_published query_sort query_year query_category query_filters =
         params =
             List.filter (not << String.isEmpty)
                 [ if query_published then
-                    "query_published="
+                    "published="
                   else
                     ""
                 , query_sort
@@ -23,7 +23,7 @@ getBooks query_published query_sort query_year query_category query_filters =
                     |> Maybe.map (Http.encodeUri >> (++) "category=")
                     |> Maybe.withDefault ""
                 , query_filters
-                    |> List.map (\val -> "query_filters[]=" ++ (val |> toString |> Http.encodeUri))
+                    |> List.map (\val -> "filters[]=" ++ (val |> toString |> Http.encodeUri))
                     |> String.join "&"
                 ]
     in

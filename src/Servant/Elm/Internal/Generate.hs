@@ -317,13 +317,13 @@ mkLetParams opts request =
 
         F.Flag ->
             "if" <+> name <+> "then" <$>
-            indent 4 (dquotes (name <> equals)) <$>
+            indent 4 (dquotes (elmName <> equals)) <$>
             indent 2 "else" <$>
             indent 4 (dquotes empty)
 
         F.List ->
             name <$>
-            indent 4 ("|> List.map" <+> parens (backslash <> "val ->" <+> dquotes (name <> "[]=") <+> "++ (val |> toString |> Http.encodeUri)") <$>
+            indent 4 ("|> List.map" <+> parens (backslash <> "val ->" <+> dquotes (elmName <> "[]=") <+> "++ (val |> toString |> Http.encodeUri)") <$>
                       "|> String.join" <+> dquotes "&")
       where
         name = elmQueryArg qarg
