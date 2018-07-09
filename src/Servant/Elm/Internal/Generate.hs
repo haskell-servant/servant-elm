@@ -311,23 +311,23 @@ mkLetParams opts request =
               else
                 "toString >> "
           in
-              (if wrapped then name else "Just" <+> name) <$>
-              indent 4 ("|> Maybe.map" <+> parens (toStringSrc <> "Http.encodeUri >> (++)" <+> dquotes (elmName <> equals)) <$>
+              (if wrapped then elmName else "Just" <+> elmName) <$>
+              indent 4 ("|> Maybe.map" <+> parens (toStringSrc <> "Http.encodeUri >> (++)" <+> dquotes (name <> equals)) <$>
                         "|> Maybe.withDefault" <+> dquotes empty)
 
         F.Flag ->
-            "if" <+> name <+> "then" <$>
+            "if" <+> elmName <+> "then" <$>
             indent 4 (dquotes (name <> equals)) <$>
             indent 2 "else" <$>
             indent 4 (dquotes empty)
 
         F.List ->
-            name <$>
+            elmName <$>
             indent 4 ("|> List.map" <+> parens (backslash <> "val ->" <+> dquotes (name <> "[]=") <+> "++ (val |> toString |> Http.encodeUri)") <$>
                       "|> String.join" <+> dquotes "&")
       where
-        name = elmQueryArg qarg
-        elmName= qarg ^. F.queryArgName . F.argName . to (stext . F.unPathSegment)
+        elmName = elmQueryArg qarg
+        name = qarg ^. F.queryArgName . F.argName . to (stext . F.unPathSegment)
 
 
 mkRequest :: ElmOptions -> F.Req ElmDatatype -> Doc
