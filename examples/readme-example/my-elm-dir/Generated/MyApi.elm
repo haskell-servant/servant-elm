@@ -15,12 +15,15 @@ type alias Book  =
 
 jsonDecBook : Json.Decode.Decoder ( Book )
 jsonDecBook =
-   (Json.Decode.string) >>= \pname ->
+   ("name" := Json.Decode.string) >>= \pname ->
    Json.Decode.succeed {name = pname}
 
 jsonEncBook : Book -> Value
 jsonEncBook  val =
-   Json.Encode.string val.name
+   Json.Encode.object
+   [ ("name", Json.Encode.string val.name)
+   ]
+
 
 getBooksByBookId : Int -> Http.Request Book
 getBooksByBookId capture_bookId =

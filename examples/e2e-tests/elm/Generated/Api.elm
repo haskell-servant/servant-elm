@@ -15,12 +15,15 @@ type alias MessageBody  =
 
 jsonDecMessageBody : Json.Decode.Decoder ( MessageBody )
 jsonDecMessageBody =
-   (Json.Decode.string) >>= \pmessage ->
+   ("message" := Json.Decode.string) >>= \pmessage ->
    Json.Decode.succeed {message = pmessage}
 
 jsonEncMessageBody : MessageBody -> Value
 jsonEncMessageBody  val =
-   Json.Encode.string val.message
+   Json.Encode.object
+   [ ("message", Json.Encode.string val.message)
+   ]
+
 
 
 type alias QueryArgs  =
@@ -29,12 +32,15 @@ type alias QueryArgs  =
 
 jsonDecQueryArgs : Json.Decode.Decoder ( QueryArgs )
 jsonDecQueryArgs =
-   (Json.Decode.string) >>= \pq ->
+   ("q" := Json.Decode.string) >>= \pq ->
    Json.Decode.succeed {q = pq}
 
 jsonEncQueryArgs : QueryArgs -> Value
 jsonEncQueryArgs  val =
-   Json.Encode.string val.q
+   Json.Encode.object
+   [ ("q", Json.Encode.string val.q)
+   ]
+
 
 
 type alias Response  =
@@ -43,12 +49,15 @@ type alias Response  =
 
 jsonDecResponse : Json.Decode.Decoder ( Response )
 jsonDecResponse =
-   (Json.Decode.string) >>= \porigin ->
+   ("origin" := Json.Decode.string) >>= \porigin ->
    Json.Decode.succeed {origin = porigin}
 
 jsonEncResponse : Response -> Value
 jsonEncResponse  val =
-   Json.Encode.string val.origin
+   Json.Encode.object
+   [ ("origin", Json.Encode.string val.origin)
+   ]
+
 
 
 type alias ResponseWithJson  =
@@ -57,12 +66,15 @@ type alias ResponseWithJson  =
 
 jsonDecResponseWithJson : Json.Decode.Decoder ( ResponseWithJson )
 jsonDecResponseWithJson =
-   (jsonDecMessageBody) >>= \pjson ->
+   ("json" := jsonDecMessageBody) >>= \pjson ->
    Json.Decode.succeed {json = pjson}
 
 jsonEncResponseWithJson : ResponseWithJson -> Value
 jsonEncResponseWithJson  val =
-   jsonEncMessageBody val.json
+   Json.Encode.object
+   [ ("json", jsonEncMessageBody val.json)
+   ]
+
 
 
 type alias ResponseWithArgs  =
@@ -71,12 +83,15 @@ type alias ResponseWithArgs  =
 
 jsonDecResponseWithArgs : Json.Decode.Decoder ( ResponseWithArgs )
 jsonDecResponseWithArgs =
-   (jsonDecQueryArgs) >>= \pargs ->
+   ("args" := jsonDecQueryArgs) >>= \pargs ->
    Json.Decode.succeed {args = pargs}
 
 jsonEncResponseWithArgs : ResponseWithArgs -> Value
 jsonEncResponseWithArgs  val =
-   jsonEncQueryArgs val.args
+   Json.Encode.object
+   [ ("args", jsonEncQueryArgs val.args)
+   ]
+
 
 getIp : Http.Request Response
 getIp =

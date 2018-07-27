@@ -3,12 +3,11 @@
 {-# LANGUAGE TemplateHaskell   #-}
 {-# LANGUAGE TypeOperators     #-}
 
-import           Elm.Derive   (defaultOptions, deriveBoth)
-
 import           Servant.API  ((:<|>), (:>), Capture, Get, JSON, Post, ReqBody)
 import           Servant.Elm  (DefineElm (DefineElm), ElmOptions(urlPrefix),
-                               Proxy (Proxy), UrlPrefix(Static), defElmImports,
-                               defElmOptions, generateElmModuleWith)
+                               Proxy (Proxy), UrlPrefix(Static), defaultOptions,
+                               defElmImports, defElmOptions, deriveBoth,
+                               generateElmModuleWith)
 
 data Book = Book
   { name :: String

@@ -3,13 +3,11 @@
 {-# LANGUAGE TemplateHaskell   #-}
 {-# LANGUAGE TypeOperators     #-}
 
-import           Elm.Derive   (defaultOptions, deriveBoth)
-
 import           Servant.API  ((:<|>), (:>), Capture, Get, GetNoContent, JSON,
                                NoContent, Post, QueryParam, ReqBody)
 import           Servant.Elm  (DefineElm (DefineElm), ElmOptions(..), Proxy (Proxy),
-                               UrlPrefix (Static), defElmImports, defElmOptions,
-                               generateElmModuleWith)
+                               UrlPrefix (Static), defaultOptions, defElmImports,
+                               defElmOptions, deriveBoth, generateElmModuleWith)
 
 myElmOpts :: ElmOptions
 myElmOpts = defElmOptions { urlPrefix = Static "https://httpbin.org" }

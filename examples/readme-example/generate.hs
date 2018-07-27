@@ -3,11 +3,10 @@
 {-# LANGUAGE TemplateHaskell   #-}
 {-# LANGUAGE TypeOperators     #-}
 
-import           Elm.Derive   (defaultOptions, deriveBoth)
-
 import           Servant.API  ((:>), Capture, Get, JSON)
-import           Servant.Elm  (DefineElm (DefineElm), Proxy (Proxy), defElmImports, defElmOptions,
-                               generateElmModuleWith)
+import           Servant.Elm  (DefineElm (DefineElm), Proxy (Proxy),
+                               defaultOptions, defElmImports, defElmOptions,
+                               deriveBoth, generateElmModuleWith)
 
 data Book = Book
   { name :: String

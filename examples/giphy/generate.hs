@@ -6,8 +6,9 @@
 import qualified Elm.Derive as Elm
 
 import           Servant.API  ((:>), Get, JSON, QueryParam)
-import           Servant.Elm  (DefineElm (DefineElm), ElmOptions (urlPrefix), Proxy (Proxy), UrlPrefix (Static),
-                               defElmImports, defElmOptions,
+import           Servant.Elm  (DefineElm (DefineElm), ElmOptions (urlPrefix),
+                               Proxy (Proxy), UrlPrefix (Static), defElmImports,
+                               defElmOptions, defaultOptions, deriveBoth,
                                generateElmModuleWith)
 
 data GifData = GifData
@@ -19,7 +20,7 @@ data Gif = Gif
   } deriving (Show, Eq)
 
 concat <$> mapM
-  (Elm.deriveBoth Elm.defaultOptions
+  (deriveBoth defaultOptions
     { Elm.fieldLabelModifier = \ field ->
         if head field == '_' then
           tail field

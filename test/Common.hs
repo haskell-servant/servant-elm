@@ -5,11 +5,11 @@ module Common where
 
 import           Data.Proxy   (Proxy (Proxy))
 import           Data.Text    (Text)
-import           Elm.Derive   (defaultOptions, deriveBoth)
 import           Servant.API  ((:<|>), (:>), Capture, Get, GetNoContent, Header,
                                Header', Headers, JSON, NoContent, Post,
                                PostNoContent, Put, QueryFlag, QueryParam,
                                QueryParam', QueryParams, ReqBody, Required)
+import           Servant.Elm  (deriveBoth, defaultOptions)
 
 data Book = Book
     { title :: String
