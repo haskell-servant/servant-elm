@@ -5,6 +5,7 @@ import Json.Decode.Pipeline exposing (..)
 import Json.Encode
 import Http
 import String
+import String.Conversions as String
 
 
 type alias Response =
@@ -140,7 +141,7 @@ getGet query_q =
         params =
             List.filter (not << String.isEmpty)
                 [ query_q
-                    |> Maybe.map (Http.encodeUri >> (++) "q=")
+                    |> Maybe.map (identity >> Http.encodeUri >> (++) "q=")
                     |> Maybe.withDefault ""
                 ]
     in

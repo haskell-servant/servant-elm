@@ -11,10 +11,10 @@ getWithaheader header_myStringHeader header_MyIntHeader header_MyRequiredStringH
             "GET"
         , headers =
             List.filterMap identity
-                [ Maybe.map (Http.header "myStringHeader") header_myStringHeader
-                , Maybe.map (Http.header "MyIntHeader" << toString) header_MyIntHeader
+                [ Maybe.map (identity >> Http.header "myStringHeader") header_myStringHeader
+                , Maybe.map (String.fromInt >> Http.header "MyIntHeader") header_MyIntHeader
                 , Maybe.map (Http.header "MyRequiredStringHeader") (Just header_MyRequiredStringHeader)
-                , Maybe.map (Http.header "MyRequiredIntHeader" << toString) (Just header_MyRequiredIntHeader)
+                , Maybe.map (String.fromInt >> Http.header "MyRequiredIntHeader") (Just header_MyRequiredIntHeader)
                 ]
         , url =
             String.join "/"

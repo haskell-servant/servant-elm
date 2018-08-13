@@ -72,6 +72,7 @@ import Json.Decode.Pipeline exposing (..)
 import Json.Encode
 import Http
 import String
+import String.Conversions as String
 
 
 type alias Book =
