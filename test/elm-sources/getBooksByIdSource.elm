@@ -14,7 +14,7 @@ getBooksById capture_id =
             String.join "/"
                 [ ""
                 , "books"
-                , capture_id |> toString |> Http.encodeUri
+                , capture_id |> String.fromInt |> Http.encodeUri
                 ]
         , body =
             Http.emptyBody

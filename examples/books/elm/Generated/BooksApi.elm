@@ -5,6 +5,7 @@ import Json.Decode.Pipeline exposing (..)
 import Json.Encode
 import Http
 import String
+import String.Conversions as String
 
 
 type alias Book =
@@ -22,7 +23,7 @@ encodeBook x =
         [ ( "name", Json.Encode.string x.name )
         ]
 
-postBooks : Book -> Http.Request (Book)
+postBooks : Book -> Http.Request (Http.Response (Book))
 postBooks body =
     Http.request
         { method =
@@ -37,14 +38,18 @@ postBooks body =
         , body =
             Http.jsonBody (encodeBook body)
         , expect =
-            Http.expectJson decodeBook
+            Http.expectStringResponse
+                (\response ->
+                    Result.map
+                        (\body -> { response | body = body })
+                        (decodeString decodeBook response.body))
         , timeout =
             Nothing
         , withCredentials =
             False
         }
 
-getBooks : Http.Request (List (Book))
+getBooks : Http.Request (Http.Response (List (Book)))
 getBooks =
     Http.request
         { method =
@@ -59,14 +64,18 @@ getBooks =
         , body =
             Http.emptyBody
         , expect =
-            Http.expectJson (list decodeBook)
+            Http.expectStringResponse
+                (\response ->
+                    Result.map
+                        (\body -> { response | body = body })
+                        (decodeString (list decodeBook) response.body))
         , timeout =
             Nothing
         , withCredentials =
             False
         }
 
-getBooksByBookId : Int -> Http.Request (Book)
+getBooksByBookId : Int -> Http.Request (Http.Response (Book))
 getBooksByBookId capture_bookId =
     Http.request
         { method =
@@ -77,12 +86,16 @@ getBooksByBookId capture_bookId =
             String.join "/"
                 [ "http://localhost:8000"
                 , "books"
-                , capture_bookId |> toString |> Http.encodeUri
+                , capture_bookId |> String.fromInt |> Http.encodeUri
                 ]
         , body =
             Http.emptyBody
         , expect =
-            Http.expectJson decodeBook
+            Http.expectStringResponse
+                (\response ->
+                    Result.map
+                        (\body -> { response | body = body })
+                        (decodeString decodeBook response.body))
         , timeout =
             Nothing
         , withCredentials =

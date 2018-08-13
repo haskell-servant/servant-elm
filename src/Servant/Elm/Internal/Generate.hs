@@ -12,7 +12,7 @@ import           Data.Text                    (Text)
 import qualified Data.Text                    as T
 import qualified Data.Text.Lazy               as L
 import qualified Data.Text.Encoding           as T
-import           Elm                          (ElmDatatype)
+import           Elm                          (ElmDatatype(..), ElmPrimitive(..))
 import qualified Elm
 import           Servant.API                  (NoContent (..))
 import           Servant.Elm.Internal.Foreign (LangElm, getEndpoints)
@@ -40,8 +40,15 @@ data ElmOptions = ElmOptions
     -- ^ Types that represent an empty Http response.
   , stringElmTypes        :: [ElmDatatype]
     -- ^ Types that represent a String.
+  , intElmTypes        :: [ElmDatatype]
+    -- ^ Types that represent a Int.
+  , floatElmTypes        :: [ElmDatatype]
+    -- ^ Types that represent a Float.
+  , boolElmTypes        :: [ElmDatatype]
+    -- ^ Types that represent a Bool.
+  , charElmTypes        :: [ElmDatatype]
+    -- ^ Types that represent a Char.
   }
-
 
 data UrlPrefix
   = Static T.Text
@@ -61,6 +68,14 @@ The default options are:
 >     [ toElmType NoContent ]
 > , stringElmTypes =
 >     [ toElmType "" ]
+> , intElmTypes =
+>     [ toElmType 0 ]
+> , floatElmTypes =
+>     [ toElmType 0 ]
+> , boolElmTypes =
+>     [ toElmType True ]
+> , charElmTypes =
+>     [ toElmType '' ]
 > }
 -}
 defElmOptions :: ElmOptions
@@ -75,6 +90,14 @@ defElmOptions = ElmOptions
       [ Elm.toElmType ("" :: String)
       , Elm.toElmType ("" :: T.Text)
       ]
+  , intElmTypes =
+      [ Elm.toElmType (0 :: Int) ]
+  , floatElmTypes =
+      [ Elm.toElmType (0 :: Float) ]
+  , boolElmTypes =
+      [ Elm.toElmType (False :: Bool) ]
+  , charElmTypes =
+      [ Elm.toElmType (' ' :: Char) ]
   }
 
 
@@ -90,6 +113,7 @@ The default required imports are:
 > import Json.Encode
 > import Http
 > import String
+> import String.Conversions as String
 -}
 defElmImports :: Text
 defElmImports =
@@ -99,6 +123,7 @@ defElmImports =
     , "import Json.Encode"
     , "import Http"
     , "import String"
+    , "import String.Conversions as String"
     ]
 
 
@@ -299,15 +324,10 @@ mkLetParams opts request =
       case qarg ^. F.queryArgType of
         F.Normal ->
           let
-            -- Don't use "toString" on Elm Strings, otherwise we get extraneous quotes.
-            toStringSrc =
-              if isElmStringType opts (qarg ^. F.queryArgName . F.argType) then
-                ""
-              else
-                "toString >> "
+            toStringSrc' = toStringSrc ">>" opts (qarg ^. F.queryArgName . F.argType)
           in
               name <$>
-              indent 4 ("|> Maybe.map" <+> parens (toStringSrc <> "Http.encodeUri >> (++)" <+> dquotes (elmName <> equals)) <$>
+              indent 4 ("|> Maybe.map" <+> parens (toStringSrc' <> "Http.encodeUri >> (++)" <+> dquotes (elmName <> equals)) <$>
                         "|> Maybe.withDefault" <+> dquotes empty)
 
         F.Flag ->
@@ -317,8 +337,11 @@ mkLetParams opts request =
             indent 4 (dquotes empty)
 
         F.List ->
-            name <$>
-            indent 4 ("|> List.map" <+> parens (backslash <> "val ->" <+> dquotes (name <> "[]=") <+> "++ (val |> toString |> Http.encodeUri)") <$>
+            let
+              argType = qarg ^. F.queryArgName . F.argType
+            in
+                name <$>
+                indent 4 ("|> List.map" <+> parens (backslash <> "val ->" <+> dquotes (name <> "[]=") <+> "++ (val |>" <+> toStringSrc "|>" opts argType <+> "Http.encodeUri)") <$>
                       "|> String.join" <+> dquotes "&")
       where
         name = elmQueryArg qarg
@@ -351,12 +374,8 @@ mkRequest opts request =
        request ^. F.reqMethod . to (stext . T.decodeUtf8)
 
     headers =
-        [("Http.header" <+> dquotes headerName <+>
-                 (if isElmStringType opts (header ^. F.headerArg . F.argType) then
-                     headerArgName
-                   else
-                     parens ("toString " <> headerArgName)
-                  ))
+        [ "Http.header" <+> dquotes headerName <+>
+            parens (toStringSrc ">>" opts (header ^. F.headerArg . F.argType) <> headerArgName)
         | header <- request ^. F.reqHeaders
         , headerName <- [header ^. F.headerArg . F.argName . to (stext . F.unPathSegment)]
         , headerArgName <- [elmHeaderArg header]
@@ -421,13 +440,9 @@ mkUrl opts segments =
         F.Cap arg ->
           let
             -- Don't use "toString" on Elm Strings, otherwise we get extraneous quotes.
-            toStringSrc =
-              if isElmStringType opts (arg ^. F.argType) then
-                empty
-              else
-                " |> toString"
+            toStringSrc' = toStringSrc "|>" opts (arg ^. F.argType)
           in
-            (elmCaptureArg s) <> toStringSrc <> " |> Http.encodeUri"
+            elmCaptureArg s <+> "|>" <+> toStringSrc' <+> "Http.encodeUri"
 
 
 mkQueryParams
@@ -450,13 +465,67 @@ isEmptyType :: ElmOptions -> ElmDatatype -> Bool
 isEmptyType opts elmTypeExpr =
   elmTypeExpr `elem` emptyResponseElmTypes opts
 
+{- | Determines how to stringify a value.
+-}
+toStringSrc :: T.Text -> ElmOptions -> ElmDatatype -> Doc
+toStringSrc operator opts argType
+  -- Don't use "toString" on Elm Strings, otherwise we get extraneous quotes.
+  -- We don't append an operator in this case
+  | isElmStringType opts argType = stext ""
+  | otherwise                    = stext $ toStringSrcTypes operator opts argType <> " " <> operator
+
+
+toStringSrcTypes :: T.Text -> ElmOptions -> ElmDatatype -> T.Text
+toStringSrcTypes operator opts (ElmPrimitive (EMaybe argType)) = toStringSrcTypes operator opts argType
+ -- [Char] == String so we can just use identity here.
+ -- We can't return `""` here, because this string might be nested in a `Maybe` or `List`.
+toStringSrcTypes _ _ (ElmPrimitive (EList (ElmPrimitive EChar))) = "identity"
+toStringSrcTypes operator opts (ElmPrimitive (EList argType)) = toStringSrcTypes operator opts argType
+toStringSrcTypes _ opts argType
+    | isElmStringType opts argType   = "identity"
+    | isElmIntType opts argType   = "String.fromInt"
+    | isElmFloatType opts argType = "String.fromFloat"
+    | isElmBoolType opts argType  = "String.fromBool" -- We should change this to return `true`/`false` but this mimics the old behavior.
+    | isElmCharType opts argType  = "String.fromChar"
+    | otherwise                   = error ("Sorry, we don't support other types than `String`, `Int` and `Float` atm. " <> show argType)
+
 
 {- | Determines whether we call `toString` on URL captures and query params of
 this type in Elm.
 -}
 isElmStringType :: ElmOptions -> ElmDatatype -> Bool
+isElmStringType _ (ElmPrimitive (EList (ElmPrimitive EChar))) = True
 isElmStringType opts elmTypeExpr =
   elmTypeExpr `elem` stringElmTypes opts
+
+
+{- | Determines whether we call `String.fromInt` on URL captures and query params of this type in Elm.
+-}
+isElmIntType :: ElmOptions -> ElmDatatype -> Bool
+isElmIntType opts elmTypeExpr =
+  elmTypeExpr `elem` intElmTypes opts
+
+
+{- | Determines whether we call `String.fromFloat` on URL captures and query params of
+this type in Elm.
+-}
+isElmFloatType :: ElmOptions -> ElmDatatype -> Bool
+isElmFloatType opts elmTypeExpr =
+  elmTypeExpr `elem` floatElmTypes opts
+
+
+{- | Determines whether we convert to `true` or `false`
+-}
+isElmBoolType :: ElmOptions -> ElmDatatype -> Bool
+isElmBoolType opts elmTypeExpr =
+  elmTypeExpr `elem` boolElmTypes opts
+
+{- | Determines whether we call `String.fromChar` on URL captures and query params of
+this type in Elm.
+-}
+isElmCharType :: ElmOptions -> ElmDatatype -> Bool
+isElmCharType opts elmTypeExpr =
+  elmTypeExpr `elem` charElmTypes opts
 
 
 -- Doc helpers
