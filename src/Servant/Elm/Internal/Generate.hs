@@ -375,7 +375,7 @@ mkRequest opts request =
 
     headers =
         [ "Http.header" <+> dquotes headerName <+>
-            parens (toStringSrc ">>" opts (header ^. F.headerArg . F.argType) <> headerArgName)
+            parens (toStringSrc "" opts (header ^. F.headerArg . F.argType) <> headerArgName)
         | header <- request ^. F.reqHeaders
         , headerName <- [header ^. F.headerArg . F.argName . to (stext . F.unPathSegment)]
         , headerArgName <- [elmHeaderArg header]
