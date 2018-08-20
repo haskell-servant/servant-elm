@@ -1,9 +1,10 @@
 module GetBooksByIdSource exposing (..)
 
+import String.Conversions as String
 import Http
 
 
-getBooksById : Int -> Http.Request (Book)
+getBooksById : Int -> Http.Request (Http.Response (Book))
 getBooksById capture_id =
     Http.request
         { method =
@@ -14,12 +15,16 @@ getBooksById capture_id =
             String.join "/"
                 [ ""
                 , "books"
-                , capture_id |> String.fromInt |> Http.encodeUri
+                , capture_id |> toString |> Http.encodeUri
                 ]
         , body =
             Http.emptyBody
         , expect =
-            Http.expectJson decodeBook
+            Http.expectStringResponse
+                (\response ->
+                    Result.map
+                        (\body -> { response | body = body })
+                        (decodeString decodeBook response.body))
         , timeout =
             Nothing
         , withCredentials =

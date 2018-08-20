@@ -1,10 +1,11 @@
 module GetOneSource exposing (..)
 
 import Http
+import String.Conversions as String
 import Json.Decode exposing (..)
 
 
-getOne : Http.Request (Int)
+getOne : Http.Request (Http.Response (Int))
 getOne =
     Http.request
         { method =
@@ -19,7 +20,11 @@ getOne =
         , body =
             Http.emptyBody
         , expect =
-            Http.expectJson int
+            Http.expectStringResponse
+                (\response ->
+                    Result.map
+                        (\body -> { response | body = body })
+                        (decodeString int response.body))
         , timeout =
             Nothing
         , withCredentials =
