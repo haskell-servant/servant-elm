@@ -483,8 +483,8 @@ toStringSrcTypes _ _ (ElmPrimitive (EList (ElmPrimitive EChar))) = "identity"
 toStringSrcTypes operator opts (ElmPrimitive (EList argType)) = toStringSrcTypes operator opts argType
 toStringSrcTypes _ opts argType
     | isElmStringType opts argType   = "identity"
-    | isElmIntType opts argType   = "String.fromInt"
-    | isElmFloatType opts argType = "String.fromFloat"
+    | isElmIntType opts argType   = "toString" -- in elm 0.19 "String.fromInt"
+    | isElmFloatType opts argType = "toString" -- in elm 0.19 "String.fromFloat"
     | isElmBoolType opts argType  = "String.fromBool" -- We should change this to return `true`/`false` but this mimics the old behavior.
     | isElmCharType opts argType  = "String.fromChar"
     | otherwise                   = error ("Sorry, we don't support other types than `String`, `Int` and `Float` atm. " <> show argType)
