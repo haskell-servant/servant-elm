@@ -12,3 +12,8 @@ instance ElmType ElmDatatype where
 
 
 instance ElmType NoContent
+
+-- TODO: Generate Elm functions that can handle the response headers. PRs
+-- welcome!
+instance (ElmType a) => ElmType (Headers ls a) where
+  toElmType = toElmType . getResponse
