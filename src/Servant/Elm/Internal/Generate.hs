@@ -476,7 +476,7 @@ toStringSrc operator opts argType
 
 
 toStringSrcTypes :: T.Text -> ElmOptions -> ElmDatatype -> T.Text
-toStringSrcTypes operator opts (ElmPrimitive (EMaybe argType)) = toStringSrcTypes operator opts argType
+toStringSrcTypes operator opts (ElmPrimitive (EMaybe argType)) = "Maybe.map (" <> toStringSrcTypes operator opts argType <> ") |> Maybe.withDefault \"\""
  -- [Char] == String so we can just use identity here.
  -- We can't return `""` here, because this string might be nested in a `Maybe` or `List`.
 toStringSrcTypes _ _ (ElmPrimitive (EList (ElmPrimitive EChar))) = "identity"
