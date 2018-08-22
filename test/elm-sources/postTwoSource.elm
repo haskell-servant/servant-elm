@@ -25,7 +25,7 @@ postTwo body =
                 (\response ->
                     Result.map
                         (\body -> { response | body = body })
-                        (decodeString (maybe int) response.body))
+                        (decodeString (nullable int) response.body))
         , timeout =
             Nothing
         , withCredentials =
