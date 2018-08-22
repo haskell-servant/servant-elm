@@ -35,38 +35,48 @@ spec = do
                           [ ( "test/elm-sources/getOneSource.elm"
                             , "module GetOneSource exposing (..)\n\n" <>
                               "import Http\n" <>
+                              "import String.Conversions as String\n" <>
                               "import Json.Decode exposing (..)\n\n\n")
                           , ( "test/elm-sources/postTwoSource.elm"
                             , "module PostTwoSource exposing (..)\n\n" <>
                               "import Http\n" <>
+                              "import String.Conversions as String\n" <>
                               "import Json.Decode exposing (..)\n" <>
                               "import Json.Encode\n\n\n")
                           , ( "test/elm-sources/getBooksByIdSource.elm"
                             , "module GetBooksByIdSource exposing (..)\n\n" <>
+                              "import String.Conversions as String\n" <>
                               "import Http\n\n\n")
                           , ( "test/elm-sources/getBooksByTitleSource.elm"
                             , "module GetBooksByTitleSource exposing (..)\n\n" <>
-                              "import Http\n\n\n")
+                              "import Http\n" <>
+                              "import String.Conversions as String\n\n\n")
                           , ( "test/elm-sources/getBooksSource.elm"
                             , "module GetBooksSource exposing (..)\n\n" <>
                               "import Http\n" <>
+                              "import String.Conversions as String\n" <>
                               "import Json.Decode exposing (..)\n\n\n")
                           , ( "test/elm-sources/postBooksSource.elm"
                             , "module PostBooksSource exposing (..)\n\n" <>
+                              "import String.Conversions as String\n" <>
                               "import Http\n\n\n")
                           , ( "test/elm-sources/getNothingSource.elm"
                             , "module GetNothingSource exposing (..)\n\n" <>
+                              "import String.Conversions as String\n" <>
                               "import Http\n\n\n")
                           , ( "test/elm-sources/putNothingSource.elm"
                             , "module PutNothingSource exposing (..)\n\n" <>
+                              "import String.Conversions as String\n" <>
                               "import Http\n\n\n")
                           , ( "test/elm-sources/getWithaheaderSource.elm"
                             , "module GetWithAHeaderSource exposing (..)\n\n" <>
                               "import Http\n" <>
+                              "import String.Conversions as String\n" <>
                               "import Json.Decode exposing (..)\n\n\n")
                           , ( "test/elm-sources/getWitharesponseheaderSource.elm"
                             , "module GetWithAResponseHeaderSource exposing (..)\n\n" <>
                               "import Http\n" <>
+                              "import String.Conversions as String\n" <>
                               "import Json.Decode exposing (..)\n\n\n")]
                   let generated = map (<> "\n") (generateElmForAPI testApi)
                   generated `itemsShouldBe` expected
@@ -79,6 +89,7 @@ spec = do
                           [ ( "test/elm-sources/getOneWithDynamicUrlSource.elm"
                             , "module GetOneWithDynamicUrlSource exposing (..)\n\n" <>
                               "import Http\n" <>
+                              "import String.Conversions as String\n" <>
                               "import Json.Decode exposing (..)\n\n\n")]
                   let generated =
                           map

@@ -32,7 +32,7 @@ library
                      , Servant.Elm.Internal.Generate
                      , Servant.Elm.Internal.Orphans
   build-depends:       base >= 4.7 && < 5
-                     , elm-export      >= 0.5
+                     , elm-export
                      , lens
                      , servant         >= 0.8
                      , servant-foreign >= 0.8

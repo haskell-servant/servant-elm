@@ -75,7 +75,8 @@ createCache = do
               "elm-lang/core": "5.0.0 <= v < 6.0.0",
               "elm-community/json-extra": "2.0.0 <= v < 3.0.0",
               "elm-lang/http": "1.0.0 <= v < 2.0.0",
-              "NoRedInk/elm-decode-pipeline": "3.0.0 <= v < 4.0.0"
+              "NoRedInk/elm-decode-pipeline": "3.0.0 <= v < 4.0.0",
+              "NoRedInk/string-conversions": "1.0.0 <= v < 2.0.0"
           },
           "elm-version": "0.18.0 <= v < 0.19.0"
       }

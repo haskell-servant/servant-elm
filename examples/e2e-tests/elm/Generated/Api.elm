@@ -5,6 +5,7 @@ import Json.Decode.Pipeline exposing (..)
 import Json.Encode
 import Http
 import String
+import String.Conversions as String
 
 
 type alias Response =
@@ -61,7 +62,7 @@ decodeResponseWithArgs =
     decode ResponseWithArgs
         |> required "args" decodeQueryArgs
 
-getIp : Http.Request (Response)
+getIp : Http.Request (Http.Response (Response))
 getIp =
     Http.request
         { method =
@@ -76,14 +77,18 @@ getIp =
         , body =
             Http.emptyBody
         , expect =
-            Http.expectJson decodeResponse
+            Http.expectStringResponse
+                (\response ->
+                    Result.map
+                        (\body -> { response | body = body })
+                        (decodeString decodeResponse response.body))
         , timeout =
             Nothing
         , withCredentials =
             False
         }
 
-getStatus204 : Http.Request (NoContent)
+getStatus204 : Http.Request (Http.Response (NoContent))
 getStatus204 =
     Http.request
         { method =
@@ -100,9 +105,9 @@ getStatus204 =
             Http.emptyBody
         , expect =
             Http.expectStringResponse
-                (\{ body } ->
-                    if String.isEmpty body then
-                        Ok NoContent
+                (\response ->
+                    if String.isEmpty response.body then
+                        Ok { response | body = NoContent }
                     else
                         Err "Expected the response body to be empty"
                 )
@@ -112,7 +117,7 @@ getStatus204 =
             False
         }
 
-postPost : MessageBody -> Http.Request (ResponseWithJson)
+postPost : MessageBody -> Http.Request (Http.Response (ResponseWithJson))
 postPost body =
     Http.request
         { method =
@@ -127,14 +132,18 @@ postPost body =
         , body =
             Http.jsonBody (encodeMessageBody body)
         , expect =
-            Http.expectJson decodeResponseWithJson
+            Http.expectStringResponse
+                (\response ->
+                    Result.map
+                        (\body -> { response | body = body })
+                        (decodeString decodeResponseWithJson response.body))
         , timeout =
             Nothing
         , withCredentials =
             False
         }
 
-getGet : Maybe (String) -> Http.Request (ResponseWithArgs)
+getGet : Maybe (String) -> Http.Request (Http.Response (ResponseWithArgs))
 getGet query_q =
     let
         params =
@@ -161,14 +170,18 @@ getGet query_q =
             , body =
                 Http.emptyBody
             , expect =
-                Http.expectJson decodeResponseWithArgs
+                Http.expectStringResponse
+                    (\response ->
+                        Result.map
+                            (\body -> { response | body = body })
+                            (decodeString decodeResponseWithArgs response.body))
             , timeout =
                 Nothing
             , withCredentials =
                 False
             }
 
-getByPath : String -> Http.Request (Response)
+getByPath : String -> Http.Request (Http.Response (Response))
 getByPath capture_path =
     Http.request
         { method =
@@ -183,7 +196,11 @@ getByPath capture_path =
         , body =
             Http.emptyBody
         , expect =
-            Http.expectJson decodeResponse
+            Http.expectStringResponse
+                (\response ->
+                    Result.map
+                        (\body -> { response | body = body })
+                        (decodeString decodeResponse response.body))
         , timeout =
             Nothing
         , withCredentials =
