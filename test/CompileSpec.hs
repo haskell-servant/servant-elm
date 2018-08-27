@@ -41,6 +41,7 @@ spec = do
                       "elm/json": "1.0.0",
                       "elm-community/json-extra": "3.0.0",
                       "elm/http": "1.0.0",
+                      "elm/url": "1.0.0",
                       "NoRedInk/elm-json-decode-pipeline": "1.0.0"
                   },
                   "indirect": {}

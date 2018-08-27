@@ -1,6 +1,7 @@
 module GetBooksByTitleSource exposing (..)
 
 import Http
+import Url
 
 
 getBooksByTitle : String -> Http.Request (Book)
@@ -14,7 +15,7 @@ getBooksByTitle capture_title =
             String.join "/"
                 [ ""
                 , "books"
-                , capture_title |> Http.encodeUri
+                , capture_title |> Url.percentEncode
                 ]
         , body =
             Http.emptyBody

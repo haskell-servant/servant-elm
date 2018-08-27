@@ -1,6 +1,7 @@
 module GetBooksByIdSource exposing (..)
 
 import Http
+import Url
 
 
 getBooksById : Int -> Http.Request (Book)
@@ -14,7 +15,7 @@ getBooksById capture_id =
             String.join "/"
                 [ ""
                 , "books"
-                , capture_id |> String.fromInt |> Http.encodeUri
+                , capture_id |> String.fromInt |> Url.percentEncode
                 ]
         , body =
             Http.emptyBody

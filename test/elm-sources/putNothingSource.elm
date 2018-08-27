@@ -19,8 +19,8 @@ putNothing =
             Http.emptyBody
         , expect =
             Http.expectStringResponse
-                (\{ body } ->
-                    if String.isEmpty body then
+                (\res ->
+                    if String.isEmpty res.body then
                         Ok ()
                     else
                         Err "Expected the response body to be empty"

@@ -5,7 +5,7 @@ import Json.Decode.Pipeline exposing (..)
 import Json.Encode
 import Http
 import String
-import String.Conversions as String
+import Url
 
 
 type alias Book =
@@ -14,7 +14,7 @@ type alias Book =
 
 decodeBook : Decoder Book
 decodeBook =
-    decode Book
+    succeed Book
         |> required "name" string
 
 encodeBook : Book -> Json.Encode.Value
@@ -78,7 +78,7 @@ getBooksByBookId capture_bookId =
             String.join "/"
                 [ "http://localhost:8000"
                 , "books"
-                , capture_bookId |> String.fromInt |> Http.encodeUri
+                , capture_bookId |> String.fromInt |> Url.percentEncode
                 ]
         , body =
             Http.emptyBody

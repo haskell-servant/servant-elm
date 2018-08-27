@@ -43,14 +43,17 @@ spec = do
                               "import Json.Encode\n\n\n")
                           , ( "test/elm-sources/getBooksByIdSource.elm"
                             , "module GetBooksByIdSource exposing (..)\n\n" <>
-                              "import Http\n\n\n")
+                              "import Http\n" <>
+                              "import Url\n\n\n")
                           , ( "test/elm-sources/getBooksByTitleSource.elm"
                             , "module GetBooksByTitleSource exposing (..)\n\n" <>
-                              "import Http\n\n\n")
+                              "import Http\n" <>
+                              "import Url\n\n\n")
                           , ( "test/elm-sources/getBooksSource.elm"
                             , "module GetBooksSource exposing (..)\n\n" <>
                               "import Http\n" <>
-                              "import Json.Decode exposing (..)\n\n\n")
+                              "import Json.Decode exposing (..)\n" <>
+                              "import Url\n\n\n")
                           , ( "test/elm-sources/postBooksSource.elm"
                             , "module PostBooksSource exposing (..)\n\n" <>
                               "import Http\n\n\n")

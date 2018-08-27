@@ -37,7 +37,7 @@ type TestApi =
          :> QueryParam "sort" String
          :> QueryParam "year" Int
          :> QueryParam' '[Required] "category" String
-         :> QueryParams "filters" (Maybe Bool)
+         :> QueryParams "filters" Bool
          :> Get '[JSON] [Book]
   :<|> "books"
          :> ReqBody '[JSON] Book

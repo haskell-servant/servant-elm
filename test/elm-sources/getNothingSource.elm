@@ -19,8 +19,8 @@ getNothing =
             Http.emptyBody
         , expect =
             Http.expectStringResponse
-                (\{ body } ->
-                    if String.isEmpty body then
+                (\res ->
+                    if String.isEmpty res.body then
                         Ok NoContent
                     else
                         Err "Expected the response body to be empty"

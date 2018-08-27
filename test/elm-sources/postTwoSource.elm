@@ -20,7 +20,7 @@ postTwo body =
         , body =
             Http.jsonBody (Json.Encode.string body)
         , expect =
-            Http.expectJson (maybe int)
+            Http.expectJson (nullable int)
         , timeout =
             Nothing
         , withCredentials =

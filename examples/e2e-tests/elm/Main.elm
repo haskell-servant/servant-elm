@@ -1,13 +1,14 @@
 module Main exposing (..)
 
+import Browser
 import Generated.Api as Api
 import Html exposing (div, img, input, button, text, li, ul, h1, dl, dd, dt)
 import Http
 
 
-main : Program Never Model Msg
+main : Program () Model Msg
 main =
-    Html.program
+    Browser.element
         { init = init
         , view = view
         , update = update
@@ -29,8 +30,8 @@ type MyError
     | AppError String
 
 
-init : ( Model, Cmd Msg )
-init =
+init : () -> ( Model, Cmd Msg )
+init flags =
     ( { successGetIp = Nothing
       , successGetStatus204 = Nothing
       , successPostPost = Nothing
@@ -112,7 +113,7 @@ update action model =
                                 if response.args.q == "Hello World" then
                                     promoteError result
                                 else
-                                    Err (AppError (toString response.args.q ++ " != " ++ toString "Hello World"))
+                                    Err (AppError (Debug.toString response.args.q ++ " != " ++ Debug.toString "Hello World"))
 
                             Err _ ->
                                 promoteError result
@@ -164,10 +165,10 @@ viewResult name success =
                     ( ": Waiting...", "" )
 
                 Just (Err e) ->
-                    ( ": Error", toString e )
+                    ( ": Error", Debug.toString e )
 
                 Just (Ok x) ->
-                    ( ": Ok", toString x )
+                    ( ": Ok", Debug.toString x )
     in
         [ dt [] [ text (name ++ status) ]
         , dd [] [ text content ]

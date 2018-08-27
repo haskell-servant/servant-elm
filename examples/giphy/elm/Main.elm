@@ -1,5 +1,6 @@
 module Main exposing (..)
 
+import Browser
 import Generated.GiphyApi as Api
 import Html exposing (div, img, input, button, text)
 import Html.Attributes exposing (placeholder, src, value)
@@ -8,9 +9,9 @@ import Http
 import String
 
 
-main : Program Never Model Msg
+main : Program () Model Msg
 main =
-    Html.program
+    Browser.element
         { init = init
         , view = view
         , update = update
@@ -24,8 +25,8 @@ type alias Model =
     }
 
 
-init : ( Model, Cmd Msg )
-init =
+init : () -> ( Model, Cmd Msg )
+init flags =
     ( { url = Nothing
       , topic = Nothing
       }

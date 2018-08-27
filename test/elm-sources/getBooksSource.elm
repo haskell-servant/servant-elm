@@ -2,9 +2,10 @@ module GetBooksSource exposing (..)
 
 import Http
 import Json.Decode exposing (..)
+import Url
 
 
-getBooks : Bool -> Maybe (String) -> Maybe (Int) -> String -> List (Maybe (Bool)) -> Http.Request (List (Book))
+getBooks : Bool -> Maybe (String) -> Maybe (Int) -> String -> List (Bool) -> Http.Request (List (Book))
 getBooks query_published query_sort query_year query_category query_filters =
     let
         params =
@@ -14,16 +15,16 @@ getBooks query_published query_sort query_year query_category query_filters =
                   else
                     ""
                 , query_sort
-                    |> Maybe.map (identity >> Http.encodeUri >> (++) "sort=")
+                    |> Maybe.map (identity >> Url.percentEncode >> (++) "sort=")
                     |> Maybe.withDefault ""
                 , query_year
-                    |> Maybe.map (String.fromInt >> Http.encodeUri >> (++) "year=")
+                    |> Maybe.map (String.fromInt >> Url.percentEncode >> (++) "year=")
                     |> Maybe.withDefault ""
                 , Just query_category
-                    |> Maybe.map (Http.encodeUri >> (++) "category=")
+                    |> Maybe.map (Url.percentEncode >> (++) "category=")
                     |> Maybe.withDefault ""
                 , query_filters
-                    |> List.map (\val -> "filters[]=" ++ (val |> String.fromBool |> Http.encodeUri))
+                    |> List.map (\val -> "filters[]=" ++ (val |> (\v -> if v then "True" else "False") |> Url.percentEncode))
                     |> String.join "&"
                 ]
     in
