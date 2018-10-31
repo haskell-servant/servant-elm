@@ -492,6 +492,7 @@ isElmStringType opts elmTypeExpr =
 
 
 toStringSrcTypes :: T.Text -> ElmOptions -> ElmDatatype -> T.Text
+toStringSrcTypes operator opts (ElmDatatype name _) = T.toLower name <> "ToString"
 toStringSrcTypes operator opts (ElmPrimitive (EMaybe argType)) = toStringSrcTypes operator opts argType
 toStringSrcTypes _ _ (ElmPrimitive (EList (ElmPrimitive EChar))) = "identity"
 toStringSrcTypes operator opts (ElmPrimitive (EList argType)) = toStringSrcTypes operator opts argType
