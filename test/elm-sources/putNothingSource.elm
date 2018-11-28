@@ -20,9 +20,9 @@ putNothing =
             Http.emptyBody
         , expect =
             Http.expectStringResponse
-                (\response ->
-                    if String.isEmpty response.body then
-                        Ok { response | body = () }
+                (\res ->
+                    if String.isEmpty res.body then
+                        Ok { url = res.url, status = res.status, headers = res.headers, body = () }
                     else
                         Err "Expected the response body to be empty"
                 )

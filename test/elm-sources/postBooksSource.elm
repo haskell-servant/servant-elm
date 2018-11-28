@@ -20,9 +20,9 @@ postBooks body =
             Http.jsonBody (encodeBook body)
         , expect =
             Http.expectStringResponse
-                (\response ->
-                    if String.isEmpty response.body then
-                        Ok { response | body = NoContent }
+                (\res ->
+                    if String.isEmpty res.body then
+                        Ok { url = res.url, status = res.status, headers = res.headers, body = NoContent }
                     else
                         Err "Expected the response body to be empty"
                 )

@@ -71,8 +71,8 @@ import Json.Decode exposing (..)
 import Json.Decode.Pipeline exposing (..)
 import Json.Encode
 import Http
-import String
 import String.Conversions as String
+import Url
 
 
 type alias Book =
@@ -95,7 +95,7 @@ getBooksByBookId capture_bookId =
             String.join "/"
                 [ ""
                 , "books"
-                , capture_bookId |> toString |> Http.encodeUri
+                , capture_bookId |> String.fromInt |> Url.percentEncode
                 ]
         , body =
             Http.emptyBody
