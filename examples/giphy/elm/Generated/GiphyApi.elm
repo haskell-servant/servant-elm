@@ -4,7 +4,8 @@ import Json.Decode exposing (..)
 import Json.Decode.Pipeline exposing (..)
 import Json.Encode
 import Http
-import String
+import String.Conversions as String
+import Url
 
 
 type alias Gif =
@@ -17,24 +18,24 @@ type alias GifData =
 
 decodeGif : Decoder Gif
 decodeGif =
-    decode Gif
+    succeed Gif
         |> required "data" decodeGifData
 
 decodeGifData : Decoder GifData
 decodeGifData =
-    decode GifData
+    succeed GifData
         |> required "image_url" string
 
-getRandom : Maybe (String) -> Maybe (String) -> Http.Request (Gif)
+getRandom : Maybe (String) -> Maybe (String) -> Http.Request (Http.Response (Gif))
 getRandom query_api_key query_tag =
     let
         params =
             List.filter (not << String.isEmpty)
                 [ query_api_key
-                    |> Maybe.map (Http.encodeUri >> (++) "api_key=")
+                    |> Maybe.map (Url.percentEncode >> (++) "api_key=")
                     |> Maybe.withDefault ""
                 , query_tag
-                    |> Maybe.map (Http.encodeUri >> (++) "tag=")
+                    |> Maybe.map (Url.percentEncode >> (++) "tag=")
                     |> Maybe.withDefault ""
                 ]
     in
@@ -55,7 +56,12 @@ getRandom query_api_key query_tag =
             , body =
                 Http.emptyBody
             , expect =
-                Http.expectJson decodeGif
+                Http.expectStringResponse
+                    (\res ->
+                        Result.mapError Json.Decode.errorToString
+                            (Result.map
+                                (\body_ -> { url = res.url, status = res.status, headers = res.headers, body = body_ })
+                                (decodeString decodeGif res.body)))
             , timeout =
                 Nothing
             , withCredentials =

@@ -46,16 +46,19 @@ spec = do
                           , ( "test/elm-sources/getBooksByIdSource.elm"
                             , "module GetBooksByIdSource exposing (..)\n\n" <>
                               "import String.Conversions as String\n" <>
-                              "import Http\n\n\n")
+                              "import Http\n" <>
+                              "import Url\n\n\n")
                           , ( "test/elm-sources/getBooksByTitleSource.elm"
                             , "module GetBooksByTitleSource exposing (..)\n\n" <>
                               "import Http\n" <>
-                              "import String.Conversions as String\n\n\n")
+                              "import String.Conversions as String\n" <>
+                              "import Url\n\n\n")
                           , ( "test/elm-sources/getBooksSource.elm"
                             , "module GetBooksSource exposing (..)\n\n" <>
                               "import Http\n" <>
                               "import String.Conversions as String\n" <>
-                              "import Json.Decode exposing (..)\n\n\n")
+                              "import Json.Decode exposing (..)\n" <>
+                              "import Url\n\n\n")
                           , ( "test/elm-sources/postBooksSource.elm"
                             , "module PostBooksSource exposing (..)\n\n" <>
                               "import String.Conversions as String\n" <>

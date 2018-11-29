@@ -4,9 +4,8 @@ import Json.Decode exposing (..)
 import Json.Decode.Pipeline exposing (..)
 import Json.Encode
 import Http
-import String
 import String.Conversions as String
-
+import Url
 
 type alias Response =
     { origin : String
@@ -14,7 +13,7 @@ type alias Response =
 
 decodeResponse : Decoder Response
 decodeResponse =
-    decode Response
+    succeed Response
         |> required "origin" string
 
 type NoContent
@@ -32,7 +31,7 @@ encodeMessageBody x =
 
 decodeMessageBody : Decoder MessageBody
 decodeMessageBody =
-    decode MessageBody
+    succeed MessageBody
         |> required "message" string
 
 type alias ResponseWithJson =
@@ -41,7 +40,7 @@ type alias ResponseWithJson =
 
 decodeResponseWithJson : Decoder ResponseWithJson
 decodeResponseWithJson =
-    decode ResponseWithJson
+    succeed ResponseWithJson
         |> required "json" decodeMessageBody
 
 type alias QueryArgs =
@@ -50,7 +49,7 @@ type alias QueryArgs =
 
 decodeQueryArgs : Decoder QueryArgs
 decodeQueryArgs =
-    decode QueryArgs
+    succeed QueryArgs
         |> required "q" string
 
 type alias ResponseWithArgs =
@@ -59,7 +58,7 @@ type alias ResponseWithArgs =
 
 decodeResponseWithArgs : Decoder ResponseWithArgs
 decodeResponseWithArgs =
-    decode ResponseWithArgs
+    succeed ResponseWithArgs
         |> required "args" decodeQueryArgs
 
 getIp : Http.Request (Http.Response (Response))
@@ -78,10 +77,11 @@ getIp =
             Http.emptyBody
         , expect =
             Http.expectStringResponse
-                (\response ->
-                    Result.map
-                        (\body -> { response | body = body })
-                        (decodeString decodeResponse response.body))
+                (\res ->
+                    Result.mapError Json.Decode.errorToString
+                        (Result.map
+                            (\body_ -> { url = res.url, status = res.status, headers = res.headers, body = body_ })
+                            (decodeString decodeResponse res.body)))
         , timeout =
             Nothing
         , withCredentials =
@@ -105,9 +105,9 @@ getStatus204 =
             Http.emptyBody
         , expect =
             Http.expectStringResponse
-                (\response ->
-                    if String.isEmpty response.body then
-                        Ok { response | body = NoContent }
+                (\res ->
+                    if String.isEmpty res.body then
+                        Ok { url = res.url, status = res.status, headers = res.headers, body = NoContent }
                     else
                         Err "Expected the response body to be empty"
                 )
@@ -133,10 +133,11 @@ postPost body =
             Http.jsonBody (encodeMessageBody body)
         , expect =
             Http.expectStringResponse
-                (\response ->
-                    Result.map
-                        (\body -> { response | body = body })
-                        (decodeString decodeResponseWithJson response.body))
+                (\res ->
+                    Result.mapError Json.Decode.errorToString
+                        (Result.map
+                            (\body_ -> { url = res.url, status = res.status, headers = res.headers, body = body_ })
+                            (decodeString decodeResponseWithJson res.body)))
         , timeout =
             Nothing
         , withCredentials =
@@ -149,7 +150,7 @@ getGet query_q =
         params =
             List.filter (not << String.isEmpty)
                 [ query_q
-                    |> Maybe.map (Http.encodeUri >> (++) "q=")
+                    |> Maybe.map (Url.percentEncode >> (++) "q=")
                     |> Maybe.withDefault ""
                 ]
     in
@@ -171,10 +172,11 @@ getGet query_q =
                 Http.emptyBody
             , expect =
                 Http.expectStringResponse
-                    (\response ->
-                        Result.map
-                            (\body -> { response | body = body })
-                            (decodeString decodeResponseWithArgs response.body))
+                    (\res ->
+                        Result.mapError Json.Decode.errorToString
+                            (Result.map
+                                (\body_ -> { url = res.url, status = res.status, headers = res.headers, body = body_ })
+                                (decodeString decodeResponseWithArgs res.body)))
             , timeout =
                 Nothing
             , withCredentials =
@@ -191,16 +193,17 @@ getByPath capture_path =
         , url =
             String.join "/"
                 [ "https://httpbin.org"
-                , capture_path |> Http.encodeUri
+                , capture_path |> Url.percentEncode
                 ]
         , body =
             Http.emptyBody
         , expect =
             Http.expectStringResponse
-                (\response ->
-                    Result.map
-                        (\body -> { response | body = body })
-                        (decodeString decodeResponse response.body))
+                (\res ->
+                    Result.mapError Json.Decode.errorToString
+                        (Result.map
+                            (\body_ -> { url = res.url, status = res.status, headers = res.headers, body = body_ })
+                            (decodeString decodeResponse res.body)))
         , timeout =
             Nothing
         , withCredentials =

@@ -4,8 +4,8 @@ import Json.Decode exposing (..)
 import Json.Decode.Pipeline exposing (..)
 import Json.Encode
 import Http
-import String
 import String.Conversions as String
+import Url
 
 
 type alias Book =
@@ -14,7 +14,7 @@ type alias Book =
 
 decodeBook : Decoder Book
 decodeBook =
-    decode Book
+    succeed Book
         |> required "name" string
 
 encodeBook : Book -> Json.Encode.Value
@@ -39,10 +39,11 @@ postBooks body =
             Http.jsonBody (encodeBook body)
         , expect =
             Http.expectStringResponse
-                (\response ->
-                    Result.map
-                        (\body -> { response | body = body })
-                        (decodeString decodeBook response.body))
+                (\res ->
+                    Result.mapError Json.Decode.errorToString
+                        (Result.map
+                            (\body_ -> { url = res.url, status = res.status, headers = res.headers, body = body_ })
+                            (decodeString decodeBook res.body)))
         , timeout =
             Nothing
         , withCredentials =
@@ -65,10 +66,11 @@ getBooks =
             Http.emptyBody
         , expect =
             Http.expectStringResponse
-                (\response ->
-                    Result.map
-                        (\body -> { response | body = body })
-                        (decodeString (list decodeBook) response.body))
+                (\res ->
+                    Result.mapError Json.Decode.errorToString
+                        (Result.map
+                            (\body_ -> { url = res.url, status = res.status, headers = res.headers, body = body_ })
+                            (decodeString (list decodeBook) res.body)))
         , timeout =
             Nothing
         , withCredentials =
@@ -86,16 +88,17 @@ getBooksByBookId capture_bookId =
             String.join "/"
                 [ "http://localhost:8000"
                 , "books"
-                , capture_bookId |> toString |> Http.encodeUri
+                , capture_bookId |> String.fromInt |> Url.percentEncode
                 ]
         , body =
             Http.emptyBody
         , expect =
             Http.expectStringResponse
-                (\response ->
-                    Result.map
-                        (\body -> { response | body = body })
-                        (decodeString decodeBook response.body))
+                (\res ->
+                    Result.mapError Json.Decode.errorToString
+                        (Result.map
+                            (\body_ -> { url = res.url, status = res.status, headers = res.headers, body = body_ })
+                            (decodeString decodeBook res.body)))
         , timeout =
             Nothing
         , withCredentials =

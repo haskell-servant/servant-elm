@@ -112,8 +112,8 @@ The default required imports are:
 > import Json.Decode.Pipeline exposing (..)
 > import Json.Encode
 > import Http
-> import String
 > import String.Conversions as String
+> import Url
 -}
 defElmImports :: Text
 defElmImports =
@@ -122,8 +122,8 @@ defElmImports =
     , "import Json.Decode.Pipeline exposing (..)"
     , "import Json.Encode"
     , "import Http"
-    , "import String"
     , "import String.Conversions as String"
+    , "import Url"
     ]
 
 
@@ -327,7 +327,7 @@ mkLetParams opts request =
             toStringSrc' = toStringSrc ">>" opts (qarg ^. F.queryArgName . F.argType)
           in
               name <$>
-              indent 4 ("|> Maybe.map" <+> parens (toStringSrc' <> "Http.encodeUri >> (++)" <+> dquotes (elmName <> equals)) <$>
+              indent 4 ("|> Maybe.map" <+> parens (toStringSrc' <> "Url.percentEncode >> (++)" <+> dquotes (elmName <> equals)) <$>
                         "|> Maybe.withDefault" <+> dquotes empty)
 
         F.Flag ->
@@ -341,7 +341,7 @@ mkLetParams opts request =
               argType = qarg ^. F.queryArgName . F.argType
             in
                 name <$>
-                indent 4 ("|> List.map" <+> parens (backslash <> "val ->" <+> dquotes (name <> "[]=") <+> "++ (val |>" <+> toStringSrc "|>" opts argType <+> "Http.encodeUri)") <$>
+                indent 4 ("|> List.map" <+> parens (backslash <> "val ->" <+> dquotes (name <> "[]=") <+> "++ (val |>" <+> toStringSrc "|>" opts argType <+> "Url.percentEncode)") <$>
                       "|> String.join" <+> dquotes "&")
       where
         name = elmQueryArg qarg
@@ -404,19 +404,20 @@ mkRequest opts request =
                 Elm.toElmTypeRefWith (elmExportOptions opts) elmTypeExpr
           in
             "Http.expectStringResponse" <$>
-            indent i (parens (backslash <> "response" <+> "->" <$>
-                              indent i ("if String.isEmpty response.body then" <$>
-                                        indent i "Ok" <+> braces (" response" <+> "|" <+> "body" <+> "=" <+> stext elmConstructor <> " ") <$>
+            indent i (parens (backslash <> "res" <+> "->" <$>
+                              indent i ("if String.isEmpty res.body then" <$>
+                                        indent i "Ok" <+> braces (" url = res.url, status = res.status, headers = res.headers, body =" <+> stext elmConstructor <> " ") <$>
                                         "else" <$>
                                         indent i ("Err" <+> dquotes "Expected the response body to be empty")) <> line))
 
 
         Just elmTypeExpr ->
           "Http.expectStringResponse" <$>
-          indent i (parens (backslash <> "response" <+> "->" <$>
-                            indent i ("Result.map" <$>
-                                      indent i (parens (backslash <> "body" <+> "->" <+> braces (" response" <+> "|" <+> "body" <+> "=" <+> "body "))) <$>
-                                      indent i (parens ("decodeString" <+> stext (Elm.toElmDecoderRefWith (elmExportOptions opts) elmTypeExpr) <+> "response.body")))))
+          indent i (parens (backslash <> "res" <+> "->" <$>
+                            indent i ("Result.mapError Json.Decode.errorToString" <$>
+                                      indent i (parens ("Result.map" <$>
+                                                indent i (parens (backslash <> "body_" <+> "->" <+> braces (" url = res.url, status = res.status, headers = res.headers, body = body_ "))) <$>
+                                                indent i (parens ("decodeString" <+> stext (Elm.toElmDecoderRefWith (elmExportOptions opts) elmTypeExpr) <+> "res.body")))))))
 
         Nothing ->
           error "mkHttpRequest: no reqReturnType?"
@@ -442,7 +443,7 @@ mkUrl opts segments =
             -- Don't use "toString" on Elm Strings, otherwise we get extraneous quotes.
             toStringSrc' = toStringSrc "|>" opts (arg ^. F.argType)
           in
-            elmCaptureArg s <+> "|>" <+> toStringSrc' <+> "Http.encodeUri"
+            elmCaptureArg s <+> "|>" <+> toStringSrc' <+> "Url.percentEncode"
 
 
 mkQueryParams
@@ -483,11 +484,11 @@ toStringSrcTypes _ _ (ElmPrimitive (EList (ElmPrimitive EChar))) = "identity"
 toStringSrcTypes operator opts (ElmPrimitive (EList argType)) = toStringSrcTypes operator opts argType
 toStringSrcTypes _ opts argType
     | isElmStringType opts argType   = "identity"
-    | isElmIntType opts argType   = "toString" -- in elm 0.19 "String.fromInt"
-    | isElmFloatType opts argType = "toString" -- in elm 0.19 "String.fromFloat"
+    | isElmIntType opts argType   = "String.fromInt"
+    | isElmFloatType opts argType = "String.fromFloat"
     | isElmBoolType opts argType  = "String.fromBool" -- We should change this to return `true`/`false` but this mimics the old behavior.
     | isElmCharType opts argType  = "String.fromChar"
-    | otherwise                   = error ("Sorry, we don't support other types than `String`, `Int` and `Float` atm. " <> show argType)
+    | otherwise                   = error ("Sorry, we don't support other types than `String`, `Int`, `Float`, `Bool`, and `Char` right now. " <> show argType)
 
 
 {- | Determines whether we call `toString` on URL captures and query params of

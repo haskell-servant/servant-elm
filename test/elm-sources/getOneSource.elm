@@ -21,10 +21,11 @@ getOne =
             Http.emptyBody
         , expect =
             Http.expectStringResponse
-                (\response ->
-                    Result.map
-                        (\body -> { response | body = body })
-                        (decodeString int response.body))
+                (\res ->
+                    Result.mapError Json.Decode.errorToString
+                        (Result.map
+                            (\body_ -> { url = res.url, status = res.status, headers = res.headers, body = body_ })
+                            (decodeString int res.body)))
         , timeout =
             Nothing
         , withCredentials =
