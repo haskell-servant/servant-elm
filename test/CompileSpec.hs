@@ -37,13 +37,18 @@ spec = do
               "elm-version": "0.19.0",
               "dependencies": {
                   "direct": {
-                      "elm/core": "1.0.0",
-                      "elm/json": "1.0.0",
-                      "elm-community/json-extra": "3.0.0",
-                      "elm/http": "1.0.0",
+                      "elm/core": "1.0.2",
+                      "elm/json": "1.1.2",
+                      "elm/http": "2.0.0",
+                      "elm/url": "1.0.0",
+                      "NoRedInk/elm-string-conversions": "1.0.1",
                       "NoRedInk/elm-json-decode-pipeline": "1.0.0"
                   },
-                  "indirect": {}
+                  "indirect": {
+                    "elm/bytes": "1.0.7",
+                    "elm/time": "1.0.0",
+                    "elm/file": "1.0.1"
+                  }
               },
               "test-dependencies": {
                   "direct": {},

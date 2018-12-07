@@ -4,8 +4,8 @@ import String.Conversions as String
 import Http
 
 
-getNothing : Http.Request (Http.Response (NoContent))
-getNothing =
+getNothing : (Result Http.Error (NoContent) -> msg) -> Cmd msg
+getNothing toMsg =
     Http.request
         { method =
             "GET"
@@ -19,15 +19,21 @@ getNothing =
         , body =
             Http.emptyBody
         , expect =
-            Http.expectStringResponse
+            Http.expectStringResponse toMsg
                 (\res ->
-                    if String.isEmpty res.body then
-                        Ok { url = res.url, status = res.status, headers = res.headers, body = NoContent }
-                    else
-                        Err "Expected the response body to be empty"
-                )
+                    case res of
+                        Http.BadUrl_ url -> Err (Http.BadUrl url)
+                        Http.Timeout_ -> Err Http.Timeout
+                        Http.NetworkError_ -> Err Http.NetworkError
+                        Http.BadStatus_ metadata _ -> Err (Http.BadStatus metadata.statusCode)
+                        Http.GoodStatus_ metadata body_ ->
+                            if String.isEmpty body_ then
+                                Ok (NoContent)
+                            else
+                                Err (Http.BadBody "Expected the response body to be empty")
+                            )
         , timeout =
             Nothing
-        , withCredentials =
-            False
+        , tracker =
+            Nothing
         }

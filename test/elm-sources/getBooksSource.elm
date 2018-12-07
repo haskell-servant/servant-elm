@@ -6,8 +6,8 @@ import Json.Decode exposing (..)
 import Url
 
 
-getBooks : Bool -> Maybe (String) -> Maybe (Int) -> List (Maybe (Bool)) -> Http.Request (Http.Response (List (Book)))
-getBooks query_published query_sort query_year query_filters =
+getBooks : (Result Http.Error (List (Book)) -> msg) -> Bool -> Maybe (String) -> Maybe (Int) -> List (Maybe (Bool)) -> Cmd msg
+getBooks toMsg query_published query_sort query_year query_filters =
     let
         params =
             List.filter (not << String.isEmpty)
@@ -43,14 +43,19 @@ getBooks query_published query_sort query_year query_filters =
             , body =
                 Http.emptyBody
             , expect =
-                Http.expectStringResponse
+                Http.expectStringResponse toMsg
                     (\res ->
-                        Result.mapError Json.Decode.errorToString
-                            (Result.map
-                                (\body_ -> { url = res.url, status = res.status, headers = res.headers, body = body_ })
-                                (decodeString (list decodeBook) res.body)))
+                        case res of
+                            Http.BadUrl_ url -> Err (Http.BadUrl url)
+                            Http.Timeout_ -> Err Http.Timeout
+                            Http.NetworkError_ -> Err Http.NetworkError
+                            Http.BadStatus_ metadata _ -> Err (Http.BadStatus metadata.statusCode)
+                            Http.GoodStatus_ metadata body_ ->
+                                (decodeString (list decodeBook) body_)
+                                    |> Result.mapError Json.Decode.errorToString
+                                    |> Result.mapError Http.BadBody)
             , timeout =
                 Nothing
-            , withCredentials =
-                False
+            , tracker =
+                Nothing
             }

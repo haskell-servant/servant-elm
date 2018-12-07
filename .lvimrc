@@ -1,0 +1,9 @@
+" This file contains project-specific configuration settings for VIM users.
+" To load this file automatically, install this plugin: 'embear/vim-localvimrc'.
+
+" Formatting information for the Neoformat plugin: 'sbdchd/neoformat'.
+let g:neoformat_enabled_haskell = []
+let g:neoformat_enabled_elm = []
+let g:neoformat_enabled_sql = []
+let g:neoformat_enabled_yaml = []
+let g:ale_linters = { 'haskell': ['hlint'], 'elm': [] }

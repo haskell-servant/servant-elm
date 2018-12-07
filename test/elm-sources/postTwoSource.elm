@@ -6,8 +6,8 @@ import Json.Decode exposing (..)
 import Json.Encode
 
 
-postTwo : String -> Http.Request (Http.Response (Maybe (Int)))
-postTwo body =
+postTwo : (Result Http.Error (Maybe (Int)) -> msg) -> String -> Cmd msg
+postTwo toMsg body =
     Http.request
         { method =
             "POST"
@@ -21,14 +21,19 @@ postTwo body =
         , body =
             Http.jsonBody (Json.Encode.string body)
         , expect =
-            Http.expectStringResponse
+            Http.expectStringResponse toMsg
                 (\res ->
-                    Result.mapError Json.Decode.errorToString
-                        (Result.map
-                            (\body_ -> { url = res.url, status = res.status, headers = res.headers, body = body_ })
-                            (decodeString (nullable int) res.body)))
+                    case res of
+                        Http.BadUrl_ url -> Err (Http.BadUrl url)
+                        Http.Timeout_ -> Err Http.Timeout
+                        Http.NetworkError_ -> Err Http.NetworkError
+                        Http.BadStatus_ metadata _ -> Err (Http.BadStatus metadata.statusCode)
+                        Http.GoodStatus_ metadata body_ ->
+                            (decodeString (nullable int) body_)
+                                |> Result.mapError Json.Decode.errorToString
+                                |> Result.mapError Http.BadBody)
         , timeout =
             Nothing
-        , withCredentials =
-            False
+        , tracker =
+            Nothing
         }
