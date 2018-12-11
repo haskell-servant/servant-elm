@@ -202,7 +202,7 @@ generateElmForRequest opts request =
 mkTypeSignature :: ElmOptions -> F.Req ElmDatatype -> Doc
 mkTypeSignature opts request =
   (hsep . punctuate " ->" . concat)
-    [ catMaybes [urlPrefixType]
+    [ catMaybes [msgType, urlPrefixType]
     , headerTypes
     , urlCaptureTypes
     , queryTypes
@@ -249,10 +249,13 @@ mkTypeSignature opts request =
     bodyType =
         fmap elmTypeRef $ request ^. F.reqBody
 
-    returnType :: Maybe Doc
-    returnType = do
+    msgType :: Maybe Doc
+    msgType = do
       result <- fmap elmTypeRef $ request ^. F.reqReturnType
-      pure ("Http.Request" <+> parens ("Http.Response" <+> parens result))
+      pure (parens ("Result Http.Error" <+> parens result <+> "-> msg"))
+
+    returnType :: Maybe Doc
+    returnType = pure "Cmd msg"
 
 
 elmHeaderArg :: F.HeaderArg ElmDatatype -> Doc
@@ -284,7 +287,8 @@ mkArgs
   -> Doc
 mkArgs opts request =
   (hsep . concat) $
-    [ -- Dynamic url prefix
+    [ ["toMsg"]
+    , -- Dynamic url prefix
       case urlPrefix opts of
         Dynamic -> ["urlBase"]
         Static _ -> []
@@ -366,8 +370,8 @@ mkRequest opts request =
          indent i expect
        , "timeout =" <$>
          indent i "Nothing"
-       , "withCredentials =" <$>
-         indent i "False"
+       , "tracker =" <$>
+         indent i "Nothing"
        ])
   where
     method =
@@ -403,21 +407,42 @@ mkRequest opts request =
           let elmConstructor =
                 Elm.toElmTypeRefWith (elmExportOptions opts) elmTypeExpr
           in
-            "Http.expectStringResponse" <$>
-            indent i (parens (backslash <> "res" <+> "->" <$>
-                              indent i ("if String.isEmpty res.body then" <$>
-                                        indent i "Ok" <+> braces (" url = res.url, status = res.status, headers = res.headers, body =" <+> stext elmConstructor <> " ") <$>
-                                        "else" <$>
-                                        indent i ("Err" <+> dquotes "Expected the response body to be empty")) <> line))
+          "Http.expectStringResponse toMsg" <$>
+          indent i (parens (backslash <> "res" <+> "->" <$>
+              indent i "case res of" <$>
+              indent i (
+                indent i "Http.BadUrl_ url -> Err (Http.BadUrl url)" <$>
+                indent i "Http.Timeout_ -> Err Http.Timeout" <$>
+                indent i "Http.NetworkError_ -> Err Http.NetworkError" <$>
+                indent i "Http.BadStatus_ metadata _ -> Err (Http.BadStatus metadata.statusCode)" <$>
+
+                indent i "Http.GoodStatus_ metadata body_ ->" <$>
+                indent i (
+                indent i ("if String.isEmpty body_ then" <$>
+                  indent i "Ok" <+> (parens (stext elmConstructor)) <$>
+                  "else" <$>
+                  indent i ("Err" <+> (parens ("Http.BadBody" <+> dquotes "Expected the response body to be empty"))) <> line)
+                ))))
+
 
 
         Just elmTypeExpr ->
-          "Http.expectStringResponse" <$>
+          "Http.expectStringResponse toMsg" <$>
           indent i (parens (backslash <> "res" <+> "->" <$>
-                            indent i ("Result.mapError Json.Decode.errorToString" <$>
-                                      indent i (parens ("Result.map" <$>
-                                                indent i (parens (backslash <> "body_" <+> "->" <+> braces (" url = res.url, status = res.status, headers = res.headers, body = body_ "))) <$>
-                                                indent i (parens ("decodeString" <+> stext (Elm.toElmDecoderRefWith (elmExportOptions opts) elmTypeExpr) <+> "res.body")))))))
+              indent i "case res of" <$>
+              indent i (
+                indent i "Http.BadUrl_ url -> Err (Http.BadUrl url)" <$>
+                indent i "Http.Timeout_ -> Err Http.Timeout" <$>
+                indent i "Http.NetworkError_ -> Err Http.NetworkError" <$>
+                indent i "Http.BadStatus_ metadata _ -> Err (Http.BadStatus metadata.statusCode)" <$>
+
+                indent i "Http.GoodStatus_ metadata body_ ->" <$>
+                indent i (
+                indent i (parens ("decodeString" <+> stext (Elm.toElmDecoderRefWith (elmExportOptions opts) elmTypeExpr) <+> "body_")) <$>
+                indent i (
+                  indent i "|> Result.mapError Json.Decode.errorToString" <$>
+                  indent i "|> Result.mapError Http.BadBody"
+                )))))
 
         Nothing ->
           error "mkHttpRequest: no reqReturnType?"
