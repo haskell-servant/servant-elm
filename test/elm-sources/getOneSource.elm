@@ -5,7 +5,7 @@ import String.Conversions as String
 import Json.Decode exposing (..)
 
 
-getOne : (Result Http.Error (Int) -> msg) -> Cmd msg
+getOne : (Result (Maybe Http.Metadata, Http.Error) (Int) -> msg) -> Cmd msg
 getOne toMsg =
     Http.request
         { method =
@@ -23,14 +23,15 @@ getOne toMsg =
             Http.expectStringResponse toMsg
                 (\res ->
                     case res of
-                        Http.BadUrl_ url -> Err (Http.BadUrl url)
-                        Http.Timeout_ -> Err Http.Timeout
-                        Http.NetworkError_ -> Err Http.NetworkError
-                        Http.BadStatus_ metadata _ -> Err (Http.BadStatus metadata.statusCode)
+                        Http.BadUrl_ url -> Err (Nothing, Http.BadUrl url)
+                        Http.Timeout_ -> Err (Nothing, Http.Timeout)
+                        Http.NetworkError_ -> Err (Nothing, Http.NetworkError)
+                        Http.BadStatus_ metadata _ -> Err (Just metadata, Http.BadStatus metadata.statusCode)
                         Http.GoodStatus_ metadata body_ ->
                             (decodeString int body_)
                                 |> Result.mapError Json.Decode.errorToString
-                                |> Result.mapError Http.BadBody)
+                                |> Result.mapError Http.BadBody
+                                |> Result.mapError (Tuple.pair (Just metadata)))
         , timeout =
             Nothing
         , tracker =
