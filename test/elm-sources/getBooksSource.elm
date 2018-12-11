@@ -6,7 +6,7 @@ import Json.Decode exposing (..)
 import Url
 
 
-getBooks : (Result (Maybe Http.Metadata, Http.Error) (List (Book)) -> msg) -> Bool -> Maybe (String) -> Maybe (Int) -> List (Maybe (Bool)) -> Cmd msg
+getBooks : (Result (Maybe (Http.Metadata, String), Http.Error) (List (Book)) -> msg) -> Bool -> Maybe (String) -> Maybe (Int) -> List (Maybe (Bool)) -> Cmd msg
 getBooks toMsg query_published query_sort query_year query_filters =
     let
         params =
@@ -49,12 +49,12 @@ getBooks toMsg query_published query_sort query_year query_filters =
                             Http.BadUrl_ url -> Err (Nothing, Http.BadUrl url)
                             Http.Timeout_ -> Err (Nothing, Http.Timeout)
                             Http.NetworkError_ -> Err (Nothing, Http.NetworkError)
-                            Http.BadStatus_ metadata _ -> Err (Just metadata, Http.BadStatus metadata.statusCode)
+                            Http.BadStatus_ metadata body_ -> Err (Just (metadata, body_), Http.BadStatus metadata.statusCode)
                             Http.GoodStatus_ metadata body_ ->
                                 (decodeString (list decodeBook) body_)
                                     |> Result.mapError Json.Decode.errorToString
                                     |> Result.mapError Http.BadBody
-                                    |> Result.mapError (Tuple.pair (Just metadata)))
+                                    |> Result.mapError (Tuple.pair (Just (metadata, body_))))
             , timeout =
                 Nothing
             , tracker =

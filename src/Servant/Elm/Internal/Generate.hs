@@ -252,7 +252,7 @@ mkTypeSignature opts request =
     msgType :: Maybe Doc
     msgType = do
       result <- fmap elmTypeRef $ request ^. F.reqReturnType
-      pure (parens ("Result (Maybe Http.Metadata, Http.Error)" <+> parens result <+> "-> msg"))
+      pure (parens ("Result (Maybe (Http.Metadata, String), Http.Error)" <+> parens result <+> "-> msg"))
 
     returnType :: Maybe Doc
     returnType = pure "Cmd msg"
@@ -414,14 +414,14 @@ mkRequest opts request =
                 indent i "Http.BadUrl_ url -> Err (Nothing, Http.BadUrl url)" <$>
                 indent i "Http.Timeout_ -> Err (Nothing, Http.Timeout)" <$>
                 indent i "Http.NetworkError_ -> Err (Nothing, Http.NetworkError)" <$>
-                indent i "Http.BadStatus_ metadata _ -> Err (Just metadata, Http.BadStatus metadata.statusCode)" <$>
+                indent i "Http.BadStatus_ metadata body_ -> Err (Just (metadata, body_), Http.BadStatus metadata.statusCode)" <$>
 
                 indent i "Http.GoodStatus_ metadata body_ ->" <$>
                 indent i (
                 indent i ("if String.isEmpty body_ then" <$>
                   indent i "Ok" <+> (parens (stext elmConstructor)) <$>
                   "else" <$>
-                  indent i ("Err" <+> (parens ("Just metadata," <+> "Http.BadBody <|"
+                  indent i ("Err" <+> (parens ("Just (metadata, body_)," <+> "Http.BadBody <|"
                     <+> dquotes "Expected the response body to be empty, but it was '" <+> "++" <+> "body_" <+> "++" <+> dquotes "'."))) <> line)
                 ))))
 
@@ -435,7 +435,7 @@ mkRequest opts request =
                 indent i "Http.BadUrl_ url -> Err (Nothing, Http.BadUrl url)" <$>
                 indent i "Http.Timeout_ -> Err (Nothing, Http.Timeout)" <$>
                 indent i "Http.NetworkError_ -> Err (Nothing, Http.NetworkError)" <$>
-                indent i "Http.BadStatus_ metadata _ -> Err (Just metadata, Http.BadStatus metadata.statusCode)" <$>
+                indent i "Http.BadStatus_ metadata body_ -> Err (Just (metadata, body_), Http.BadStatus metadata.statusCode)" <$>
 
                 indent i "Http.GoodStatus_ metadata body_ ->" <$>
                 indent i (
@@ -443,7 +443,7 @@ mkRequest opts request =
                 indent i (
                   indent i "|> Result.mapError Json.Decode.errorToString" <$>
                   indent i "|> Result.mapError Http.BadBody" <$>
-                  indent i "|> Result.mapError (Tuple.pair (Just metadata))"
+                  indent i "|> Result.mapError (Tuple.pair (Just (metadata, body_)))"
                 )))))
 
         Nothing ->
