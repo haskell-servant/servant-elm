@@ -13,7 +13,6 @@ build-type:          Simple
 extra-source-files:
   CHANGELOG.md
   README.md
-  test/elm-sources/elm-package.json
   test/elm-sources/*.elm
 cabal-version:       >=1.10
 
