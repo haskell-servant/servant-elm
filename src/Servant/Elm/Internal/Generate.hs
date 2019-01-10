@@ -5,6 +5,7 @@ module Servant.Elm.Internal.Generate where
 
 import           Prelude                      hiding ((<$>))
 import           Control.Lens                 (to, (^.))
+import           Data.Int                     (Int32)
 import           Data.List                    (nub)
 import           Data.Maybe                   (catMaybes)
 import           Data.Proxy                   (Proxy)
@@ -91,7 +92,9 @@ defElmOptions = ElmOptions
       , Elm.toElmType ("" :: T.Text)
       ]
   , intElmTypes =
-      [ Elm.toElmType (0 :: Int) ]
+      [ Elm.toElmType (0 :: Int)
+      , Elm.toElmType (0 :: Int32)
+      ]
   , floatElmTypes =
       [ Elm.toElmType (0 :: Float) ]
   , boolElmTypes =
