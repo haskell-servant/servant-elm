@@ -11,17 +11,17 @@ getBooks query_published query_sort query_year query_category query_filters =
             List.filterMap identity
             (List.concat
                 [ [ if query_published then
-                    Just (Url.Builder.string "query_published" "")
+                    Just (Url.Builder.string "published" "")
                   else
                     Nothing ]
                 , [ query_sort
-                    |> Maybe.map (Url.Builder.string "sort") ]
+                    |> Maybe.map (Url.Builder.string "query_sort") ]
                 , [ query_year
-                    |> Maybe.map (String.fromInt >> Url.Builder.string "year") ]
+                    |> Maybe.map (String.fromInt >> Url.Builder.string "query_year") ]
                 , [ Just query_category
-                    |> Maybe.map (Url.Builder.string "category") ]
+                    |> Maybe.map (Url.Builder.string "query_category") ]
                 , query_filters
-                    |> List.map (\val -> Just (Url.Builder.string "query_filters[]" (maybeBoolToIntStr val)))
+                    |> List.map (\val -> Just (Url.Builder.string "filters[]" (maybeBoolToIntStr val)))
                 ])
     in
         Http.request

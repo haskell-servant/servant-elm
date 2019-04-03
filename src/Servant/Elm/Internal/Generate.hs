@@ -391,7 +391,7 @@ mkLetParams opts request =
               else
                 "String.fromInt >> "
           in
-              "[" <+> (if wrapped then name else "Just" <+> name) <> line <>
+              "[" <+> (if wrapped then elmName else "Just" <+> elmName) <> line <>
                 (indent 4 ("|> Maybe.map" <+> parens (toStringSrc <> "Url.Builder.string" <+> dquotes elmName)))
                 <+> "]"
               -- (if wrapped then name else "Just" <+> name) <$>
@@ -400,7 +400,7 @@ mkLetParams opts request =
 
         F.Flag ->
             "[" <+>
-            ("if" <+> name <+> "then" <$>
+            ("if" <+> elmName <+> "then" <$>
             indent 4 ("Just" <+> parens ("Url.Builder.string" <+> dquotes name <+> dquotes empty)) <$>
             indent 2 "else" <$>
             indent 4 "Nothing")
@@ -415,15 +415,15 @@ mkLetParams opts request =
                 else
                   "val"
             in
-            name <$>
+            elmName <$>
             indent 4 ("|> List.map"
                       <+> parens (backslash <> "val ->" <+> "Just"
                                   <+> parens ("Url.Builder.string"
                                               <+> dquotes (name <> "[]")
                                               <+> convertedVal)))
       where
-        name = elmQueryArg qarg
-        elmName= qarg ^. F.queryArgName . F.argName . to (stext . F.unPathSegment)
+        elmName = elmQueryArg qarg
+        name = qarg ^. F.queryArgName . F.argName . to (stext . F.unPathSegment)
 
 
 mkRequest :: ElmOptions -> F.Req EType -> Doc
