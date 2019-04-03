@@ -49,11 +49,10 @@ data ElmOptions = ElmOptions
     argument.
     -}
     urlPrefix             :: UrlPrefix
-    -- * Alterations to perform on ETypes before code generation.
   , elmTypeAlterations        :: (EType -> EType)
-    -- * Alterations to perform on ETypeDefs before code generation.
+    -- ^ Alterations to perform on ETypes before code generation.
   , elmAlterations        :: (ETypeDef -> ETypeDef)
-    -- ^ Options to pass to elm-export
+    -- ^ Alterations to perform on ETypeDefs before code generation.
   , emptyResponseElmTypes :: [EType]
     -- ^ Types that represent an empty Http response.
   , stringElmTypes        :: [EType]
