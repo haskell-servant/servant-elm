@@ -69,7 +69,8 @@ spec = do
         --   , DefineElm (Proxy :: Proxy NoContent)
         --   ]
         --   (Proxy :: Proxy TestApi)
-        callCommand "cp -r . /home/kb/tmp/servelmtest"
+        -- -- Useful for locally checking out sources in your tmp dir
+        -- callCommand "cp -r . /home/kb/tmp/servelmtest"
         runProcess_ "elm make Generated/BooksApi.elm --output api.js"
 
 
