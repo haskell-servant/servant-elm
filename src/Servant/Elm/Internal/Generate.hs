@@ -17,7 +17,7 @@ import           Data.Text.IO                 as TIO
 
 import           Elm.Json (jsonParserForType, jsonSerForType)
 import qualified Elm.Module                   as Elm
-import           Elm.TyRep (ETCon(..), EType(..), toElmType)
+import           Elm.TyRep (ETCon(..), EType(..), ETypeDef(..), toElmType)
 import           Elm.TyRender (renderElm)
 import           Elm.Versions (ElmVersion(Elm0p18))
 
@@ -28,13 +28,13 @@ import           Text.PrettyPrint.Leijen.Text
 
 
 toElmTypeRefWith :: ElmOptions -> EType -> Text
-toElmTypeRefWith ElmOptions{..} = T.pack . renderElm . elmAlterations
+toElmTypeRefWith ElmOptions{..} = T.pack . renderElm . elmTypeAlterations
 
 toElmDecoderRefWith :: ElmOptions -> EType -> Text
-toElmDecoderRefWith ElmOptions{..} = T.pack . jsonParserForType . elmAlterations
+toElmDecoderRefWith ElmOptions{..} = T.pack . jsonParserForType . elmTypeAlterations
 
 toElmEncoderRefWith :: ElmOptions -> EType -> Text
-toElmEncoderRefWith ElmOptions{..} = T.pack . jsonSerForType . elmAlterations
+toElmEncoderRefWith ElmOptions{..} = T.pack . jsonSerForType . elmTypeAlterations
 
 {-|
 Options to configure how code is generated.
@@ -50,7 +50,9 @@ data ElmOptions = ElmOptions
     -}
     urlPrefix             :: UrlPrefix
     -- * Alterations to perform on ETypes before code generation.
-  , elmAlterations        :: (EType -> EType)
+  , elmTypeAlterations        :: (EType -> EType)
+    -- * Alterations to perform on ETypeDefs before code generation.
+  , elmAlterations        :: (ETypeDef -> ETypeDef)
     -- ^ Options to pass to elm-export
   , emptyResponseElmTypes :: [EType]
     -- ^ Types that represent an empty Http response.
@@ -85,7 +87,8 @@ The default options are:
 defElmOptions :: ElmOptions
 defElmOptions = ElmOptions
   { urlPrefix = Static ""
-  , elmAlterations = Elm.defaultTypeAlterations
+  , elmTypeAlterations = Elm.defaultTypeAlterations
+  , elmAlterations = Elm.defaultAlterations
   , emptyResponseElmTypes =
       [ toElmType (Proxy :: Proxy F.NoContent)
       , toElmType (Proxy :: Proxy ())
@@ -112,6 +115,7 @@ The default required imports are:
 > import Set
 > import Http
 > import String
+> import Url.Builder
 -}
 defElmImports :: Text
 defElmImports =
@@ -124,6 +128,14 @@ defElmImports =
     , "import Set"
     , "import Http"
     , "import String"
+    , "import Url.Builder"
+    , ""
+    , "maybeBoolToIntStr : Maybe Bool -> String"
+    , "maybeBoolToIntStr mx ="
+    , "  case mx of"
+    , "    Nothing -> \"\""
+    , "    Just True -> \"1\""
+    , "    Just False -> \"0\""
     ]
 
 {-|
@@ -147,7 +159,7 @@ generateElmModuleWith options namespace imports rootDir typeDefs api = do
         [ T.pack $ Elm.moduleHeader Elm0p18 moduleName
         , ""
         , imports
-        , T.pack $ Elm.makeModuleContentWithAlterations options typeDefs
+        , T.pack $ Elm.makeModuleContentWithAlterations (elmAlterations options) typeDefs
         ] ++
         generateElmForAPIWith options api
       moduleName = intercalate "." namespace
@@ -356,12 +368,10 @@ mkArgs opts request =
 
 mkLetParams :: ElmOptions -> F.Req EType -> Maybe Doc
 mkLetParams opts request =
-  if null (request ^. F.reqUrl . F.queryStr) then
-    Nothing
-  else
     Just $ "params =" <$>
-           indent i ("List.filter (not << String.isEmpty)" <$>
-                      indent i (elmList params))
+           indent i ("List.filterMap identity" <$>
+                      parens ("List.concat" <$>
+                              indent i (elmList params)))
   where
     params :: [Doc]
     params = map paramToDoc (request ^. F.reqUrl . F.queryStr)
@@ -379,22 +389,38 @@ mkLetParams opts request =
               if isElmStringType opts argType || isElmMaybeStringType opts argType then
                 ""
               else
-                "toString >> "
+                "String.fromInt >> "
           in
-              (if wrapped then name else "Just" <+> name) <$>
-              indent 4 ("|> Maybe.map" <+> parens (toStringSrc <> "Http.encodeUri >> (++)" <+> dquotes (elmName <> equals)) <$>
-                        "|> Maybe.withDefault" <+> dquotes empty)
+              "[" <+> (if wrapped then name else "Just" <+> name) <> line <>
+                (indent 4 ("|> Maybe.map" <+> parens (toStringSrc <> "Url.Builder.string" <+> dquotes elmName)))
+                <+> "]"
+              -- (if wrapped then name else "Just" <+> name) <$>
+              -- indent 4 ("|> Maybe.map" <+> parens (toStringSrc <> "Http.encodeUri >> (++)" <+> dquotes (elmName <> equals)) <$>
+              --           "|> Maybe.withDefault" <+> dquotes empty)
 
         F.Flag ->
-            "if" <+> name <+> "then" <$>
-            indent 4 (dquotes (name <> equals)) <$>
+            "[" <+>
+            ("if" <+> name <+> "then" <$>
+            indent 4 ("Just" <+> parens ("Url.Builder.string" <+> dquotes name <+> dquotes empty)) <$>
             indent 2 "else" <$>
-            indent 4 (dquotes empty)
+            indent 4 "Nothing")
+            <+> "]"
 
         F.List ->
+            let
+              argType = qarg ^. F.queryArgName . F.argType
+              convertedVal =
+                if isElmListOfMaybeBoolType argType then
+                  parens ("maybeBoolToIntStr" <+> "val")
+                else
+                  "val"
+            in
             name <$>
-            indent 4 ("|> List.map" <+> parens (backslash <> "val ->" <+> dquotes (name <> "[]=") <+> "++ (val |> toString |> Http.encodeUri)") <$>
-                      "|> String.join" <+> dquotes "&")
+            indent 4 ("|> List.map"
+                      <+> parens (backslash <> "val ->" <+> "Just"
+                                  <+> parens ("Url.Builder.string"
+                                              <+> dquotes (name <> "[]")
+                                              <+> convertedVal)))
       where
         name = elmQueryArg qarg
         elmName= qarg ^. F.queryArgName . F.argName . to (stext . F.unPathSegment)
@@ -434,7 +460,7 @@ mkRequest opts request =
             if isElmMaybeStringType opts argType || isElmStringType opts argType then
               mempty
             else
-              " << toString"
+              " << String.fromInt"
       in
         "Maybe.map" <+> parens (("Http.header" <+> dquotes headerName <> toStringSrc))
         <+>
@@ -469,8 +495,8 @@ mkRequest opts request =
                 toElmTypeRefWith opts elmTypeExpr
           in
             "Http.expectStringResponse" <$>
-            indent i (parens (backslash <> braces " body " <+> "->" <$>
-                              indent i ("if String.isEmpty body then" <$>
+            indent i (parens (backslash <> " rsp " <+> "->" <$>
+                              indent i ("if String.isEmpty rsp.body then" <$>
                                         indent i "Ok" <+> stext elmConstructor <$>
                                         "else" <$>
                                         indent i ("Err" <+> dquotes "Expected the response body to be empty")) <> line))
@@ -485,12 +511,13 @@ mkRequest opts request =
 
 mkUrl :: ElmOptions -> [F.Segment EType] -> Doc
 mkUrl opts segments =
-  "String.join" <+> dquotes "/" <$>
+  "Url.Builder.absolute" <$>
   (indent i . elmList)
-    ( case urlPrefix opts of
-        Dynamic -> "urlBase"
-        Static url -> dquotes (stext url)
-      : map segmentToDoc segments)
+    ( map segmentToDoc segments)
+    -- ( case urlPrefix opts of
+    --     Dynamic -> "urlBase"
+    --     Static url -> dquotes (stext url)
+    --   : map segmentToDoc segments)
   where
 
     segmentToDoc :: F.Segment EType -> Doc
@@ -505,22 +532,19 @@ mkUrl opts segments =
               if isElmStringType opts (arg ^. F.argType) then
                 empty
               else
-                " |> toString"
+                " |> String.fromInt"
           in
-            (elmCaptureArg s) <> toStringSrc <> " |> Http.encodeUri"
+            (elmCaptureArg s) <> toStringSrc
 
 
 mkQueryParams
   :: F.Req EType
   -> Doc
-mkQueryParams request =
-  if null (request ^. F.reqUrl . F.queryStr) then
-    empty
-  else
-    line <> "++" <+> align ("if List.isEmpty params then" <$>
-                            indent i (dquotes empty) <$>
-                            "else" <$>
-                            indent i (dquotes "?" <+> "++ String.join" <+> dquotes "&" <+> "params"))
+mkQueryParams _request =
+  -- if null (request ^. F.reqUrl . F.queryStr) then
+  --   empty
+  -- else
+    line <> indent 4 (align "params")
 
 
 {- | Determines whether we construct an Elm function that expects an empty
@@ -548,6 +572,11 @@ isElmMaybeType :: EType -> Bool
 isElmMaybeType (ETyApp (ETyCon (ETCon "Maybe")) _) = True
 isElmMaybeType _ = False
 
+isElmListOfMaybeBoolType :: EType -> Bool
+isElmListOfMaybeBoolType t =
+  case t of
+    (ETyApp (ETyCon (ETCon "List")) (ETyApp (ETyCon (ETCon "Maybe")) (ETyCon (ETCon "Bool")))) -> True
+    _ -> False
 
 -- Doc helpers
 

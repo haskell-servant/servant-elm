@@ -35,15 +35,26 @@ spec = do
                           [ ( "test/elm-sources/getOneSource.elm"
                             , "module GetOneSource exposing (..)\n\n" <>
                               "import Http\n" <>
-                              "import Json.Decode exposing (..)\n\n\n")
+                              "import Json.Decode exposing (..)\n" <>
+                              "import Url.Builder\n\n\n"
+                            )
                           , ( "test/elm-sources/postTwoSource.elm"
                             , "module PostTwoSource exposing (..)\n\n" <>
                               "import Http\n" <>
                               "import Json.Decode exposing (..)\n" <>
-                              "import Json.Encode\n\n\n")
+                              "import Json.Encode\n" <>
+                              "import Url.Builder\n\n\n"
+                            )
                           , ( "test/elm-sources/getBooksByIdSource.elm"
                             , "module GetBooksByIdSource exposing (..)\n\n" <>
-                              "import Http\n\n\n")
+                              "import Http\n" <>
+                              "import Url.Builder\n" <>
+                              "import Json.Decode\n" <>
+                              "\n" <>
+                              "type Book = Book\n" <>
+                              "jsonDecBook : Json.Decode.Decoder Book\n" <>
+                              "jsonDecBook = Debug.todo \"\"\n\n"
+                            )
                           , ( "test/elm-sources/getBooksByTitleSource.elm"
                             , "module GetBooksByTitleSource exposing (..)\n\n" <>
                               "import Http\n\n\n")

@@ -5,28 +5,34 @@ import Http
 
 putNothing : Http.Request ()
 putNothing =
-    Http.request
-        { method =
-            "PUT"
-        , headers =
-            []
-        , url =
-            String.join "/"
-                [ ""
-                , "nothing"
-                ]
-        , body =
-            Http.emptyBody
-        , expect =
-            Http.expectStringResponse
-                (\{ body } ->
-                    if String.isEmpty body then
-                        Ok ()
-                    else
-                        Err "Expected the response body to be empty"
-                )
-        , timeout =
-            Nothing
-        , withCredentials =
-            False
-        }
+    let
+        params =
+            List.filterMap identity
+            (List.concat
+                [])
+    in
+        Http.request
+            { method =
+                "PUT"
+            , headers =
+                []
+            , url =
+                Url.Builder.absolute
+                    [ "nothing"
+                    ]
+                    params
+            , body =
+                Http.emptyBody
+            , expect =
+                Http.expectStringResponse
+                    (\ rsp  ->
+                        if String.isEmpty rsp.body then
+                            Ok ()
+                        else
+                            Err "Expected the response body to be empty"
+                    )
+            , timeout =
+                Nothing
+            , withCredentials =
+                False
+            }
