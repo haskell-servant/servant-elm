@@ -8,6 +8,14 @@ import Dict exposing (Dict)
 import Set
 import Http
 import String
+import Url.Builder
+
+maybeBoolToIntStr : Maybe Bool -> String
+maybeBoolToIntStr mx =
+  case mx of
+    Nothing -> ""
+    Just True -> "1"
+    Just False -> "0"
 
 type alias Gif  =
    { data: GifData
@@ -15,8 +23,8 @@ type alias Gif  =
 
 jsonDecGif : Json.Decode.Decoder ( Gif )
 jsonDecGif =
-   ("data" := jsonDecGifData) >>= \pdata ->
-   Json.Decode.succeed {data = pdata}
+   Json.Decode.succeed (\pdata -> {data = pdata})
+   |> required "data" (jsonDecGifData)
 
 jsonEncGif : Gif -> Value
 jsonEncGif  val =
@@ -32,8 +40,8 @@ type alias GifData  =
 
 jsonDecGifData : Json.Decode.Decoder ( GifData )
 jsonDecGifData =
-   ("image_url" := Json.Decode.string) >>= \pimage_url ->
-   Json.Decode.succeed {image_url = pimage_url}
+   Json.Decode.succeed (\pimage_url -> {image_url = pimage_url})
+   |> required "image_url" (Json.Decode.string)
 
 jsonEncGifData : GifData -> Value
 jsonEncGifData  val =
@@ -46,14 +54,13 @@ getRandom : (Maybe String) -> (Maybe String) -> Http.Request Gif
 getRandom query_api_key query_tag =
     let
         params =
-            List.filter (not << String.isEmpty)
-                [ query_api_key
-                    |> Maybe.map (Http.encodeUri >> (++) "api_key=")
-                    |> Maybe.withDefault ""
-                , query_tag
-                    |> Maybe.map (Http.encodeUri >> (++) "tag=")
-                    |> Maybe.withDefault ""
-                ]
+            List.filterMap identity
+            (List.concat
+                [ [ query_api_key
+                    |> Maybe.map (Url.Builder.string "query_api_key") ]
+                , [ query_tag
+                    |> Maybe.map (Url.Builder.string "query_tag") ]
+                ])
     in
         Http.request
             { method =
@@ -61,14 +68,10 @@ getRandom query_api_key query_tag =
             , headers =
                 []
             , url =
-                String.join "/"
-                    [ "http://api.giphy.com/v1/gifs"
-                    , "random"
+                Url.Builder.absolute
+                    [ "random"
                     ]
-                ++ if List.isEmpty params then
-                       ""
-                   else
-                       "?" ++ String.join "&" params
+                    params
             , body =
                 Http.emptyBody
             , expect =
