@@ -10,7 +10,7 @@ Uses https://httpbin.org/ to generate sample responses.
 cd examples/e2e-tests
 stack build
 stack runghc generate.hs
-elm package install
+elm install
 elm reactor
 ```
 

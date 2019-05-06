@@ -8,6 +8,14 @@ import Dict exposing (Dict)
 import Set
 import Http
 import String
+import Url.Builder
+
+maybeBoolToIntStr : Maybe Bool -> String
+maybeBoolToIntStr mx =
+  case mx of
+    Nothing -> ""
+    Just True -> "1"
+    Just False -> "0"
 
 type alias MessageBody  =
    { message: String
@@ -15,8 +23,8 @@ type alias MessageBody  =
 
 jsonDecMessageBody : Json.Decode.Decoder ( MessageBody )
 jsonDecMessageBody =
-   ("message" := Json.Decode.string) >>= \pmessage ->
-   Json.Decode.succeed {message = pmessage}
+   Json.Decode.succeed (\pmessage -> {message = pmessage})
+   |> required "message" (Json.Decode.string)
 
 jsonEncMessageBody : MessageBody -> Value
 jsonEncMessageBody  val =
@@ -32,8 +40,8 @@ type alias QueryArgs  =
 
 jsonDecQueryArgs : Json.Decode.Decoder ( QueryArgs )
 jsonDecQueryArgs =
-   ("q" := Json.Decode.string) >>= \pq ->
-   Json.Decode.succeed {q = pq}
+   Json.Decode.succeed (\pq -> {q = pq})
+   |> required "q" (Json.Decode.string)
 
 jsonEncQueryArgs : QueryArgs -> Value
 jsonEncQueryArgs  val =
@@ -49,8 +57,8 @@ type alias Response  =
 
 jsonDecResponse : Json.Decode.Decoder ( Response )
 jsonDecResponse =
-   ("origin" := Json.Decode.string) >>= \porigin ->
-   Json.Decode.succeed {origin = porigin}
+   Json.Decode.succeed (\porigin -> {origin = porigin})
+   |> required "origin" (Json.Decode.string)
 
 jsonEncResponse : Response -> Value
 jsonEncResponse  val =
@@ -66,8 +74,8 @@ type alias ResponseWithJson  =
 
 jsonDecResponseWithJson : Json.Decode.Decoder ( ResponseWithJson )
 jsonDecResponseWithJson =
-   ("json" := jsonDecMessageBody) >>= \pjson ->
-   Json.Decode.succeed {json = pjson}
+   Json.Decode.succeed (\pjson -> {json = pjson})
+   |> required "json" (jsonDecMessageBody)
 
 jsonEncResponseWithJson : ResponseWithJson -> Value
 jsonEncResponseWithJson  val =
@@ -83,8 +91,8 @@ type alias ResponseWithArgs  =
 
 jsonDecResponseWithArgs : Json.Decode.Decoder ( ResponseWithArgs )
 jsonDecResponseWithArgs =
-   ("args" := jsonDecQueryArgs) >>= \pargs ->
-   Json.Decode.succeed {args = pargs}
+   Json.Decode.succeed (\pargs -> {args = pargs})
+   |> required "args" (jsonDecQueryArgs)
 
 jsonEncResponseWithArgs : ResponseWithArgs -> Value
 jsonEncResponseWithArgs  val =
@@ -95,86 +103,11 @@ jsonEncResponseWithArgs  val =
 
 getIp : Http.Request Response
 getIp =
-    Http.request
-        { method =
-            "GET"
-        , headers =
-            []
-        , url =
-            String.join "/"
-                [ "https://httpbin.org"
-                , "ip"
-                ]
-        , body =
-            Http.emptyBody
-        , expect =
-            Http.expectJson <| jsonDecResponse
-        , timeout =
-            Nothing
-        , withCredentials =
-            False
-        }
-
-getStatus204 : Http.Request NoContent
-getStatus204 =
-    Http.request
-        { method =
-            "GET"
-        , headers =
-            []
-        , url =
-            String.join "/"
-                [ "https://httpbin.org"
-                , "status"
-                , "204"
-                ]
-        , body =
-            Http.emptyBody
-        , expect =
-            Http.expectStringResponse
-                (\{ body } ->
-                    if String.isEmpty body then
-                        Ok NoContent
-                    else
-                        Err "Expected the response body to be empty"
-                )
-        , timeout =
-            Nothing
-        , withCredentials =
-            False
-        }
-
-postPost : MessageBody -> Http.Request ResponseWithJson
-postPost body =
-    Http.request
-        { method =
-            "POST"
-        , headers =
-            []
-        , url =
-            String.join "/"
-                [ "https://httpbin.org"
-                , "post"
-                ]
-        , body =
-            Http.jsonBody (jsonEncMessageBody body)
-        , expect =
-            Http.expectJson <| jsonDecResponseWithJson
-        , timeout =
-            Nothing
-        , withCredentials =
-            False
-        }
-
-getGet : (Maybe String) -> Http.Request ResponseWithArgs
-getGet query_q =
     let
         params =
-            List.filter (not << String.isEmpty)
-                [ query_q
-                    |> Maybe.map (Http.encodeUri >> (++) "q=")
-                    |> Maybe.withDefault ""
-                ]
+            List.filterMap identity
+            (List.concat
+                [])
     in
         Http.request
             { method =
@@ -182,14 +115,103 @@ getGet query_q =
             , headers =
                 []
             , url =
-                String.join "/"
-                    [ "https://httpbin.org"
-                    , "get"
+                Url.Builder.absolute
+                    [ "ip"
                     ]
-                ++ if List.isEmpty params then
-                       ""
-                   else
-                       "?" ++ String.join "&" params
+                    params
+            , body =
+                Http.emptyBody
+            , expect =
+                Http.expectJson <| jsonDecResponse
+            , timeout =
+                Nothing
+            , withCredentials =
+                False
+            }
+
+getStatus204 : Http.Request NoContent
+getStatus204 =
+    let
+        params =
+            List.filterMap identity
+            (List.concat
+                [])
+    in
+        Http.request
+            { method =
+                "GET"
+            , headers =
+                []
+            , url =
+                Url.Builder.absolute
+                    [ "status"
+                    , "204"
+                    ]
+                    params
+            , body =
+                Http.emptyBody
+            , expect =
+                Http.expectStringResponse
+                    (\ rsp  ->
+                        if String.isEmpty rsp.body then
+                            Ok NoContent
+                        else
+                            Err "Expected the response body to be empty"
+                    )
+            , timeout =
+                Nothing
+            , withCredentials =
+                False
+            }
+
+postPost : MessageBody -> Http.Request ResponseWithJson
+postPost body =
+    let
+        params =
+            List.filterMap identity
+            (List.concat
+                [])
+    in
+        Http.request
+            { method =
+                "POST"
+            , headers =
+                []
+            , url =
+                Url.Builder.absolute
+                    [ "post"
+                    ]
+                    params
+            , body =
+                Http.jsonBody (jsonEncMessageBody body)
+            , expect =
+                Http.expectJson <| jsonDecResponseWithJson
+            , timeout =
+                Nothing
+            , withCredentials =
+                False
+            }
+
+getGet : (Maybe String) -> Http.Request ResponseWithArgs
+getGet query_q =
+    let
+        params =
+            List.filterMap identity
+            (List.concat
+                [ [ query_q
+                    |> Maybe.map (Url.Builder.string "query_q") ]
+                ])
+    in
+        Http.request
+            { method =
+                "GET"
+            , headers =
+                []
+            , url =
+                Url.Builder.absolute
+                    [ "get"
+                    ]
+                    params
             , body =
                 Http.emptyBody
             , expect =
@@ -202,22 +224,28 @@ getGet query_q =
 
 getByPath : String -> Http.Request Response
 getByPath capture_path =
-    Http.request
-        { method =
-            "GET"
-        , headers =
-            []
-        , url =
-            String.join "/"
-                [ "https://httpbin.org"
-                , capture_path |> Http.encodeUri
-                ]
-        , body =
-            Http.emptyBody
-        , expect =
-            Http.expectJson <| jsonDecResponse
-        , timeout =
-            Nothing
-        , withCredentials =
-            False
-        }
+    let
+        params =
+            List.filterMap identity
+            (List.concat
+                [])
+    in
+        Http.request
+            { method =
+                "GET"
+            , headers =
+                []
+            , url =
+                Url.Builder.absolute
+                    [ capture_path
+                    ]
+                    params
+            , body =
+                Http.emptyBody
+            , expect =
+                Http.expectJson <| jsonDecResponse
+            , timeout =
+                Nothing
+            , withCredentials =
+                False
+            }
