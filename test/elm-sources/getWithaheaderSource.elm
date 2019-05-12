@@ -1,6 +1,7 @@
 module GetWithAHeaderSource exposing (..)
 
 import Http
+import Url.Builder
 import Json.Decode exposing (..)
 
 

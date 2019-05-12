@@ -1,7 +1,11 @@
 module GetBooksByTitleSource exposing (..)
 
 import Http
+import Url.Builder
+import Json.Decode as J
 
+type alias Book = {}
+jsonDecBook = J.succeed {}
 
 getBooksByTitle : String -> Http.Request Book
 getBooksByTitle capture_title =

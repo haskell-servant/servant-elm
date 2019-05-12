@@ -4,7 +4,7 @@
 {-# LANGUAGE TypeOperators     #-}
 
 import           Servant.API  ((:<|>), (:>), Capture, Get, GetNoContent, JSON,
-                               NoContent, Post, QueryParam, ReqBody)
+                               Post, QueryParam, ReqBody)
 import           Servant.Elm  (DefineElm (DefineElm), ElmOptions(..), Proxy (Proxy),
                                UrlPrefix (Static), defaultOptions, defElmImports,
                                defElmOptions, deriveBoth, generateElmModuleWith)
@@ -38,7 +38,7 @@ type Api
     :> Get '[JSON] Response
   :<|> "status"
     :> "204"
-    :> GetNoContent '[JSON] NoContent
+    :> GetNoContent '[JSON] ()
   :<|> "post"
     :> ReqBody '[JSON] MessageBody
     :> Post '[JSON] ResponseWithJson

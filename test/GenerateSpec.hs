@@ -57,27 +57,54 @@ spec = do
                             )
                           , ( "test/elm-sources/getBooksByTitleSource.elm"
                             , "module GetBooksByTitleSource exposing (..)\n\n" <>
-                              "import Http\n\n\n")
+                              "import Http\n" <>
+                              "import Url.Builder\n" <>
+                              "import Json.Decode as J\n\n" <>
+                              "type alias Book = {}\n" <>
+                              "jsonDecBook = J.succeed {}\n\n"
+                            )
                           , ( "test/elm-sources/getBooksSource.elm"
                             , "module GetBooksSource exposing (..)\n\n" <>
                               "import Http\n" <>
-                              "import Json.Decode exposing (..)\n\n\n")
+                              "import Json.Decode exposing (..)\n" <>
+                              "import Url.Builder\n" <>
+                              "import Json.Decode as J\n\n" <>
+                              "type alias Book = {}\n\n" <>
+                              "maybeBoolToIntStr : Maybe Bool -> String\n" <>
+                              "maybeBoolToIntStr mx =\n" <>
+                              "  case mx of\n" <>
+                              "    Nothing -> \"\"\n" <>
+                              "    Just True -> \"1\"\n" <>
+                              "    Just False -> \"0\"\n\n" <>
+                              "jsonDecBook = J.succeed {}\n\n"
+                            )
                           , ( "test/elm-sources/postBooksSource.elm"
                             , "module PostBooksSource exposing (..)\n\n" <>
-                              "import Http\n\n\n")
+                              "import Http\n" <>
+                              "import Url.Builder\n" <>
+                              "import Json.Encode as Enc\n\n" <>
+                              "type alias Book = {}\n" <>
+                              "jsonEncBook = \\b -> Enc.object []\n\n"
+                            )
                           , ( "test/elm-sources/getNothingSource.elm"
                             , "module GetNothingSource exposing (..)\n\n" <>
-                              "import Http\n\n\n")
+                              "import Http\n" <>
+                              "import Url.Builder\n\n\n"
+                            )
                           , ( "test/elm-sources/putNothingSource.elm"
                             , "module PutNothingSource exposing (..)\n\n" <>
-                              "import Http\n\n\n")
+                              "import Http\n" <>
+                              "import Url.Builder\n\n\n"
+                            )
                           , ( "test/elm-sources/getWithaheaderSource.elm"
                             , "module GetWithAHeaderSource exposing (..)\n\n" <>
                               "import Http\n" <>
+                              "import Url.Builder\n" <>
                               "import Json.Decode exposing (..)\n\n\n")
                           , ( "test/elm-sources/getWitharesponseheaderSource.elm"
                             , "module GetWithAResponseHeaderSource exposing (..)\n\n" <>
                               "import Http\n" <>
+                              "import Url.Builder\n" <>
                               "import Json.Decode exposing (..)\n\n\n")]
                   let generated = filter (not . T.null) (generateElmForAPI testApi)
                   generated `itemsShouldBe` expected
@@ -90,6 +117,7 @@ spec = do
                           [ ( "test/elm-sources/getOneWithDynamicUrlSource.elm"
                             , "module GetOneWithDynamicUrlSource exposing (..)\n\n" <>
                               "import Http\n" <>
+                              "import Url.Builder\n" <>
                               "import Json.Decode exposing (..)\n\n\n")]
                   let generated =
                           map

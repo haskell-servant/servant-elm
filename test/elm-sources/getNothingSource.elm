@@ -1,9 +1,10 @@
 module GetNothingSource exposing (..)
 
 import Http
+import Url.Builder
 
 
-getNothing : Http.Request NoContent
+getNothing : Http.Request ()
 getNothing =
     let
         params =
@@ -27,7 +28,7 @@ getNothing =
                 Http.expectStringResponse
                     (\ rsp  ->
                         if String.isEmpty rsp.body then
-                            Ok NoContent
+                            Ok ()
                         else
                             Err "Expected the response body to be empty"
                     )

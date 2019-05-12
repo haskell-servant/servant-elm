@@ -1,9 +1,13 @@
 module PostBooksSource exposing (..)
 
 import Http
+import Url.Builder
+import Json.Encode as Enc
 
+type alias Book = {}
+jsonEncBook = \b -> Enc.object []
 
-postBooks : Book -> Http.Request NoContent
+postBooks : Book -> Http.Request ()
 postBooks body =
     let
         params =
@@ -27,7 +31,7 @@ postBooks body =
                 Http.expectStringResponse
                     (\ rsp  ->
                         if String.isEmpty rsp.body then
-                            Ok NoContent
+                            Ok ()
                         else
                             Err "Expected the response body to be empty"
                     )

@@ -76,8 +76,7 @@ The default options are:
 > , elmAlterations =
 >     Elm.defaultTypeAlterations
 > , emptyResponseElmTypes =
->     [ getType (Proxy :: Proxy F.NoContent)
->     , getType (Proxy :: Proxy ()) ]
+>     [ getType (Proxy :: Proxy ()) ]
 > , stringElmTypes =
 >     [ getType (Proxy :: Proxy String)
 >     , getType (Proxy :: Proxy T.Text) ]
@@ -89,8 +88,7 @@ defElmOptions = ElmOptions
   , elmTypeAlterations = Elm.defaultTypeAlterations
   , elmAlterations = Elm.defaultAlterations
   , emptyResponseElmTypes =
-      [ toElmType (Proxy :: Proxy F.NoContent)
-      , toElmType (Proxy :: Proxy ())
+      [ toElmType (Proxy :: Proxy ())
       ]
   , stringElmTypes =
       [ toElmType (Proxy :: Proxy String)
