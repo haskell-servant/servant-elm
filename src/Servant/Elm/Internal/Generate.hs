@@ -238,7 +238,9 @@ generateElmForRequest opts request =
         ]
 
     fnName =
-      request ^. F.reqFuncName . to (T.replace "-" "" . F.camelCase) . to stext
+      request ^. F.reqFuncName . to (replace . F.camelCase) . to stext
+
+    replace = T.replace "-" "" . T.replace "." ""
 
     typeSignature =
       mkTypeSignature opts request
@@ -260,7 +262,7 @@ mkTypeSignature opts request =
     , headerTypes
     , urlCaptureTypes
     , queryTypes
-    , catMaybes [bodyType, returnType]
+    , catMaybes [bodyType, toMsgType, returnType]
     ]
   where
     urlPrefixType :: Maybe Doc
@@ -297,10 +299,15 @@ mkTypeSignature opts request =
     bodyType =
         fmap elmTypeRef $ request ^. F.reqBody
 
+    toMsgType :: Maybe Doc
+    toMsgType = do
+      result <- fmap elmTypeRef $ request ^. F.reqReturnType
+      Just ("(Result Http.Error " <+> parens result <+> " -> msg)")
+
     returnType :: Maybe Doc
     returnType = do
       result <- fmap elmTypeRef $ request ^. F.reqReturnType
-      pure ("Http.Request" <+> result)
+      pure ("Cmd msg")
 
 
 elmHeaderArg :: F.HeaderArg EType -> Doc
@@ -312,7 +319,9 @@ elmHeaderArg header =
 elmCaptureArg :: F.Segment EType -> Doc
 elmCaptureArg segment =
   "capture_" <>
-  F.captureArg segment ^. F.argName . to (stext . F.unPathSegment)
+  F.captureArg segment ^. F.argName . to (stext . replace . F.unPathSegment)
+  where
+    replace = T.replace "-" "_"
 
 
 elmQueryArg :: F.QueryArg EType -> Doc
@@ -360,6 +369,7 @@ mkArgs opts request =
       ]
     , -- Request body
       maybe [] (const [elmBodyArg]) (request ^. F.reqBody)
+    , pure "toMsg"
     ]
 
 
@@ -441,8 +451,8 @@ mkRequest opts request =
          indent i expect
        , "timeout =" <$>
          indent i "Nothing"
-       , "withCredentials =" <$>
-         indent i "False"
+       , "tracker =" <$>
+         indent i "Nothing"
        ])
   where
     method =
@@ -487,23 +497,41 @@ mkRequest opts request =
 
     expect =
       case request ^. F.reqReturnType of
-        Just elmTypeExpr | isEmptyType opts elmTypeExpr ->
-          let elmConstructor =
-                toElmTypeRefWith opts elmTypeExpr
-          in
-            "Http.expectStringResponse" <$>
-            indent i (parens (backslash <> " rsp " <+> "->" <$>
-                              indent i ("if String.isEmpty rsp.body then" <$>
-                                        indent i "Ok" <+> stext elmConstructor <$>
-                                        "else" <$>
-                                        indent i ("Err" <+> dquotes "Expected the response body to be empty")) <> line))
-
-
+        Just elmTypeExpr
+          | isEmptyType opts elmTypeExpr
+            -- let elmConstructor = T.pack (renderElm elmTypeExpr)
+           ->
+            "Http.expectString " <> line <+> indent i "(\\x -> case x of" <> line <+>
+            indent i "Err e -> toMsg (Err e)" <> line <+>
+            indent i "Ok _ -> toMsg (Ok ()))"
         Just elmTypeExpr ->
-          "Http.expectJson <|" <+> stext (toElmDecoderRefWith opts elmTypeExpr)
+          "Http.expectJson toMsg" <+> renderDecoderName elmTypeExpr
+        Nothing -> error "mkHttpRequest: no reqReturnType?"
+      -- case request ^. F.reqReturnType of
+      --   Just elmTypeExpr | isEmptyType opts elmTypeExpr ->
+      --     let elmConstructor =
+      --           toElmTypeRefWith opts elmTypeExpr
+      --     in
+      --       "Http.expectStringResponse" <$>
+      --       indent i (parens (backslash <> " rsp " <+> "->" <$>
+      --                         indent i ("if String.isEmpty rsp.body then" <$>
+      --                                   indent i "Ok" <+> stext elmConstructor <$>
+      --                                   "else" <$>
+      --                                   indent i ("Err" <+> dquotes "Expected the response body to be empty")) <> line))
 
-        Nothing ->
-          error "mkHttpRequest: no reqReturnType?"
+
+      --   Just elmTypeExpr ->
+      --     "Http.expectJson <|" <+> stext (toElmDecoderRefWith opts elmTypeExpr)
+
+      --   Nothing ->
+      --     error "mkHttpRequest: no reqReturnType?"
+
+renderDecoderName :: EType -> Doc
+renderDecoderName elmTypeExpr =
+  case elmTypeExpr of
+    ETyApp (ETyCon (ETCon "List")) t ->
+      parens ("Json.Decode.list " <> parens (renderDecoderName t))
+    _ -> ("jsonDec" <> stext (T.pack (renderElm elmTypeExpr)))
 
 
 mkUrl :: ElmOptions -> [F.Segment EType] -> Doc
