@@ -508,14 +508,18 @@ mkRequest opts request =
 
 mkUrl :: ElmOptions -> [F.Segment EType] -> Doc
 mkUrl opts segments =
-  "Url.Builder.absolute" <$>
-  (indent i . elmList)
+  urlBuilder <$>
+    (indent i . elmList)
     ( map segmentToDoc segments)
-    -- ( case urlPrefix opts of
-    --     Dynamic -> "urlBase"
-    --     Static url -> dquotes (stext url)
-    --   : map segmentToDoc segments)
+  -- ( case urlPrefix opts of
+  --     Dynamic -> "urlBase"
+  --     Static url -> dquotes (stext url)
+  --   : map segmentToDoc segments)
   where
+    urlBuilder :: Doc
+    urlBuilder = case urlPrefix opts of
+      Dynamic -> "Url.Builder.absolute" :: Doc
+      Static url -> "Url.Builder.crossOrigin" <+> dquotes (stext url)
 
     segmentToDoc :: F.Segment EType -> Doc
     segmentToDoc s =
