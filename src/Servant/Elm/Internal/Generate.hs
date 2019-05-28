@@ -327,7 +327,9 @@ elmCaptureArg segment =
 elmQueryArg :: F.QueryArg EType -> Doc
 elmQueryArg arg =
   "query_" <>
-  arg ^. F.queryArgName . F.argName . to (stext . F.unPathSegment)
+  arg ^. F.queryArgName . F.argName . to (stext . replace . F.unPathSegment)
+  where
+    replace = T.replace "-" "_"
 
 
 elmBodyArg :: Doc
