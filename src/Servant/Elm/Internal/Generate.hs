@@ -306,7 +306,6 @@ mkTypeSignature opts request =
 
     returnType :: Maybe Doc
     returnType = do
-      result <- fmap elmTypeRef $ request ^. F.reqReturnType
       pure ("Cmd msg")
 
 
