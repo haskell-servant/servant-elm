@@ -60,17 +60,8 @@ spec = do
         createDirectoryIfMissing True filePath
         TIO.writeFile fileName out
 
-        -- generateElmModuleWith
-        --   defElmOptions
-        --   ["Generated", "BooksApi"]
-        --   defElmImports
-        --   "."
-        --   [ DefineElm (Proxy :: Proxy Book)
-        --   , DefineElm (Proxy :: Proxy NoContent)
-        --   ]
-        --   (Proxy :: Proxy TestApi)
         -- -- Useful for locally checking out sources in your tmp dir
-        callCommand "cp -r . /home/kb/tmp/servelmtest"
+        -- callCommand "cp -r . /home/kb/tmp/servelmtest"
         runProcess_ "elm make Generated/BooksApi.elm --output api.js"
 
 
