@@ -2,30 +2,39 @@ module GetBooksSource exposing (..)
 
 import Http
 import Json.Decode exposing (..)
+import Url.Builder
+import Json.Decode as J
 
+type alias Book = {}
 
-getBooks : Bool -> Maybe (String) -> Maybe (Int) -> String -> List (Maybe (Bool)) -> Http.Request (List (Book))
-getBooks query_published query_sort query_year query_category query_filters =
+maybeBoolToIntStr : Maybe Bool -> String
+maybeBoolToIntStr mx =
+  case mx of
+    Nothing -> ""
+    Just True -> "1"
+    Just False -> "0"
+
+jsonDecBook = J.succeed {}
+
+getBooks : Bool -> (Maybe String) -> (Maybe Int) -> String -> (List (Maybe Bool)) -> (Result Http.Error  ((List Book))  -> msg) -> Cmd msg
+getBooks query_published query_sort query_year query_category query_filters toMsg =
     let
         params =
-            List.filter (not << String.isEmpty)
-                [ if query_published then
-                    "published="
+            List.filterMap identity
+            (List.concat
+                [ [ if query_published then
+                    Just (Url.Builder.string "published" "")
                   else
-                    ""
-                , query_sort
-                    |> Maybe.map (Http.encodeUri >> (++) "sort=")
-                    |> Maybe.withDefault ""
-                , query_year
-                    |> Maybe.map (toString >> Http.encodeUri >> (++) "year=")
-                    |> Maybe.withDefault ""
-                , Just query_category
-                    |> Maybe.map (Http.encodeUri >> (++) "category=")
-                    |> Maybe.withDefault ""
+                    Nothing ]
+                , [ query_sort
+                    |> Maybe.map (Url.Builder.string "query_sort") ]
+                , [ query_year
+                    |> Maybe.map (String.fromInt >> Url.Builder.string "query_year") ]
+                , [ Just query_category
+                    |> Maybe.map (Url.Builder.string "query_category") ]
                 , query_filters
-                    |> List.map (\val -> "filters[]=" ++ (val |> toString |> Http.encodeUri))
-                    |> String.join "&"
-                ]
+                    |> List.map (\val -> Just (Url.Builder.string "filters[]" (maybeBoolToIntStr val)))
+                ])
     in
         Http.request
             { method =
@@ -33,20 +42,16 @@ getBooks query_published query_sort query_year query_category query_filters =
             , headers =
                 []
             , url =
-                String.join "/"
-                    [ ""
-                    , "books"
+                Url.Builder.crossOrigin ""
+                    [ "books"
                     ]
-                ++ if List.isEmpty params then
-                       ""
-                   else
-                       "?" ++ String.join "&" params
+                    params
             , body =
                 Http.emptyBody
             , expect =
-                Http.expectJson (list decodeBook)
+                Http.expectJson toMsg (Json.Decode.list (jsonDecBook))
             , timeout =
                 Nothing
-            , withCredentials =
-                False
+            , tracker =
+                Nothing
             }

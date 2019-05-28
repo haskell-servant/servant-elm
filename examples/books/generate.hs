@@ -1,21 +1,19 @@
 {-# LANGUAGE DataKinds         #-}
-{-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell   #-}
 {-# LANGUAGE TypeOperators     #-}
 
-import           Elm          (Spec (Spec), specsToDir, toElmDecoderSource,
-                               toElmEncoderSource, toElmTypeSource)
-import           GHC.Generics (Generic)
 import           Servant.API  ((:<|>), (:>), Capture, Get, JSON, Post, ReqBody)
-import           Servant.Elm  (ElmOptions (..), ElmType, Proxy (Proxy),
-                               UrlPrefix (Static), defElmImports, defElmOptions,
-                               generateElmForAPIWith)
+import           Servant.Elm  (DefineElm (DefineElm), ElmOptions(urlPrefix),
+                               Proxy (Proxy), UrlPrefix(Static), defaultOptions,
+                               defElmImports, defElmOptions, deriveBoth,
+                               generateElmModuleWith)
 
 data Book = Book
   { name :: String
-  } deriving (Show, Eq, Generic)
+  } deriving (Show, Eq)
 
-instance ElmType Book
+deriveBoth defaultOptions ''Book
 
 type BooksApi = "books" :> ReqBody '[JSON] Book :> Post '[JSON] Book
            :<|> "books" :> Get '[JSON] [Book]
@@ -24,13 +22,15 @@ type BooksApi = "books" :> ReqBody '[JSON] Book :> Post '[JSON] Book
 myElmOpts :: ElmOptions
 myElmOpts = defElmOptions { urlPrefix = Static "http://localhost:8000" }
 
-spec :: Spec
-spec = Spec ["Generated", "BooksApi"]
-            (defElmImports
-             : toElmTypeSource    (Proxy :: Proxy Book)
-             : toElmDecoderSource (Proxy :: Proxy Book)
-             : toElmEncoderSource (Proxy :: Proxy Book)
-             : generateElmForAPIWith myElmOpts (Proxy :: Proxy BooksApi))
-
 main :: IO ()
-main = specsToDir [spec] "elm"
+main =
+  generateElmModuleWith
+    myElmOpts
+    [ "Generated"
+    , "BooksApi"
+    ]
+    defElmImports
+    "elm"
+    [ DefineElm (Proxy :: Proxy Book)
+    ]
+    (Proxy :: Proxy BooksApi)

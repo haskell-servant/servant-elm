@@ -1,24 +1,21 @@
 {-# LANGUAGE DataKinds     #-}
-{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeOperators #-}
 module Common where
 
-import           Data.Aeson   (ToJSON)
 import           Data.Proxy   (Proxy (Proxy))
 import           Data.Text    (Text)
-import           Elm          (ElmType)
-import           GHC.Generics (Generic)
 import           Servant.API  ((:<|>), (:>), Capture, Get, GetNoContent, Header,
-                               Header', Headers, JSON, NoContent, Post,
+                               Header', Headers, JSON, Post,
                                PostNoContent, Put, QueryFlag, QueryParam,
                                QueryParam', QueryParams, ReqBody, Required)
+import           Servant.Elm  (deriveBoth, defaultOptions)
 
 data Book = Book
     { title :: String
-    } deriving (Generic)
+    }
 
-instance ToJSON Book
-instance ElmType Book
+deriveBoth defaultOptions ''Book
 
 type TestApi =
        "one"
@@ -41,9 +38,9 @@ type TestApi =
          :> Get '[JSON] [Book]
   :<|> "books"
          :> ReqBody '[JSON] Book
-         :> PostNoContent '[JSON] NoContent
+         :> PostNoContent '[JSON] ()
   :<|> "nothing"
-         :> GetNoContent '[JSON] NoContent
+         :> GetNoContent '[JSON] ()
   :<|> "nothing"
          :> Put '[JSON] () -- old way to specify no content
   :<|> "with-a-header"

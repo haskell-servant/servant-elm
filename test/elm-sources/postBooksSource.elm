@@ -1,32 +1,39 @@
 module PostBooksSource exposing (..)
 
 import Http
+import Url.Builder
+import Json.Encode as Enc
 
+type alias Book = {}
+jsonEncBook = \b -> Enc.object []
 
-postBooks : Book -> Http.Request (NoContent)
-postBooks body =
-    Http.request
-        { method =
-            "POST"
-        , headers =
-            []
-        , url =
-            String.join "/"
-                [ ""
-                , "books"
-                ]
-        , body =
-            Http.jsonBody (encodeBook body)
-        , expect =
-            Http.expectStringResponse
-                (\{ body } ->
-                    if String.isEmpty body then
-                        Ok NoContent
-                    else
-                        Err "Expected the response body to be empty"
-                )
-        , timeout =
-            Nothing
-        , withCredentials =
-            False
-        }
+postBooks : Book -> (Result Http.Error  (())  -> msg) -> Cmd msg
+postBooks body toMsg =
+    let
+        params =
+            List.filterMap identity
+            (List.concat
+                [])
+    in
+        Http.request
+            { method =
+                "POST"
+            , headers =
+                []
+            , url =
+                Url.Builder.crossOrigin ""
+                    [ "books"
+                    ]
+                    params
+            , body =
+                Http.jsonBody (jsonEncBook body)
+            , expect =
+                Http.expectString 
+                     (\x -> case x of
+                     Err e -> toMsg (Err e)
+                     Ok _ -> toMsg (Ok ()))
+            , timeout =
+                Nothing
+            , tracker =
+                Nothing
+            }

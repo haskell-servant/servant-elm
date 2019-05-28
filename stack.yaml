@@ -1,14 +1,15 @@
 # For more information, see: https://github.com/commercialhaskell/stack/blob/release/doc/yaml_configuration.md
 
 # Specifies the GHC version and set of packages available (e.g., lts-3.5, nightly-2015-09-21, ghc-7.10.2)
-resolver: lts-11.2
+resolver: lts-13.15
 
 # Local packages, usually specified by relative directory name
 packages:
 - '.'
 
 # Packages to be pulled from upstream that are not in the resolver (e.g., acme-missiles-0.3)
-extra-deps: []
+extra-deps:
+- elm-bridge-0.5.1@sha256:e38bfb9dcd1e2cd119a280072f2f99ed718120c21f37f102b8318156645f06da
 
 # Override default flag values for local packages and extra-deps
 flags: {}
