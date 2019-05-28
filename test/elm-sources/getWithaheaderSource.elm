@@ -5,8 +5,8 @@ import Url.Builder
 import Json.Decode exposing (..)
 
 
-getWithaheader : (Maybe String) -> (Maybe Int) -> String -> Int -> Http.Request String
-getWithaheader header_myStringHeader header_MyIntHeader header_MyRequiredStringHeader header_MyRequiredIntHeader =
+getWithaheader : (Maybe String) -> (Maybe Int) -> String -> Int -> (Result Http.Error  (String)  -> msg) -> Cmd msg
+getWithaheader header_myStringHeader header_MyIntHeader header_MyRequiredStringHeader header_MyRequiredIntHeader toMsg =
     let
         params =
             List.filterMap identity
@@ -24,16 +24,16 @@ getWithaheader header_myStringHeader header_MyIntHeader header_MyRequiredStringH
                     , Maybe.map (Http.header "MyRequiredIntHeader" << String.fromInt) (Just header_MyRequiredIntHeader)
                     ]
             , url =
-                Url.Builder.absolute
+                Url.Builder.crossOrigin ""
                     [ "with-a-header"
                     ]
                     params
             , body =
                 Http.emptyBody
             , expect =
-                Http.expectJson <| Json.Decode.string
+                Http.expectJson toMsg Json.Decode.string
             , timeout =
                 Nothing
-            , withCredentials =
-                False
+            , tracker =
+                Nothing
             }

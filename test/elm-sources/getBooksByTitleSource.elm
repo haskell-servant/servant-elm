@@ -7,8 +7,8 @@ import Json.Decode as J
 type alias Book = {}
 jsonDecBook = J.succeed {}
 
-getBooksByTitle : String -> Http.Request Book
-getBooksByTitle capture_title =
+getBooksByTitle : String -> (Result Http.Error  (Book)  -> msg) -> Cmd msg
+getBooksByTitle capture_title toMsg =
     let
         params =
             List.filterMap identity
@@ -21,7 +21,7 @@ getBooksByTitle capture_title =
             , headers =
                 []
             , url =
-                Url.Builder.absolute
+                Url.Builder.crossOrigin ""
                     [ "books"
                     , capture_title
                     ]
@@ -29,9 +29,9 @@ getBooksByTitle capture_title =
             , body =
                 Http.emptyBody
             , expect =
-                Http.expectJson <| jsonDecBook
+                Http.expectJson toMsg jsonDecBook
             , timeout =
                 Nothing
-            , withCredentials =
-                False
+            , tracker =
+                Nothing
             }

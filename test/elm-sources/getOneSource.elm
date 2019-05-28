@@ -5,8 +5,8 @@ import Json.Decode exposing (..)
 import Url.Builder
 
 
-getOne : Http.Request Int
-getOne =
+getOne : (Result Http.Error  (Int)  -> msg) -> Cmd msg
+getOne toMsg =
     let
         params =
             List.filterMap identity
@@ -19,16 +19,16 @@ getOne =
             , headers =
                 []
             , url =
-                Url.Builder.absolute
+                Url.Builder.crossOrigin ""
                     [ "one"
                     ]
                     params
             , body =
                 Http.emptyBody
             , expect =
-                Http.expectJson <| Json.Decode.int
+                Http.expectJson toMsg Json.Decode.int
             , timeout =
                 Nothing
-            , withCredentials =
-                False
+            , tracker =
+                Nothing
             }

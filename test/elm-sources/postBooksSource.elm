@@ -7,8 +7,8 @@ import Json.Encode as Enc
 type alias Book = {}
 jsonEncBook = \b -> Enc.object []
 
-postBooks : Book -> Http.Request ()
-postBooks body =
+postBooks : Book -> (Result Http.Error  (())  -> msg) -> Cmd msg
+postBooks body toMsg =
     let
         params =
             List.filterMap identity
@@ -21,22 +21,19 @@ postBooks body =
             , headers =
                 []
             , url =
-                Url.Builder.absolute
+                Url.Builder.crossOrigin ""
                     [ "books"
                     ]
                     params
             , body =
                 Http.jsonBody (jsonEncBook body)
             , expect =
-                Http.expectStringResponse
-                    (\ rsp  ->
-                        if String.isEmpty rsp.body then
-                            Ok ()
-                        else
-                            Err "Expected the response body to be empty"
-                    )
+                Http.expectString 
+                     (\x -> case x of
+                     Err e -> toMsg (Err e)
+                     Ok _ -> toMsg (Ok ()))
             , timeout =
                 Nothing
-            , withCredentials =
-                False
+            , tracker =
+                Nothing
             }

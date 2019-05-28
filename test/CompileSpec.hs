@@ -70,7 +70,7 @@ spec = do
         --   ]
         --   (Proxy :: Proxy TestApi)
         -- -- Useful for locally checking out sources in your tmp dir
-        -- callCommand "cp -r . /home/kb/tmp/servelmtest"
+        callCommand "cp -r . /home/kb/tmp/servelmtest"
         runProcess_ "elm make Generated/BooksApi.elm --output api.js"
 
 
@@ -101,7 +101,7 @@ createCache = do
               "direct": {
                 "elm/core": "1.0.2",
                 "elm/json": "1.1.3",
-                "elm/http": "1.0.0",
+                "elm/http": "2.0.0",
                 "elm/url": "1.0.0",
                 "bartavelle/json-helpers": "2.0.2"
               },

@@ -4,8 +4,8 @@ import Http
 import Url.Builder
 
 
-getNothing : Http.Request ()
-getNothing =
+getNothing : (Result Http.Error  (())  -> msg) -> Cmd msg
+getNothing toMsg =
     let
         params =
             List.filterMap identity
@@ -18,22 +18,19 @@ getNothing =
             , headers =
                 []
             , url =
-                Url.Builder.absolute
+                Url.Builder.crossOrigin ""
                     [ "nothing"
                     ]
                     params
             , body =
                 Http.emptyBody
             , expect =
-                Http.expectStringResponse
-                    (\ rsp  ->
-                        if String.isEmpty rsp.body then
-                            Ok ()
-                        else
-                            Err "Expected the response body to be empty"
-                    )
+                Http.expectString 
+                     (\x -> case x of
+                     Err e -> toMsg (Err e)
+                     Ok _ -> toMsg (Ok ()))
             , timeout =
                 Nothing
-            , withCredentials =
-                False
+            , tracker =
+                Nothing
             }

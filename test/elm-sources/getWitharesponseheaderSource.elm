@@ -5,8 +5,8 @@ import Url.Builder
 import Json.Decode exposing (..)
 
 
-getWitharesponseheader : Http.Request String
-getWitharesponseheader =
+getWitharesponseheader : (Result Http.Error  (String)  -> msg) -> Cmd msg
+getWitharesponseheader toMsg =
     let
         params =
             List.filterMap identity
@@ -19,16 +19,16 @@ getWitharesponseheader =
             , headers =
                 []
             , url =
-                Url.Builder.absolute
+                Url.Builder.crossOrigin ""
                     [ "with-a-response-header"
                     ]
                     params
             , body =
                 Http.emptyBody
             , expect =
-                Http.expectJson <| Json.Decode.string
+                Http.expectJson toMsg Json.Decode.string
             , timeout =
                 Nothing
-            , withCredentials =
-                False
+            , tracker =
+                Nothing
             }

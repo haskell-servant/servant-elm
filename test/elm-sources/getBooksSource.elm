@@ -16,8 +16,8 @@ maybeBoolToIntStr mx =
 
 jsonDecBook = J.succeed {}
 
-getBooks : Bool -> (Maybe String) -> (Maybe Int) -> String -> (List (Maybe Bool)) -> Http.Request (List Book)
-getBooks query_published query_sort query_year query_category query_filters =
+getBooks : Bool -> (Maybe String) -> (Maybe Int) -> String -> (List (Maybe Bool)) -> (Result Http.Error  ((List Book))  -> msg) -> Cmd msg
+getBooks query_published query_sort query_year query_category query_filters toMsg =
     let
         params =
             List.filterMap identity
@@ -42,16 +42,16 @@ getBooks query_published query_sort query_year query_category query_filters =
             , headers =
                 []
             , url =
-                Url.Builder.absolute
+                Url.Builder.crossOrigin ""
                     [ "books"
                     ]
                     params
             , body =
                 Http.emptyBody
             , expect =
-                Http.expectJson <| Json.Decode.list (jsonDecBook)
+                Http.expectJson toMsg (Json.Decode.list (jsonDecBook))
             , timeout =
                 Nothing
-            , withCredentials =
-                False
+            , tracker =
+                Nothing
             }

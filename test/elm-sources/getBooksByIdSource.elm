@@ -8,8 +8,8 @@ type Book = Book
 jsonDecBook : Json.Decode.Decoder Book
 jsonDecBook = Debug.todo ""
 
-getBooksById : Int -> Http.Request Book
-getBooksById capture_id =
+getBooksById : Int -> (Result Http.Error  (Book)  -> msg) -> Cmd msg
+getBooksById capture_id toMsg =
     let
         params =
             List.filterMap identity
@@ -22,7 +22,7 @@ getBooksById capture_id =
             , headers =
                 []
             , url =
-                Url.Builder.absolute
+                Url.Builder.crossOrigin ""
                     [ "books"
                     , capture_id |> String.fromInt
                     ]
@@ -30,9 +30,9 @@ getBooksById capture_id =
             , body =
                 Http.emptyBody
             , expect =
-                Http.expectJson <| jsonDecBook
+                Http.expectJson toMsg jsonDecBook
             , timeout =
                 Nothing
-            , withCredentials =
-                False
+            , tracker =
+                Nothing
             }

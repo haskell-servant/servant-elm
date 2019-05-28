@@ -6,8 +6,8 @@ import Json.Encode
 import Url.Builder
 
 
-postTwo : String -> Http.Request (Maybe Int)
-postTwo body =
+postTwo : String -> (Result Http.Error  ((Maybe Int))  -> msg) -> Cmd msg
+postTwo body toMsg =
     let
         params =
             List.filterMap identity
@@ -20,16 +20,16 @@ postTwo body =
             , headers =
                 []
             , url =
-                Url.Builder.absolute
+                Url.Builder.crossOrigin ""
                     [ "two"
                     ]
                     params
             , body =
                 Http.jsonBody (Json.Encode.string body)
             , expect =
-                Http.expectJson <| Json.Decode.maybe (Json.Decode.int)
+                Http.expectJson toMsg (Json.Decode.maybe (Json.Decode.int))
             , timeout =
                 Nothing
-            , withCredentials =
-                False
+            , tracker =
+                Nothing
             }

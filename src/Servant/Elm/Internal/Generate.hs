@@ -531,6 +531,10 @@ renderDecoderName elmTypeExpr =
   case elmTypeExpr of
     ETyApp (ETyCon (ETCon "List")) t ->
       parens ("Json.Decode.list " <> parens (renderDecoderName t))
+    ETyApp (ETyCon (ETCon "Maybe")) t ->
+      parens ("Json.Decode.maybe " <> parens (renderDecoderName t))
+    ETyCon (ETCon "Int") -> "Json.Decode.int"
+    ETyCon (ETCon "String") -> "Json.Decode.string"
     _ -> ("jsonDec" <> stext (T.pack (renderElm elmTypeExpr)))
 
 
