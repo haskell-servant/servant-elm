@@ -1,3 +1,8 @@
+0.6.0.1
+-------
+
+* Bug: Replace special symbols in query string param name
+
 0.6.0.0
 -------
 
