@@ -4,7 +4,7 @@
 
 Generate Elm functions to query your Servant API!
 
-Elm type generation coutesy of [krisajenkins/elm-export](https://github.com/krisajenkins/elm-export).
+Elm type generation coutesy of [elm-bridge](http://hackage.haskell.org/package/elm-bridge).
 
 ## Installation
 
