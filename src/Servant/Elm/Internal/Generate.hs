@@ -400,7 +400,7 @@ mkLetParams opts request =
                 "String.fromInt >> "
           in
               "[" <+> (if wrapped then elmName else "Just" <+> elmName) <> line <>
-                (indent 4 ("|> Maybe.map" <+> parens (toStringSrc <> "Url.Builder.string" <+> dquotes elmName)))
+                (indent 4 ("|> Maybe.map" <+> parens (toStringSrc <> "Url.Builder.string" <+> dquotes name)))
                 <+> "]"
               -- (if wrapped then name else "Just" <+> name) <$>
               -- indent 4 ("|> Maybe.map" <+> parens (toStringSrc <> "Http.encodeUri >> (++)" <+> dquotes (elmName <> equals)) <$>

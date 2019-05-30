@@ -27,11 +27,11 @@ getBooks query_published query_sort query_year query_category query_filters toMs
                   else
                     Nothing ]
                 , [ query_sort
-                    |> Maybe.map (Url.Builder.string "query_sort") ]
+                    |> Maybe.map (Url.Builder.string "sort") ]
                 , [ query_year
-                    |> Maybe.map (String.fromInt >> Url.Builder.string "query_year") ]
+                    |> Maybe.map (String.fromInt >> Url.Builder.string "year") ]
                 , [ Just query_category
-                    |> Maybe.map (Url.Builder.string "query_category") ]
+                    |> Maybe.map (Url.Builder.string "category") ]
                 , query_filters
                     |> List.map (\val -> Just (Url.Builder.string "filters[]" (maybeBoolToIntStr val)))
                 ])
