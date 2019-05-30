@@ -1,3 +1,8 @@
+0.6.0.2
+-------
+
+* Ticket #53. Don't add a "query_" prefix to query params
+
 0.6.0.1
 -------
 
