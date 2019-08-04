@@ -133,8 +133,7 @@ getBooksByBookId capture_bookId =
 ```
 
 See [`examples`](examples) for a complete usage example, or take a look at
-[mattjbray/servant-elm-example-app](https://github.com/mattjbray/servant-elm-example-app)
-for an example project using this library.
+[`mattjbray/servant-elm-example-app`](https://github.com/mattjbray/servant-elm-example-app) (elm 0.18) or [`haskell-servant/example-servant-elm`](https://github.com/haskell-servant/example-servant-elm) (elm 0.19) for an example project using this library.
 
 ## Development
 
