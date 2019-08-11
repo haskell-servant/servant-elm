@@ -1,6 +1,6 @@
 # Servant Elm
 
-[![Build Status](https://travis-ci.org/mattjbray/servant-elm.svg?branch=master)](https://travis-ci.org/mattjbray/servant-elm)
+[![Build Status](https://travis-ci.org/haskell-servant/servant-elm.svg?branch=master)](https://travis-ci.org/haskell-servant/servant-elm)
 
 Generate Elm functions to query your Servant API!
 
