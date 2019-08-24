@@ -551,7 +551,7 @@ mkUrl opts segments =
   where
     urlBuilder :: Doc
     urlBuilder = case urlPrefix opts of
-      Dynamic -> "Url.Builder.absolute" :: Doc
+      Dynamic -> "Url.Builder.crossOrigin urlBase" :: Doc
       Static url -> "Url.Builder.crossOrigin" <+> dquotes (stext url)
 
     segmentToDoc :: F.Segment EType -> Doc

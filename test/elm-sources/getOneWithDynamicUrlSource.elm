@@ -19,7 +19,7 @@ getOne urlBase toMsg =
             , headers =
                 []
             , url =
-                Url.Builder.absolute
+                Url.Builder.crossOrigin urlBase
                     [ "one"
                     ]
                     params
