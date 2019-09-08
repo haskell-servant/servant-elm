@@ -53,6 +53,8 @@ data ElmOptions = ElmOptions
     -- ^ Alterations to perform on ETypes before code generation.
   , elmAlterations        :: (ETypeDef -> ETypeDef)
     -- ^ Alterations to perform on ETypeDefs before code generation.
+  , elmToString          :: (EType -> Text)
+    -- ^ Elm functions creating a string from a given type.
   , emptyResponseElmTypes :: [EType]
     -- ^ Types that represent an empty Http response.
   , stringElmTypes        :: [EType]
@@ -87,6 +89,7 @@ defElmOptions = ElmOptions
   { urlPrefix = Static ""
   , elmTypeAlterations = Elm.defaultTypeAlterations
   , elmAlterations = Elm.defaultAlterations
+  , elmToString = defaultElmToString
   , emptyResponseElmTypes =
       [ toElmType (Proxy :: Proxy ())
       ]
@@ -392,15 +395,11 @@ mkLetParams opts request =
           let
             argType = qarg ^. F.queryArgName . F.argType
             wrapped = isElmMaybeType argType
-            -- Don't use "toString" on Elm Strings, otherwise we get extraneous quotes.
             toStringSrc =
-              if isElmStringType opts argType || isElmMaybeStringType opts argType then
-                ""
-              else
-                "String.fromInt >> "
+              toString opts argType
           in
               "[" <+> (if wrapped then elmName else "Just" <+> elmName) <> line <>
-                (indent 4 ("|> Maybe.map" <+> parens (toStringSrc <> "Url.Builder.string" <+> dquotes name)))
+                (indent 4 ("|> Maybe.map" <+> composeRight [toStringSrc, "Url.Builder.string" <+> dquotes name]))
                 <+> "]"
               -- (if wrapped then name else "Just" <+> name) <$>
               -- indent 4 ("|> Maybe.map" <+> parens (toStringSrc <> "Http.encodeUri >> (++)" <+> dquotes (elmName <> equals)) <$>
@@ -464,13 +463,9 @@ mkRequest opts request =
           headerArgName = elmHeaderArg header
           argType = header ^. F.headerArg . F.argType
           wrapped = isElmMaybeType argType
-          toStringSrc =
-            if isElmMaybeStringType opts argType || isElmStringType opts argType then
-              mempty
-            else
-              " << String.fromInt"
+          toStringSrc = toString opts argType
       in
-        "Maybe.map" <+> parens (("Http.header" <+> dquotes headerName <> toStringSrc))
+        "Maybe.map" <+> parens (("Http.header" <+> composeLeft [dquotes headerName, toStringSrc]))
         <+>
         (if wrapped then headerArgName else parens ("Just" <+> headerArgName))
 
@@ -561,14 +556,10 @@ mkUrl opts segments =
           dquotes (stext (F.unPathSegment path))
         F.Cap arg ->
           let
-            -- Don't use "toString" on Elm Strings, otherwise we get extraneous quotes.
-            toStringSrc =
-              if isElmStringType opts (arg ^. F.argType) then
-                empty
-              else
-                " |> String.fromInt"
+            toStringSrc = 
+              toString opts (arg ^. F.argType)
           in
-            (elmCaptureArg s) <> toStringSrc
+            pipeRight [elmCaptureArg s, toStringSrc]
 
 
 mkQueryParams
@@ -632,3 +623,34 @@ elmList ds = lbracket <+> hsep (punctuate (line <> comma) ds) <$> rbracket
 elmListOfMaybes :: [Doc] -> Doc
 elmListOfMaybes [] = lbracket <> rbracket
 elmListOfMaybes ds = "List.filterMap identity" <$> indent 4 (elmList ds)
+
+defaultElmToString :: EType -> Text
+defaultElmToString argType =
+    case argType of
+    ETyCon (ETCon "Bool")  -> "(\\value -> if value then \"1\" else \"0\")"
+    ETyCon (ETCon "Posix") -> "Time.posixToMillis >> String.fromInt)"
+    _                      -> "String.fromInt"
+
+toString :: ElmOptions -> EType -> Doc
+toString opts argType =
+  if isElmStringType opts argType || isElmMaybeStringType opts argType then
+    mempty
+  else
+    stext $ elmToString opts argType
+
+pipeLeft :: [Doc] -> Doc
+pipeLeft =
+  encloseSep lbracket rbracket " <| "
+
+pipeRight :: [Doc] -> Doc
+pipeRight =
+  encloseSep lbracket rbracket " |> "
+
+composeLeft :: [Doc] -> Doc
+composeLeft =
+  encloseSep lbracket rbracket " << "
+
+composeRight :: [Doc] -> Doc
+composeRight =
+  encloseSep lbracket rbracket " >> "
+
