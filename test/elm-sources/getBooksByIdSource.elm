@@ -24,7 +24,7 @@ getBooksById capture_id toMsg =
             , url =
                 Url.Builder.crossOrigin ""
                     [ "books"
-                    , capture_id |> String.fromInt
+                    , (capture_id |> String.fromInt)
                     ]
                     params
             , body =

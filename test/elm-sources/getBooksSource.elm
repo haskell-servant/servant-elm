@@ -7,13 +7,6 @@ import Json.Decode as J
 
 type alias Book = {}
 
-maybeBoolToIntStr : Maybe Bool -> String
-maybeBoolToIntStr mx =
-  case mx of
-    Nothing -> ""
-    Just True -> "1"
-    Just False -> "0"
-
 jsonDecBook = J.succeed {}
 
 getBooks : Bool -> (Maybe String) -> (Maybe Int) -> String -> (List (Maybe Bool)) -> (Result Http.Error  ((List Book))  -> msg) -> Cmd msg
@@ -29,11 +22,14 @@ getBooks query_published query_sort query_year query_category query_filters toMs
                 , [ query_sort
                     |> Maybe.map (Url.Builder.string "sort") ]
                 , [ query_year
-                    |> Maybe.map (String.fromInt >> Url.Builder.string "year") ]
+                    |> Maybe.map (String.fromInt
+                                  >> Url.Builder.string "year") ]
                 , [ Just query_category
                     |> Maybe.map (Url.Builder.string "category") ]
                 , query_filters
-                    |> List.map (\val -> Just (Url.Builder.string "filters[]" (maybeBoolToIntStr val)))
+                    |> List.map ((Maybe.map (\value -> if value then "1" else "0") >> Maybe.withDefault "")
+                                 >> Url.Builder.string "filters[]"
+                                 >> Just)
                 ])
     in
         Http.request
