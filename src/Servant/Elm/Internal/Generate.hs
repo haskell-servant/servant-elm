@@ -640,17 +640,17 @@ toString opts argType =
 
 pipeLeft :: [Doc] -> Doc
 pipeLeft =
-  encloseSep lbracket rbracket " <| "
+  encloseSep lparen rparen " <| "
 
 pipeRight :: [Doc] -> Doc
 pipeRight =
-  encloseSep lbracket rbracket " |> "
+  encloseSep lparen rparen " |> "
 
 composeLeft :: [Doc] -> Doc
 composeLeft =
-  encloseSep lbracket rbracket " << "
+  encloseSep lparen rparen " << "
 
 composeRight :: [Doc] -> Doc
 composeRight =
-  encloseSep lbracket rbracket " >> "
+  encloseSep lparen rparen " >> "
 
