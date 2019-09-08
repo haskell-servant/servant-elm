@@ -626,10 +626,11 @@ elmListOfMaybes ds = "List.filterMap identity" <$> indent 4 (elmList ds)
 
 defaultElmToString :: EType -> Text
 defaultElmToString argType =
-    case argType of
-    ETyCon (ETCon "Bool")  -> "(\\value -> if value then \"1\" else \"0\")"
-    ETyCon (ETCon "Posix") -> "Time.posixToMillis >> String.fromInt)"
-    _                      -> "String.fromInt"
+  case argType of
+    ETyCon (ETCon "Bool")             -> "(\\value -> if value then \"1\" else \"0\")"
+    ETyCon (ETCon "Posix")            -> "Time.posixToMillis >> String.fromInt)"
+    ETyApp (ETyCon (ETCon "Maybe")) v -> defaultElmToString v
+    _                                 -> "String.fromInt"
 
 toString :: ElmOptions -> EType -> Doc
 toString opts argType =
