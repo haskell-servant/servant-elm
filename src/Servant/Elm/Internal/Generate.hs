@@ -640,17 +640,16 @@ toString opts argType =
 
 pipeLeft :: [Doc] -> Doc
 pipeLeft =
-  encloseSep lparen rparen " <| "
+  encloseSep lparen rparen " <| " . filter (not . isEmpty)
 
 pipeRight :: [Doc] -> Doc
 pipeRight =
-  encloseSep lparen rparen " |> "
+  encloseSep lparen rparen " |> " . filter (not . isEmpty)
 
 composeLeft :: [Doc] -> Doc
 composeLeft =
-  encloseSep lparen rparen " << "
+  encloseSep lparen rparen " << " . filter (not . isEmpty)
 
 composeRight :: [Doc] -> Doc
 composeRight =
-  encloseSep lparen rparen " >> "
-
+  encloseSep lparen rparen " >> " . filter (not . isEmpty)
