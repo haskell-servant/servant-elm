@@ -129,13 +129,6 @@ defElmImports =
     , "import Http"
     , "import String"
     , "import Url.Builder"
-    , ""
-    , "maybeBoolToIntStr : Maybe Bool -> String"
-    , "maybeBoolToIntStr mx ="
-    , "  case mx of"
-    , "    Nothing -> \"\""
-    , "    Just True -> \"1\""
-    , "    Just False -> \"0\""
     ]
 
 {-|
@@ -396,7 +389,7 @@ mkLetParams opts request =
             argType = qarg ^. F.queryArgName . F.argType
             wrapped = isElmMaybeType argType
             toStringSrc =
-              toString opts argType
+              toString opts (maybeOf argType)
           in
               "[" <+> (if wrapped then elmName else "Just" <+> elmName) <> line <>
                 (indent 4 ("|> Maybe.map" <+> composeRight [toStringSrc, "Url.Builder.string" <+> dquotes name]))
@@ -416,18 +409,18 @@ mkLetParams opts request =
         F.List ->
             let
               argType = qarg ^. F.queryArgName . F.argType
-              convertedVal =
-                if isElmListOfMaybeBoolType argType then
-                  parens ("maybeBoolToIntStr" <+> "val")
-                else
-                  "val"
+              toStringSrc =
+                toString opts (listOf (maybeOf argType))
             in
             elmName <$>
             indent 4 ("|> List.map"
-                      <+> parens (backslash <> "val ->" <+> "Just"
-                                  <+> parens ("Url.Builder.string"
-                                              <+> dquotes (name <> "[]")
-                                              <+> convertedVal)))
+                      <+> composeRight
+                        [ toStringSrc
+                        , "Url.Builder.string" <+> dquotes (name <> "[]")
+                        , "Just"
+                        ]
+                      )
+                        
       where
         elmName = elmQueryArg qarg
         name = qarg ^. F.queryArgName . F.argName . to (stext . F.unPathSegment)
@@ -463,9 +456,9 @@ mkRequest opts request =
           headerArgName = elmHeaderArg header
           argType = header ^. F.headerArg . F.argType
           wrapped = isElmMaybeType argType
-          toStringSrc = toString opts argType
+          toStringSrc = toString opts (maybeOf argType)
       in
-        "Maybe.map" <+> parens (("Http.header" <+> composeLeft [dquotes headerName, toStringSrc]))
+        "Maybe.map" <+> composeLeft ["Http.header" <+> dquotes headerName, toStringSrc]
         <+>
         (if wrapped then headerArgName else parens ("Just" <+> headerArgName))
 
@@ -557,7 +550,7 @@ mkUrl opts segments =
         F.Cap arg ->
           let
             toStringSrc = 
-              toString opts (arg ^. F.argType)
+              toString opts (maybeOf (arg ^. F.argType))
           in
             pipeRight [elmCaptureArg s, toStringSrc]
 
@@ -628,13 +621,23 @@ defaultElmToString :: EType -> Text
 defaultElmToString argType =
   case argType of
     ETyCon (ETCon "Bool")             -> "(\\value -> if value then \"1\" else \"0\")"
-    ETyCon (ETCon "Posix")            -> "Time.posixToMillis >> String.fromInt)"
-    ETyApp (ETyCon (ETCon "Maybe")) v -> defaultElmToString v
+    ETyCon (ETCon "Float")            -> "String.fromFloat"
+    ETyCon (ETCon "Char")             -> "String.fromChar"
+    ETyApp (ETyCon (ETCon "Maybe")) v -> "(Maybe.map " <> defaultElmToString v <> " >> Maybe.withDefault \"\")"
     _                                 -> "String.fromInt"
+
+
+maybeOf :: EType -> EType
+maybeOf (ETyApp (ETyCon (ETCon "Maybe")) v) = v
+maybeOf v = v
+
+listOf :: EType -> EType
+listOf (ETyApp (ETyCon (ETCon "List")) v) = v
+listOf v = v
 
 toString :: ElmOptions -> EType -> Doc
 toString opts argType =
-  if isElmStringType opts argType || isElmMaybeStringType opts argType then
+  if isElmStringType opts argType then
     mempty
   else
     stext $ elmToString opts argType
