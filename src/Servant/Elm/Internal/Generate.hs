@@ -620,7 +620,7 @@ elmListOfMaybes ds = "List.filterMap identity" <$> indent 4 (elmList ds)
 defaultElmToString :: EType -> Text
 defaultElmToString argType =
   case argType of
-    ETyCon (ETCon "Bool")             -> "(\\value -> if value then \"1\" else \"0\")"
+    ETyCon (ETCon "Bool")             -> "(\\value -> if value then \"true\" else \"false\")"
     ETyCon (ETCon "Float")            -> "String.fromFloat"
     ETyCon (ETCon "Char")             -> "String.fromChar"
     ETyApp (ETyCon (ETCon "Maybe")) v -> "(Maybe.map " <> defaultElmToString v <> " >> Maybe.withDefault \"\")"

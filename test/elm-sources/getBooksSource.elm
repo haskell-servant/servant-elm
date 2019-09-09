@@ -27,7 +27,7 @@ getBooks query_published query_sort query_year query_category query_filters toMs
                 , [ Just query_category
                     |> Maybe.map (Url.Builder.string "category") ]
                 , query_filters
-                    |> List.map ((Maybe.map (\value -> if value then "1" else "0") >> Maybe.withDefault "")
+                    |> List.map ((Maybe.map (\value -> if value then "true" else "false") >> Maybe.withDefault "")
                                  >> Url.Builder.string "filters[]"
                                  >> Just)
                 ])
