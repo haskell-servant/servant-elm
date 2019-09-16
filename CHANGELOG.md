@@ -1,3 +1,8 @@
+0.7.0
+-----
+
+* PR #59. Using the appropriate toString functions for different types
+
 0.6.1
 -----
 
