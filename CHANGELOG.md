@@ -1,3 +1,8 @@
+0.6.1
+-----
+
+* PR #57. mkUrl: Use urlBase for Dynamic case
+
 0.6.0.2
 -------
 
