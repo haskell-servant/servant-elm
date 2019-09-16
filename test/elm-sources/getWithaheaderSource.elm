@@ -19,9 +19,11 @@ getWithaheader header_myStringHeader header_MyIntHeader header_MyRequiredStringH
             , headers =
                 List.filterMap identity
                     [ Maybe.map (Http.header "myStringHeader") header_myStringHeader
-                    , Maybe.map (Http.header "MyIntHeader" << String.fromInt) header_MyIntHeader
+                    , Maybe.map (Http.header "MyIntHeader"
+                                 << String.fromInt) header_MyIntHeader
                     , Maybe.map (Http.header "MyRequiredStringHeader") (Just header_MyRequiredStringHeader)
-                    , Maybe.map (Http.header "MyRequiredIntHeader" << String.fromInt) (Just header_MyRequiredIntHeader)
+                    , Maybe.map (Http.header "MyRequiredIntHeader"
+                                 << String.fromInt) (Just header_MyRequiredIntHeader)
                     ]
             , url =
                 Url.Builder.crossOrigin ""

@@ -10,13 +10,6 @@ import Http
 import String
 import Url.Builder
 
-maybeBoolToIntStr : Maybe Bool -> String
-maybeBoolToIntStr mx =
-  case mx of
-    Nothing -> ""
-    Just True -> "1"
-    Just False -> "0"
-
 type alias MessageBody  =
    { message: String
    }

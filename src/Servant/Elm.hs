@@ -21,6 +21,7 @@ module Servant.Elm
        , defElmOptions
        , defElmImports
        , defaultOptions
+       , defaultElmToString
        -- * Convenience re-exports from the "Elm" module
        , DefineElm (..)
        , EType (..)
@@ -34,6 +35,7 @@ module Servant.Elm
 
 import           Servant.Elm.Internal.Generate (ElmOptions (..), UrlPrefix (..),
                                                 defElmImports, defElmOptions,
+                                                defaultElmToString,
                                                 generateElmForAPI,
                                                 generateElmForAPIWith,
                                                 generateElmModule,

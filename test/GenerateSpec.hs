@@ -70,12 +70,6 @@ spec = do
                               "import Url.Builder\n" <>
                               "import Json.Decode as J\n\n" <>
                               "type alias Book = {}\n\n" <>
-                              "maybeBoolToIntStr : Maybe Bool -> String\n" <>
-                              "maybeBoolToIntStr mx =\n" <>
-                              "  case mx of\n" <>
-                              "    Nothing -> \"\"\n" <>
-                              "    Just True -> \"1\"\n" <>
-                              "    Just False -> \"0\"\n\n" <>
                               "jsonDecBook = J.succeed {}\n\n"
                             )
                           , ( "test/elm-sources/postBooksSource.elm"
