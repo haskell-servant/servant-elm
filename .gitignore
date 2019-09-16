@@ -3,3 +3,4 @@ elm-stuff
 /_test-cache/
 TAGS
 .dir-locals.el
+stack.yaml.lock
