@@ -61,7 +61,6 @@ Let's save this as `example.hs` and run it:
 ```
 $ stack runghc example.hs
 Writing: my-elm-dir/Generated/MyApi.elm
-$
 ```
 
 Here's what was generated:
