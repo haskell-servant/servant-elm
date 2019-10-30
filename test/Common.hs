@@ -15,7 +15,15 @@ data Book = Book
     { title :: String
     }
 
+data PolymorphicData a b = PolymorphicData a b deriving (Show, Eq)
+data SomeRecord = SomeRecord
+  { recordId :: Int
+  , recordName :: String
+  } deriving (Show, Eq)
+
 deriveBoth defaultOptions ''Book
+deriveBoth defaultOptions ''PolymorphicData
+deriveBoth defaultOptions ''SomeRecord
 
 type TestApi =
        "one"

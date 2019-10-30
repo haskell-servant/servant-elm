@@ -17,14 +17,14 @@ import           Servant.Elm
 import           Test.Hspec                (Spec, describe, hspec, it)
 import           Test.HUnit                (Assertion, assertEqual)
 
-import           Common                    (testApi)
+import           Common                    (testApi, SomeRecord(..), PolymorphicData(..))
 
 
 main :: IO ()
 main = hspec spec
 
 spec :: Test.Hspec.Spec
-spec = do
+spec =
     describe "encoding a simple api" $
         do it "does it" $
                do expected <-
@@ -122,6 +122,30 @@ spec = do
                                     })
                                    (Proxy :: Proxy ("one" :> Get '[JSON] Int)))
                   generated `itemsShouldBe` expected
+           it "works with polymorphic data" $
+               do expected <-
+                     mapM
+                         (\(fpath, header) -> do
+                           source <- T.readFile fpath
+                           return (fpath, header, source))
+                         [ ( "test/elm-sources/getPolymorphicData.elm"
+                           , "module GetPolymorphicData exposing (..)\n\n" <>
+                             "import Http\n" <>
+                             "import Json.Decode exposing (..)\n" <>
+                             "import Url.Builder\n\n" <>
+                             "type PolymorphicData a b = PolymorphicData a b\n" <>
+                             "type SomeRecord = SomeRecord { recordId : Int, recordname : String }\n\n" <>
+                             "jsonDecPolymorphicData : Json.Decode.Decoder a -> Json.Decode.Decoder b -> Json.Decode.Decoder (PolymorphicData a b)\n"<>
+                             "jsonDecPolymorphicData _ _ = Debug.todo \"finish\"\n\n" <>
+                             "jsonDecSomeRecord : Json.Decode.Decoder SomeRecord\n"<>
+                             "jsonDecSomeRecord = Debug.todo \"finish\"\n\n\n")]
+                  let generated =
+                        map
+                          (<> "\n")
+                          (generateElmForAPIWith
+                               defElmOptions
+                               (Proxy :: Proxy ( "polymorphicData" :> Get '[JSON] (PolymorphicData [String] SomeRecord))))
+                  generated `itemsShouldBe` expected
 
 itemsShouldBe :: [Text] -> [(String, Text, Text)] -> IO ()
 itemsShouldBe actual expected =
@@ -138,7 +162,7 @@ shouldBeDiff a (fpath,header,b) =
              (Diff.getGroupedDiff
                   (lines (T.unpack actual))
                   (lines (T.unpack expected))))
-        actual expected
+         expected actual
     where
       actual = T.strip $ header <> a
       expected = T.strip b
