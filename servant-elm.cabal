@@ -48,6 +48,7 @@ test-suite servant-elm-test
   hs-source-dirs:      test
   main-is:             GenerateSpec.hs
   other-modules:       Common
+                     , PolymorphicData
   build-depends:
                        Diff
                      , HUnit

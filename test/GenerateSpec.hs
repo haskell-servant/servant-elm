@@ -17,7 +17,8 @@ import           Servant.Elm
 import           Test.Hspec                (Spec, describe, hspec, it)
 import           Test.HUnit                (Assertion, assertEqual)
 
-import           Common                    (testApi, SomeRecord(..), PolymorphicData(..))
+import           Common                    (testApi)
+import           PolymorphicData           (SomeRecord(..), PolymorphicData(..))
 
 
 main :: IO ()
