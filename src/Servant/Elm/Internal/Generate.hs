@@ -420,7 +420,7 @@ mkLetParams opts request =
                         , "Just"
                         ]
                       )
-                        
+
       where
         elmName = elmQueryArg qarg
         name = qarg ^. F.queryArgName . F.argName . to (stext . F.unPathSegment)
@@ -522,6 +522,8 @@ renderDecoderName elmTypeExpr =
       parens ("Json.Decode.list " <> parens (renderDecoderName t))
     ETyApp (ETyCon (ETCon "Maybe")) t ->
       parens ("Json.Decode.maybe " <> parens (renderDecoderName t))
+    ETyApp x y ->
+      parens (renderDecoderName x <+> renderDecoderName y)
     ETyCon (ETCon "Int") -> "Json.Decode.int"
     ETyCon (ETCon "String") -> "Json.Decode.string"
     _ -> ("jsonDec" <> stext (T.pack (renderElm elmTypeExpr)))
@@ -549,7 +551,7 @@ mkUrl opts segments =
           dquotes (stext (F.unPathSegment path))
         F.Cap arg ->
           let
-            toStringSrc = 
+            toStringSrc =
               toString opts (maybeOf (arg ^. F.argType))
           in
             pipeRight [elmCaptureArg s, toStringSrc]
