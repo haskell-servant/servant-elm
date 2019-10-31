@@ -1,3 +1,8 @@
+0.7.1
+-----
+
+* PR #61. Improving support for polymorphic data types
+
 0.7.0
 -----
 
