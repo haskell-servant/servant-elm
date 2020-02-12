@@ -139,11 +139,7 @@ You could spit these out to a file and call them from your Elm code, but you
 would be better off creating a 'Spec' with the result and using 'specsToDir',
 which handles the module name for you.
 -}
-generateElmForAPI
-  :: ( F.HasForeign LangElm ElmDatatype api
-     , F.GenerateList ElmDatatype (F.Foreign ElmDatatype api))
-  => Proxy api
-  -> [Text]
+generateElmForAPI :: (F.HasForeign LangElm ElmDatatype api, F.GenerateList ElmDatatype (F.Foreign ElmDatatype api)) => Proxy api -> [Text]
 generateElmForAPI =
   generateElmForAPIWith defElmOptions
 
@@ -151,12 +147,7 @@ generateElmForAPI =
 {-|
 Generate Elm code for the API with custom options.
 -}
-generateElmForAPIWith
-  :: ( F.HasForeign LangElm ElmDatatype api
-     , F.GenerateList ElmDatatype (F.Foreign ElmDatatype api))
-  => ElmOptions
-  -> Proxy api
-  -> [Text]
+generateElmForAPIWith :: (F.HasForeign LangElm ElmDatatype api, F.GenerateList ElmDatatype (F.Foreign ElmDatatype api)) => ElmOptions -> Proxy api -> [Text]
 generateElmForAPIWith opts =
   nub . map docToText . map (generateElmForRequest opts) . getEndpoints
 
@@ -284,10 +275,7 @@ elmBodyArg =
   "body"
 
 
-mkArgs
-  :: ElmOptions
-  -> F.Req ElmDatatype
-  -> Doc
+mkArgs :: ElmOptions -> F.Req ElmDatatype -> Doc
 mkArgs opts request =
   (hsep . concat) $
     [ ["toMsg"]
@@ -476,9 +464,7 @@ mkUrl opts segments =
             elmCaptureArg s <+> "|>" <+> toStringSrc' <+> "Url.percentEncode"
 
 
-mkQueryParams
-  :: F.Req ElmDatatype
-  -> Doc
+mkQueryParams :: F.Req ElmDatatype -> Doc
 mkQueryParams request =
   if null (request ^. F.reqUrl . F.queryStr) then
     empty
