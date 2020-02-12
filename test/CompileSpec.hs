@@ -37,6 +37,7 @@ spec = do
               "elm-version": "0.19.0",
               "dependencies": {
                   "direct": {
+                      "avh4/elm-program-test": "3.2.0",
                       "elm/core": "1.0.2",
                       "elm/json": "1.1.2",
                       "elm/http": "2.0.0",

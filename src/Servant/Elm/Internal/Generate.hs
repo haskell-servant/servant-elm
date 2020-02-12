@@ -115,6 +115,7 @@ The default required imports are:
 > import Json.Decode.Pipeline exposing (..)
 > import Json.Encode
 > import Http
+> import SimulatedEffect.Http
 > import String.Conversions as String
 > import Url
 -}
@@ -125,6 +126,7 @@ defElmImports =
     , "import Json.Decode.Pipeline exposing (..)"
     , "import Json.Encode"
     , "import Http"
+    , "import SimulatedEffect.Http"
     , "import String.Conversions as String"
     , "import Url"
     ]
@@ -175,13 +177,29 @@ generateElmForRequest opts request =
                     ])
             Nothing ->
               indent i elmRequest
+        , "\n"
+        , fnNameSimulated <+> ":" <+> typeSignatureSimulated
+        , fnNameSimulated <+> args <+> equals
+        , case letParams of
+            Just params ->
+              indent i
+              (vsep ["let"
+                    , indent i params
+                    , "in"
+                    , indent i elmRequestSimulated
+                    ])
+            Nothing ->
+              indent i elmRequestSimulated
         ]
 
     fnName =
       request ^. F.reqFuncName . to (T.replace "-" "" . F.camelCase) . to stext
 
     typeSignature =
-      mkTypeSignature opts request
+      mkTypeSignature opts returnType request
+
+    returnType =
+      pure "Cmd msg"
 
     args =
       mkArgs opts request
@@ -190,11 +208,23 @@ generateElmForRequest opts request =
       mkLetParams opts request
 
     elmRequest =
-      mkRequest opts request
+      mkRequest "Http" opts request
+
+    fnNameSimulated =
+      fnName <> "Simulated"
+
+    typeSignatureSimulated =
+      mkTypeSignature opts returnTypeSimulated request
+
+    returnTypeSimulated =
+      pure "SimulatedEffect.Http.SimulatedEffect msg"
+
+    elmRequestSimulated =
+      mkRequest "SimulatedEffect.Http" opts request
 
 
-mkTypeSignature :: ElmOptions -> F.Req ElmDatatype -> Doc
-mkTypeSignature opts request =
+mkTypeSignature :: ElmOptions -> Maybe Doc -> F.Req ElmDatatype -> Doc
+mkTypeSignature opts returnType request =
   (hsep . punctuate " ->" . concat)
     [ catMaybes [msgType, urlPrefixType]
     , headerTypes
@@ -247,9 +277,6 @@ mkTypeSignature opts request =
     msgType = do
       result <- fmap elmTypeRef $ request ^. F.reqReturnType
       pure (parens ("Result (Maybe (Http.Metadata, String), Http.Error)" <+> parens result <+> "-> msg"))
-
-    returnType :: Maybe Doc
-    returnType = pure "Cmd msg"
 
 
 elmHeaderArg :: F.HeaderArg ElmDatatype -> Doc
@@ -343,9 +370,9 @@ mkLetParams opts request =
         elmName= qarg ^. F.queryArgName . F.argName . to (stext . F.unPathSegment)
 
 
-mkRequest :: ElmOptions -> F.Req ElmDatatype -> Doc
-mkRequest opts request =
-  "Http.request" <$>
+mkRequest :: Doc -> ElmOptions -> F.Req ElmDatatype -> Doc
+mkRequest httpLib opts request =
+  httpLib <> ".request" <$>
   indent i
     (elmRecord
        [ "method =" <$>
@@ -369,7 +396,7 @@ mkRequest opts request =
        request ^. F.reqMethod . to (stext . T.decodeUtf8)
 
     headers =
-        [ "Http.header" <+> dquotes headerName <+>
+        [ httpLib <> ".header" <+> dquotes headerName <+>
             parens (toStringSrc "" opts (header ^. F.headerArg . F.argType) <> headerArgName)
         | header <- request ^. F.reqHeaders
         , headerName <- [header ^. F.headerArg . F.argName . to (stext . F.unPathSegment)]
@@ -383,14 +410,14 @@ mkRequest opts request =
     body =
       case request ^. F.reqBody of
         Nothing ->
-          "Http.emptyBody"
+          httpLib <> ".emptyBody"
 
         Just elmTypeExpr ->
           let
             encoderName =
               Elm.toElmEncoderRefWith (elmExportOptions opts) elmTypeExpr
           in
-            "Http.jsonBody" <+> parens (stext encoderName <+> elmBodyArg)
+            httpLib <> ".jsonBody" <+> parens (stext encoderName <+> elmBodyArg)
 
     expect =
       case request ^. F.reqReturnType of
@@ -398,7 +425,7 @@ mkRequest opts request =
           let elmConstructor =
                 Elm.toElmTypeRefWith (elmExportOptions opts) elmTypeExpr
           in
-          "Http.expectStringResponse toMsg" <$>
+          httpLib <> ".expectStringResponse toMsg" <$>
           indent i (parens (backslash <> "res" <+> "->" <$>
               indent i "case res of" <$>
               indent i (
@@ -419,7 +446,7 @@ mkRequest opts request =
 
 
         Just elmTypeExpr ->
-          "Http.expectStringResponse toMsg" <$>
+          httpLib <> ".expectStringResponse toMsg" <$>
           indent i (parens (backslash <> "res" <+> "->" <$>
               indent i "case res of" <$>
               indent i (
