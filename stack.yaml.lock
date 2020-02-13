@@ -10,13 +10,13 @@ packages:
       sha256: 6938e2396e32145a98e7a2f7bd41972f5d7363263b7fb7f037a1de2b8b660462
     name: elm-export
     version: 0.6.0.1
-    git: git@github.com:NoRedInk/elm-export
+    git: https://github.com/NoRedInk/elm-export.git
     pantry-tree:
       size: 3086
       sha256: f47b830e20cf0f42674627c8d93389e4fef8ba05c0307263884e1c55264a695f
     commit: a6b7a9a315bd24cde663012fcbb5fd35d1129a72
   original:
-    git: git@github.com:NoRedInk/elm-export
+    git: https://github.com/NoRedInk/elm-export.git
     commit: a6b7a9a315bd24cde663012fcbb5fd35d1129a72
 snapshots:
 - completed:
