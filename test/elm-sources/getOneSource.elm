@@ -38,6 +38,8 @@ getOne toMsg =
         , tracker =
             Nothing
         }
+
+
 getOneSimulated : (Result (Maybe (Http.Metadata, String), Http.Error) (Int) -> msg) -> SimulatedEffect.Http.SimulatedEffect msg
 getOneSimulated toMsg =
     SimulatedEffect.Http.request

@@ -177,7 +177,7 @@ generateElmForRequest opts request =
                     ])
             Nothing ->
               indent i elmRequest
-        , "\n"
+        , "\n\n"
         , fnNameSimulated <+> ":" <+> typeSignatureSimulated
         , fnNameSimulated <+> args <+> equals
         , case letParams of

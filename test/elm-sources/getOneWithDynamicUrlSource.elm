@@ -38,6 +38,8 @@ getOne toMsg urlBase =
         , tracker =
             Nothing
         }
+
+
 getOneSimulated : (Result (Maybe (Http.Metadata, String), Http.Error) (Int) -> msg) -> String -> SimulatedEffect.Http.SimulatedEffect msg
 getOneSimulated toMsg urlBase =
     SimulatedEffect.Http.request

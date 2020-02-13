@@ -15,7 +15,7 @@ import qualified Data.Text.IO              as T
 import           Servant.API               ((:>), Get, JSON)
 import           Servant.Elm
 import           Test.Hspec                (Spec, describe, hspec, it)
-import           Test.HUnit                (Assertion, assertBool)
+import           Test.HUnit                (Assertion, assertEqual)
 
 import           Common                    (testApi)
 
@@ -67,7 +67,8 @@ spec = do
                           , ( "test/elm-sources/postBooksSource.elm"
                             , "module PostBooksSource exposing (..)\n\n" <>
                               "import String.Conversions as String\n" <>
-                              "import Http\n\n\n")
+                              "import Http\n" <>
+                              "import SimulatedEffect.Http\n\n\n")
                           , ( "test/elm-sources/getNothingSource.elm"
                             , "module GetNothingSource exposing (..)\n\n" <>
                               "import String.Conversions as String\n" <>
@@ -123,10 +124,10 @@ itemsShouldBe actual expected =
 
 shouldBeDiff :: Text -> (String, Text, Text) -> Assertion
 shouldBeDiff a (fpath,header,b) =
-    assertBool
+    assertEqual
         ("< generated\n" <> "> " <> fpath <> "\n" <>
          Diff.ppDiff
              (Diff.getGroupedDiff
                   (lines (T.unpack (header <> a)))
                   (lines (T.unpack b))))
-        (header <> a == b)
+        b (header <> a)
