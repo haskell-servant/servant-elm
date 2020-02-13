@@ -10,7 +10,7 @@ packages:
 # Packages to be pulled from upstream that are not in the resolver (e.g., acme-missiles-0.3)
 extra-deps:
 - git: https://github.com/NoRedInk/elm-export.git
-  commit: a6b7a9a315bd24cde663012fcbb5fd35d1129a72
+  commit: bca51c1f376efdaf49a7ebc59b148a1df98d8ca1
 
 # Override default flag values for local packages and extra-deps
 flags: {}

@@ -13,11 +13,11 @@ packages:
     git: https://github.com/NoRedInk/elm-export.git
     pantry-tree:
       size: 3086
-      sha256: f47b830e20cf0f42674627c8d93389e4fef8ba05c0307263884e1c55264a695f
-    commit: a6b7a9a315bd24cde663012fcbb5fd35d1129a72
+      sha256: da37c0d1207f5784a72975cec62dd6592b96a4948b42ea55148a2463778eea7f
+    commit: bca51c1f376efdaf49a7ebc59b148a1df98d8ca1
   original:
     git: https://github.com/NoRedInk/elm-export.git
-    commit: a6b7a9a315bd24cde663012fcbb5fd35d1129a72
+    commit: bca51c1f376efdaf49a7ebc59b148a1df98d8ca1
 snapshots:
 - completed:
     size: 469332
