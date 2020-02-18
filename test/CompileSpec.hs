@@ -46,9 +46,15 @@ spec = do
                       "NoRedInk/elm-json-decode-pipeline": "1.0.0"
                   },
                   "indirect": {
+                    "avh4/elm-fifo": "1.0.4",
+                    "elm/browser": "1.0.2",
                     "elm/bytes": "1.0.7",
+                    "elm/file": "1.0.1",
+                    "elm/html": "1.0.0",
+                    "elm/random": "1.0.0",
+                    "elm/virtual-dom": "1.0.2",
                     "elm/time": "1.0.0",
-                    "elm/file": "1.0.1"
+                    "elm-explorations/test": "1.2.2"
                   }
               },
               "test-dependencies": {
