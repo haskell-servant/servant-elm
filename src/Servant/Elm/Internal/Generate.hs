@@ -127,6 +127,7 @@ defElmImports =
     , "import Json.Encode"
     , "import Http"
     , "import SimulatedEffect.Http"
+    , "import ProgramTest"
     , "import String.Conversions as String"
     , "import Url"
     ]
@@ -217,7 +218,7 @@ generateElmForRequest opts request =
       mkTypeSignature opts returnTypeSimulated request
 
     returnTypeSimulated =
-      pure "SimulatedEffect.Http.SimulatedEffect msg"
+      pure "ProgramTest.SimulatedEffect msg"
 
     elmRequestSimulated =
       mkRequest "SimulatedEffect.Http" opts request
