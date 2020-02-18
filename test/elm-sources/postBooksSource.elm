@@ -3,6 +3,7 @@ module PostBooksSource exposing (..)
 import String.Conversions as String
 import Http
 import SimulatedEffect.Http
+import ProgramTest
 
 
 postBooks : (Result (Maybe (Http.Metadata, String), Http.Error) (NoContent) -> msg) -> Book -> Cmd msg
@@ -40,7 +41,7 @@ postBooks toMsg body =
         }
 
 
-postBooksSimulated : (Result (Maybe (Http.Metadata, String), Http.Error) (NoContent) -> msg) -> Book -> SimulatedEffect.Http.SimulatedEffect msg
+postBooksSimulated : (Result (Maybe (Http.Metadata, String), Http.Error) (NoContent) -> msg) -> Book -> ProgramTest.SimulatedEffect msg
 postBooksSimulated toMsg body =
     SimulatedEffect.Http.request
         { method =

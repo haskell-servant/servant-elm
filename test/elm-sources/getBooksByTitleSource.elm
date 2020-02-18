@@ -2,6 +2,7 @@ module GetBooksByTitleSource exposing (..)
 
 import Http
 import SimulatedEffect.Http
+import ProgramTest
 import String.Conversions as String
 import Url
 
@@ -41,7 +42,7 @@ getBooksByTitle toMsg capture_title =
         }
 
 
-getBooksByTitleSimulated : (Result (Maybe (Http.Metadata, String), Http.Error) (Book) -> msg) -> String -> SimulatedEffect.Http.SimulatedEffect msg
+getBooksByTitleSimulated : (Result (Maybe (Http.Metadata, String), Http.Error) (Book) -> msg) -> String -> ProgramTest.SimulatedEffect msg
 getBooksByTitleSimulated toMsg capture_title =
     SimulatedEffect.Http.request
         { method =

@@ -3,6 +3,7 @@ module GetNothingSource exposing (..)
 import String.Conversions as String
 import Http
 import SimulatedEffect.Http
+import ProgramTest
 
 
 getNothing : (Result (Maybe (Http.Metadata, String), Http.Error) (NoContent) -> msg) -> Cmd msg
@@ -40,7 +41,7 @@ getNothing toMsg =
         }
 
 
-getNothingSimulated : (Result (Maybe (Http.Metadata, String), Http.Error) (NoContent) -> msg) -> SimulatedEffect.Http.SimulatedEffect msg
+getNothingSimulated : (Result (Maybe (Http.Metadata, String), Http.Error) (NoContent) -> msg) -> ProgramTest.SimulatedEffect msg
 getNothingSimulated toMsg =
     SimulatedEffect.Http.request
         { method =

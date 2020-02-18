@@ -2,6 +2,7 @@ module GetOneWithDynamicUrlSource exposing (..)
 
 import Http
 import SimulatedEffect.Http
+import ProgramTest
 import String.Conversions as String
 import Json.Decode exposing (..)
 
@@ -40,7 +41,7 @@ getOne toMsg urlBase =
         }
 
 
-getOneSimulated : (Result (Maybe (Http.Metadata, String), Http.Error) (Int) -> msg) -> String -> SimulatedEffect.Http.SimulatedEffect msg
+getOneSimulated : (Result (Maybe (Http.Metadata, String), Http.Error) (Int) -> msg) -> String -> ProgramTest.SimulatedEffect msg
 getOneSimulated toMsg urlBase =
     SimulatedEffect.Http.request
         { method =

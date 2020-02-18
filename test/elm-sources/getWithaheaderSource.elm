@@ -2,6 +2,7 @@ module GetWithAHeaderSource exposing (..)
 
 import Http
 import SimulatedEffect.Http
+import ProgramTest
 import String.Conversions as String
 import Json.Decode exposing (..)
 
@@ -42,7 +43,7 @@ getWithaheader toMsg header_myStringHeader header_MyIntHeader =
         }
 
 
-getWithaheaderSimulated : (Result (Maybe (Http.Metadata, String), Http.Error) (String) -> msg) -> String -> Int -> SimulatedEffect.Http.SimulatedEffect msg
+getWithaheaderSimulated : (Result (Maybe (Http.Metadata, String), Http.Error) (String) -> msg) -> String -> Int -> ProgramTest.SimulatedEffect msg
 getWithaheaderSimulated toMsg header_myStringHeader header_MyIntHeader =
     SimulatedEffect.Http.request
         { method =

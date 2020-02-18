@@ -116,6 +116,7 @@ The default required imports are:
 > import Json.Encode
 > import Http
 > import SimulatedEffect.Http
+> import ProgramTest
 > import String.Conversions as String
 > import Url
 -}

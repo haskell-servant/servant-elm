@@ -2,6 +2,7 @@ module PostTwoSource exposing (..)
 
 import Http
 import SimulatedEffect.Http
+import ProgramTest
 import String.Conversions as String
 import Json.Decode exposing (..)
 import Json.Encode
@@ -41,7 +42,7 @@ postTwo toMsg body =
         }
 
 
-postTwoSimulated : (Result (Maybe (Http.Metadata, String), Http.Error) (Maybe (Int)) -> msg) -> String -> SimulatedEffect.Http.SimulatedEffect msg
+postTwoSimulated : (Result (Maybe (Http.Metadata, String), Http.Error) (Maybe (Int)) -> msg) -> String -> ProgramTest.SimulatedEffect msg
 postTwoSimulated toMsg body =
     SimulatedEffect.Http.request
         { method =

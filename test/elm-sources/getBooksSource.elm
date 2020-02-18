@@ -2,6 +2,7 @@ module GetBooksSource exposing (..)
 
 import Http
 import SimulatedEffect.Http
+import ProgramTest
 import String.Conversions as String
 import Json.Decode exposing (..)
 import Url
@@ -63,7 +64,7 @@ getBooks toMsg query_published query_sort query_year query_filters =
             }
 
 
-getBooksSimulated : (Result (Maybe (Http.Metadata, String), Http.Error) (List (Book)) -> msg) -> Bool -> Maybe (String) -> Maybe (Int) -> List (Maybe (Bool)) -> SimulatedEffect.Http.SimulatedEffect msg
+getBooksSimulated : (Result (Maybe (Http.Metadata, String), Http.Error) (List (Book)) -> msg) -> Bool -> Maybe (String) -> Maybe (Int) -> List (Maybe (Bool)) -> ProgramTest.SimulatedEffect msg
 getBooksSimulated toMsg query_published query_sort query_year query_filters =
     let
         params =

@@ -3,6 +3,7 @@ module PutNothingSource exposing (..)
 import String.Conversions as String
 import Http
 import SimulatedEffect.Http
+import ProgramTest
 
 
 putNothing : (Result (Maybe (Http.Metadata, String), Http.Error) (()) -> msg) -> Cmd msg
@@ -40,7 +41,7 @@ putNothing toMsg =
         }
 
 
-putNothingSimulated : (Result (Maybe (Http.Metadata, String), Http.Error) (()) -> msg) -> SimulatedEffect.Http.SimulatedEffect msg
+putNothingSimulated : (Result (Maybe (Http.Metadata, String), Http.Error) (()) -> msg) -> ProgramTest.SimulatedEffect msg
 putNothingSimulated toMsg =
     SimulatedEffect.Http.request
         { method =

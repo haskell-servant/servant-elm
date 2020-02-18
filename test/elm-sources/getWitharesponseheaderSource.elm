@@ -2,6 +2,7 @@ module GetWithAResponseHeaderSource exposing (..)
 
 import Http
 import SimulatedEffect.Http
+import ProgramTest
 import String.Conversions as String
 import Json.Decode exposing (..)
 
@@ -40,7 +41,7 @@ getWitharesponseheader toMsg =
         }
 
 
-getWitharesponseheaderSimulated : (Result (Maybe (Http.Metadata, String), Http.Error) (String) -> msg) -> SimulatedEffect.Http.SimulatedEffect msg
+getWitharesponseheaderSimulated : (Result (Maybe (Http.Metadata, String), Http.Error) (String) -> msg) -> ProgramTest.SimulatedEffect msg
 getWitharesponseheaderSimulated toMsg =
     SimulatedEffect.Http.request
         { method =

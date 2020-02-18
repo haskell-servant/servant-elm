@@ -3,6 +3,7 @@ module GetBooksByIdSource exposing (..)
 import String.Conversions as String
 import Http
 import SimulatedEffect.Http
+import ProgramTest
 import Url
 
 
@@ -41,7 +42,7 @@ getBooksById toMsg capture_id =
         }
 
 
-getBooksByIdSimulated : (Result (Maybe (Http.Metadata, String), Http.Error) (Book) -> msg) -> Int -> SimulatedEffect.Http.SimulatedEffect msg
+getBooksByIdSimulated : (Result (Maybe (Http.Metadata, String), Http.Error) (Book) -> msg) -> Int -> ProgramTest.SimulatedEffect msg
 getBooksByIdSimulated toMsg capture_id =
     SimulatedEffect.Http.request
         { method =
