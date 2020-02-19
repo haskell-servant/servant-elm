@@ -247,7 +247,7 @@ mkTypeSignature opts returnType request =
 
     headerTypes :: [Doc]
     headerTypes =
-      [ header ^. F.headerArg . F.argType . to elmTypeRef
+      [ header ^. F.headerArg . F.argType . to unMaybe . to elmTypeRef
       | header <- request ^. F.reqHeaders
       ]
 
@@ -260,15 +260,8 @@ mkTypeSignature opts returnType request =
 
     queryTypes :: [Doc]
     queryTypes =
-      [ arg ^. F.queryArgName . F.argType . to (elmTypeRef . wrapper)
+      [ arg ^. F.queryArgName . F.argType . to elmTypeRef
       | arg <- request ^. F.reqUrl . F.queryStr
-      , wrapper <- [
-          case arg ^. F.queryArgType of
-            F.Normal ->
-              Elm.ElmPrimitive . Elm.EMaybe
-            _ ->
-              id
-          ]
       ]
 
     bodyType :: Maybe Doc
@@ -348,7 +341,7 @@ mkLetParams opts request =
       case qarg ^. F.queryArgType of
         F.Normal ->
           let
-            toStringSrc' = toStringSrc ">>" opts (qarg ^. F.queryArgName . F.argType)
+            toStringSrc' = toStringSrc ">>" opts (qarg ^. F.queryArgName . F.argType . to unMaybe)
           in
               name <$>
               indent 4 ("|> Maybe.map" <+> parens (toStringSrc' <> "Url.percentEncode >> (++)" <+> dquotes (elmName <> equals)) <$>
@@ -399,7 +392,7 @@ mkRequest httpLib opts request =
 
     headers =
         [ httpLib <> ".header" <+> dquotes headerName <+>
-            parens (toStringSrc "" opts (header ^. F.headerArg . F.argType) <> headerArgName)
+            parens (toStringSrc "" opts (header ^. F.headerArg . F.argType . to unMaybe) <> headerArgName)
         | header <- request ^. F.reqHeaders
         , headerName <- [header ^. F.headerArg . F.argName . to (stext . F.unPathSegment)]
         , headerArgName <- [elmHeaderArg header]
@@ -583,6 +576,12 @@ docToText =
 
 stext :: Text -> Doc
 stext = text . L.fromStrict
+
+unMaybe :: ElmDatatype -> ElmDatatype
+unMaybe type_ =
+  case type_ of
+    ElmPrimitive (EMaybe innerType_) -> innerType_
+    _ -> type_
 
 elmRecord :: [Doc] -> Doc
 elmRecord = encloseSep (lbrace <> space) (line <> rbrace) (comma <> space)
