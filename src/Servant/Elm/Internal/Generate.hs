@@ -247,6 +247,7 @@ mkTypeSignature opts returnType request =
 
     headerTypes :: [Doc]
     headerTypes =
+      -- Headers are always wrapped in a `Maybe`, but we don't want them to be.
       [ header ^. F.headerArg . F.argType . to unMaybe . to elmTypeRef
       | header <- request ^. F.reqHeaders
       ]
@@ -341,6 +342,7 @@ mkLetParams opts request =
       case qarg ^. F.queryArgType of
         F.Normal ->
           let
+            -- Query arguments are always wrapped in a `Maybe`, but we don't want them to be.
             toStringSrc' = toStringSrc ">>" opts (qarg ^. F.queryArgName . F.argType . to unMaybe)
           in
               name <$>
@@ -391,6 +393,7 @@ mkRequest httpLib opts request =
        request ^. F.reqMethod . to (stext . T.decodeUtf8)
 
     headers =
+        -- Headers are always wrapped in a `Maybe`, but we don't want them to be.
         [ httpLib <> ".header" <+> dquotes headerName <+>
             parens (toStringSrc "" opts (header ^. F.headerArg . F.argType . to unMaybe) <> headerArgName)
         | header <- request ^. F.reqHeaders
