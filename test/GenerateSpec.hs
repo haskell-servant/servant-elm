@@ -15,7 +15,7 @@ import qualified Data.Text.IO              as T
 import           Servant.API               ((:>), Get, JSON)
 import           Servant.Elm
 import           Test.Hspec                (Spec, describe, hspec, it)
-import           Test.HUnit                (Assertion, assertBool)
+import           Test.HUnit                (Assertion, assertEqual)
 
 import           Common                    (testApi)
 
@@ -35,11 +35,15 @@ spec = do
                           [ ( "test/elm-sources/getOneSource.elm"
                             , "module GetOneSource exposing (..)\n\n" <>
                               "import Http\n" <>
+                              "import SimulatedEffect.Http\n" <>
+                              "import ProgramTest\n" <>
                               "import String.Conversions as String\n" <>
                               "import Json.Decode exposing (..)\n\n\n")
                           , ( "test/elm-sources/postTwoSource.elm"
                             , "module PostTwoSource exposing (..)\n\n" <>
                               "import Http\n" <>
+                              "import SimulatedEffect.Http\n" <>
+                              "import ProgramTest\n" <>
                               "import String.Conversions as String\n" <>
                               "import Json.Decode exposing (..)\n" <>
                               "import Json.Encode\n\n\n")
@@ -47,38 +51,54 @@ spec = do
                             , "module GetBooksByIdSource exposing (..)\n\n" <>
                               "import String.Conversions as String\n" <>
                               "import Http\n" <>
+                              "import SimulatedEffect.Http\n" <>
+                              "import ProgramTest\n" <>
                               "import Url\n\n\n")
                           , ( "test/elm-sources/getBooksByTitleSource.elm"
                             , "module GetBooksByTitleSource exposing (..)\n\n" <>
                               "import Http\n" <>
+                              "import SimulatedEffect.Http\n" <>
+                              "import ProgramTest\n" <>
                               "import String.Conversions as String\n" <>
                               "import Url\n\n\n")
                           , ( "test/elm-sources/getBooksSource.elm"
                             , "module GetBooksSource exposing (..)\n\n" <>
                               "import Http\n" <>
+                              "import SimulatedEffect.Http\n" <>
+                              "import ProgramTest\n" <>
                               "import String.Conversions as String\n" <>
                               "import Json.Decode exposing (..)\n" <>
                               "import Url\n\n\n")
                           , ( "test/elm-sources/postBooksSource.elm"
                             , "module PostBooksSource exposing (..)\n\n" <>
                               "import String.Conversions as String\n" <>
-                              "import Http\n\n\n")
+                              "import Http\n" <>
+                              "import SimulatedEffect.Http\n" <>
+                              "import ProgramTest\n\n\n")
                           , ( "test/elm-sources/getNothingSource.elm"
                             , "module GetNothingSource exposing (..)\n\n" <>
                               "import String.Conversions as String\n" <>
-                              "import Http\n\n\n")
+                              "import Http\n" <>
+                              "import SimulatedEffect.Http\n" <>
+                              "import ProgramTest\n\n\n")
                           , ( "test/elm-sources/putNothingSource.elm"
                             , "module PutNothingSource exposing (..)\n\n" <>
                               "import String.Conversions as String\n" <>
-                              "import Http\n\n\n")
+                              "import Http\n" <>
+                              "import SimulatedEffect.Http\n" <>
+                              "import ProgramTest\n\n\n")
                           , ( "test/elm-sources/getWithaheaderSource.elm"
                             , "module GetWithAHeaderSource exposing (..)\n\n" <>
                               "import Http\n" <>
+                              "import SimulatedEffect.Http\n" <>
+                              "import ProgramTest\n" <>
                               "import String.Conversions as String\n" <>
                               "import Json.Decode exposing (..)\n\n\n")
                           , ( "test/elm-sources/getWitharesponseheaderSource.elm"
                             , "module GetWithAResponseHeaderSource exposing (..)\n\n" <>
                               "import Http\n" <>
+                              "import SimulatedEffect.Http\n" <>
+                              "import ProgramTest\n" <>
                               "import String.Conversions as String\n" <>
                               "import Json.Decode exposing (..)\n\n\n")]
                   let generated = map (<> "\n") (generateElmForAPI testApi)
@@ -92,6 +112,8 @@ spec = do
                           [ ( "test/elm-sources/getOneWithDynamicUrlSource.elm"
                             , "module GetOneWithDynamicUrlSource exposing (..)\n\n" <>
                               "import Http\n" <>
+                              "import SimulatedEffect.Http\n" <>
+                              "import ProgramTest\n" <>
                               "import String.Conversions as String\n" <>
                               "import Json.Decode exposing (..)\n\n\n")]
                   let generated =
@@ -113,10 +135,10 @@ itemsShouldBe actual expected =
 
 shouldBeDiff :: Text -> (String, Text, Text) -> Assertion
 shouldBeDiff a (fpath,header,b) =
-    assertBool
+    assertEqual
         ("< generated\n" <> "> " <> fpath <> "\n" <>
          Diff.ppDiff
              (Diff.getGroupedDiff
                   (lines (T.unpack (header <> a)))
                   (lines (T.unpack b))))
-        (header <> a == b)
+        b (header <> a)
