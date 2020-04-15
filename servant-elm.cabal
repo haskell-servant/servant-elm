@@ -34,7 +34,7 @@ library
   build-depends:       base >= 4.7 && < 5
                      , aeson >= 0.9
                      , directory
-                     , elm-bridge      >= 0.4
+                     , elm-bridge      >= 0.5.2
                      , lens
                      , servant         >= 0.8
                      , servant-foreign >= 0.8

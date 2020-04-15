@@ -1,7 +1,8 @@
-resolver: lts-14.6
+resolver: lts-15.8
 packages:
 - '.'
 extra-deps:
-- elm-bridge-0.5.2
+# - elm-bridge-0.5.2
+- ../elm-bridge
 flags: {}
 extra-package-dbs: []

@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE RecordWildCards       #-}
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
@@ -19,8 +20,11 @@ import           Elm.Json (jsonParserForType, jsonSerForType)
 import qualified Elm.Module                   as Elm
 import           Elm.TyRep (ETCon(..), EType(..), ETypeDef(..), toElmType)
 import           Elm.TyRender (renderElm)
+#if MIN_VERSION_elm_bridge(0,6,0)
+import           Elm.Versions (ElmVersion(Elm0p19))
+#else
 import           Elm.Versions (ElmVersion(Elm0p18))
-
+#endif
 import           Servant.Elm.Internal.Foreign (LangElm, getEndpoints)
 import qualified Servant.Foreign              as F
 import           System.Directory (createDirectoryIfMissing)
@@ -149,7 +153,12 @@ generateElmModuleWith ::
 generateElmModuleWith options namespace imports rootDir typeDefs api = do
   let out =
         T.unlines $
-        [ T.pack $ Elm.moduleHeader Elm0p18 moduleName
+        [
+#if MIN_VERSION_elm_bridge(0,6,0)
+          T.pack $ Elm.moduleHeader Elm0p19 moduleName
+#else
+          T.pack $ Elm.moduleHeader Elm0p18 moduleName
+#endif
         , ""
         , imports
         , T.pack $ Elm.makeModuleContentWithAlterations (elmAlterations options) typeDefs
