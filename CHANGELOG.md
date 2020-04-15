@@ -1,3 +1,8 @@
+0.7.2
+-----
+
+* Commit a80f8b41d37d11778d2c27e6b38e881a71e85343. Fix for elm-bridge-0.6.0
+
 0.7.1
 -----
 
