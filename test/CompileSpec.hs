@@ -45,7 +45,7 @@ spec = do
             api = (Proxy :: Proxy TestApi)
         let out =
               T.unlines $
-              [ T.pack $ Elm.moduleHeader Elm0p18 moduleName
+              [ T.pack $ Elm.moduleHeader Elm0p19 moduleName
               , ""
               , imports
               , ""
