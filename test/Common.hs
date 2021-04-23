@@ -5,9 +5,9 @@ module Common where
 
 import           Data.Proxy   (Proxy (Proxy))
 import           Data.Text    (Text)
-import           Servant.API  ((:<|>), (:>), Capture, Get, GetNoContent, Header,
+import           Servant.API  ((:<|>), (:>), Capture, Get, Header,
                                Header', Headers, JSON, Post,
-                               PostNoContent, Put, QueryFlag, QueryParam,
+                               Put, QueryFlag, QueryParam,
                                QueryParam', QueryParams, ReqBody, Required)
 import           Servant.Elm  (deriveBoth, defaultOptions)
 
@@ -38,9 +38,11 @@ type TestApi =
          :> Get '[JSON] [Book]
   :<|> "books"
          :> ReqBody '[JSON] Book
-         :> PostNoContent '[JSON] ()
+         -- :> PostNoContent '[JSON] ()
+         :> Post '[JSON] ()
   :<|> "nothing"
-         :> GetNoContent '[JSON] ()
+         :> Get '[JSON] ()
+         -- :> GetNoContent '[JSON] ()
   :<|> "nothing"
          :> Put '[JSON] () -- old way to specify no content
   :<|> "with-a-header"
