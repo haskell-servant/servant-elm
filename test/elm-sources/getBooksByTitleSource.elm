@@ -34,7 +34,8 @@ getBooksByTitle toMsg capture_title =
                             (decodeString decodeBook body_)
                                 |> Result.mapError Json.Decode.errorToString
                                 |> Result.mapError Http.BadBody
-                                |> Result.mapError (Tuple.pair (Just (metadata, body_))))
+                                |> Result.mapError (Tuple.pair (Just (metadata, body_)))
+                )
         , timeout =
             Nothing
         , tracker =
@@ -69,7 +70,8 @@ getBooksByTitleSimulated toMsg capture_title =
                             (decodeString decodeBook body_)
                                 |> Result.mapError Json.Decode.errorToString
                                 |> Result.mapError Http.BadBody
-                                |> Result.mapError (Tuple.pair (Just (metadata, body_))))
+                                |> Result.mapError (Tuple.pair (Just (metadata, body_)))
+                )
         , timeout =
             Nothing
         , tracker =

@@ -33,7 +33,8 @@ getOne toMsg =
                             (decodeString int body_)
                                 |> Result.mapError Json.Decode.errorToString
                                 |> Result.mapError Http.BadBody
-                                |> Result.mapError (Tuple.pair (Just (metadata, body_))))
+                                |> Result.mapError (Tuple.pair (Just (metadata, body_)))
+                )
         , timeout =
             Nothing
         , tracker =
@@ -67,7 +68,8 @@ getOneSimulated toMsg =
                             (decodeString int body_)
                                 |> Result.mapError Json.Decode.errorToString
                                 |> Result.mapError Http.BadBody
-                                |> Result.mapError (Tuple.pair (Just (metadata, body_))))
+                                |> Result.mapError (Tuple.pair (Just (metadata, body_)))
+                )
         , timeout =
             Nothing
         , tracker =

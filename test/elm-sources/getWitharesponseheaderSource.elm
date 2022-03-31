@@ -33,7 +33,8 @@ getWitharesponseheader toMsg =
                             (decodeString string body_)
                                 |> Result.mapError Json.Decode.errorToString
                                 |> Result.mapError Http.BadBody
-                                |> Result.mapError (Tuple.pair (Just (metadata, body_))))
+                                |> Result.mapError (Tuple.pair (Just (metadata, body_)))
+                )
         , timeout =
             Nothing
         , tracker =
@@ -67,7 +68,8 @@ getWitharesponseheaderSimulated toMsg =
                             (decodeString string body_)
                                 |> Result.mapError Json.Decode.errorToString
                                 |> Result.mapError Http.BadBody
-                                |> Result.mapError (Tuple.pair (Just (metadata, body_))))
+                                |> Result.mapError (Tuple.pair (Just (metadata, body_)))
+                )
         , timeout =
             Nothing
         , tracker =

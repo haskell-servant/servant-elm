@@ -34,7 +34,8 @@ getBooksById toMsg capture_id =
                             (decodeString decodeBook body_)
                                 |> Result.mapError Json.Decode.errorToString
                                 |> Result.mapError Http.BadBody
-                                |> Result.mapError (Tuple.pair (Just (metadata, body_))))
+                                |> Result.mapError (Tuple.pair (Just (metadata, body_)))
+                )
         , timeout =
             Nothing
         , tracker =
@@ -69,7 +70,8 @@ getBooksByIdSimulated toMsg capture_id =
                             (decodeString decodeBook body_)
                                 |> Result.mapError Json.Decode.errorToString
                                 |> Result.mapError Http.BadBody
-                                |> Result.mapError (Tuple.pair (Just (metadata, body_))))
+                                |> Result.mapError (Tuple.pair (Just (metadata, body_)))
+                )
         , timeout =
             Nothing
         , tracker =

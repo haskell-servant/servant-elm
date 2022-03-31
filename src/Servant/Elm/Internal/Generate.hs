@@ -366,6 +366,11 @@ mkLetParams opts request =
         name = elmQueryArg qarg
         elmName= qarg ^. F.queryArgName . F.argName . to (stext . F.unPathSegment)
 
+{-| Wrap a doc in parenthesis ensuring the closing parenthesis is at the same level of indentation as the opening.
+-}
+alignedParens :: Doc -> Doc
+alignedParens doc =
+    "(" <> doc <> line <> ")"
 
 mkRequest :: Doc -> ElmOptions -> F.Req ElmDatatype -> Doc
 mkRequest httpLib opts request =
@@ -424,7 +429,7 @@ mkRequest httpLib opts request =
                 Elm.toElmTypeRefWith (elmExportOptions opts) elmTypeExpr
           in
           httpLib <> ".expectStringResponse toMsg" <$>
-          indent i (parens (backslash <> "res" <+> "->" <$>
+          indent i (alignedParens (backslash <> "res" <+> "->" <$>
               indent i "case res of" <$>
               indent i (
                 indent i "Http.BadUrl_ url -> Err (Nothing, Http.BadUrl url)" <$>
@@ -445,7 +450,7 @@ mkRequest httpLib opts request =
 
         Just elmTypeExpr ->
           httpLib <> ".expectStringResponse toMsg" <$>
-          indent i (parens (backslash <> "res" <+> "->" <$>
+          indent i (alignedParens (backslash <> "res" <+> "->" <$>
               indent i "case res of" <$>
               indent i (
                 indent i "Http.BadUrl_ url -> Err (Nothing, Http.BadUrl url)" <$>

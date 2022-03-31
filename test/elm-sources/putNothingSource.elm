@@ -33,7 +33,8 @@ putNothing toMsg =
                                 Ok (())
                             else
                                 Err (Just (metadata, body_), Http.BadBody <| "Expected the response body to be empty, but it was '" ++ body_ ++ "'.")
-                            )
+                            
+                )
         , timeout =
             Nothing
         , tracker =
@@ -68,7 +69,8 @@ putNothingSimulated toMsg =
                                 Ok (())
                             else
                                 Err (Just (metadata, body_), Http.BadBody <| "Expected the response body to be empty, but it was '" ++ body_ ++ "'.")
-                            )
+                            
+                )
         , timeout =
             Nothing
         , tracker =

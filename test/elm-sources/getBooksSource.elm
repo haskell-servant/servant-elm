@@ -56,7 +56,8 @@ getBooks toMsg query_published query_sort query_year query_filters =
                                 (decodeString (list decodeBook) body_)
                                     |> Result.mapError Json.Decode.errorToString
                                     |> Result.mapError Http.BadBody
-                                    |> Result.mapError (Tuple.pair (Just (metadata, body_))))
+                                    |> Result.mapError (Tuple.pair (Just (metadata, body_)))
+                    )
             , timeout =
                 Nothing
             , tracker =
@@ -112,7 +113,8 @@ getBooksSimulated toMsg query_published query_sort query_year query_filters =
                                 (decodeString (list decodeBook) body_)
                                     |> Result.mapError Json.Decode.errorToString
                                     |> Result.mapError Http.BadBody
-                                    |> Result.mapError (Tuple.pair (Just (metadata, body_))))
+                                    |> Result.mapError (Tuple.pair (Just (metadata, body_)))
+                    )
             , timeout =
                 Nothing
             , tracker =
