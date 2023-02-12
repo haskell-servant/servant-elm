@@ -1,8 +1,5 @@
 resolver: lts-20.11
 packages:
 - '.'
-extra-deps:
-- elm-bridge-0.6.1
-# - ../elm-bridge
 flags: {}
 extra-package-dbs: []
