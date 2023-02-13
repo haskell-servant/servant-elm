@@ -64,6 +64,7 @@ data ElmOptions = ElmOptions
   , stringElmTypes        :: [EType]
     -- ^ Types that represent a String.
   , expectJsonMethod      :: Text
+  , expectStringMethod    :: Text
   , httpErrorType         :: Text
   }
 
@@ -104,6 +105,7 @@ defElmOptions = ElmOptions
       , toElmType (Proxy :: Proxy T.Text)
       ]
   , expectJsonMethod = "Http.expectJson"
+  , expectStringMethod = "Http.expectString"
   , httpErrorType = "Http.Error"
   }
 
@@ -313,7 +315,7 @@ mkTypeSignature opts request =
     toMsgType :: Maybe Doc
     toMsgType = do
       result <- fmap elmTypeRef $ request ^. F.reqReturnType
-      Just ("(Result" <+> stext (httpErrorType opts) <+> parens result <+> " -> msg)")
+      Just ("(Result" <+> stext (httpErrorType opts) <+> parens result <+> "-> msg)")
 
     returnType :: Maybe Doc
     returnType = do
@@ -505,11 +507,11 @@ mkRequest opts request =
           | isEmptyType opts $ (elmTypeAlterations opts) elmTypeExpr
             -- let elmConstructor = T.pack (renderElm elmTypeExpr)
            ->
-            "Http.expectString " <> line <+> indent i "(\\x -> case x of" <> line <+>
+            stext (expectStringMethod opts) <> line <+> indent i "(\\x -> case x of" <> line <+>
             indent i "Err e -> toMsg (Err e)" <> line <+>
             indent i "Ok _ -> toMsg (Ok ()))"
         Just elmTypeExpr ->
-          stext (expectJsonMethod opts) <+> " toMsg" <+> renderDecoderName ((elmTypeAlterations opts) elmTypeExpr)
+          stext (expectJsonMethod opts) <+> "toMsg" <+> renderDecoderName ((elmTypeAlterations opts) elmTypeExpr)
         Nothing -> error "mkHttpRequest: no reqReturnType?"
       -- case request ^. F.reqReturnType of
       --   Just elmTypeExpr | isEmptyType opts elmTypeExpr ->
