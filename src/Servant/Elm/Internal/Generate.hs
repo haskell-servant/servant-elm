@@ -63,6 +63,7 @@ data ElmOptions = ElmOptions
     -- ^ Types that represent an empty Http response.
   , stringElmTypes        :: [EType]
     -- ^ Types that represent a String.
+  , expectJsonMethod      :: Text
   }
 
 
@@ -101,6 +102,7 @@ defElmOptions = ElmOptions
       [ toElmType (Proxy :: Proxy String)
       , toElmType (Proxy :: Proxy T.Text)
       ]
+  , expectJsonMethod = "Http.expectJson"
   }
 
 
@@ -505,7 +507,7 @@ mkRequest opts request =
             indent i "Err e -> toMsg (Err e)" <> line <+>
             indent i "Ok _ -> toMsg (Ok ()))"
         Just elmTypeExpr ->
-          "Http.expectJson toMsg" <+> renderDecoderName ((elmTypeAlterations opts) elmTypeExpr)
+          stext (expectJsonMethod opts) <+> " toMsg" <+> renderDecoderName ((elmTypeAlterations opts) elmTypeExpr)
         Nothing -> error "mkHttpRequest: no reqReturnType?"
       -- case request ^. F.reqReturnType of
       --   Just elmTypeExpr | isEmptyType opts elmTypeExpr ->
