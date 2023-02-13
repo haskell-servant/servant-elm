@@ -64,6 +64,7 @@ data ElmOptions = ElmOptions
   , stringElmTypes        :: [EType]
     -- ^ Types that represent a String.
   , expectJsonMethod      :: Text
+  , httpErrorType         :: Text
   }
 
 
@@ -103,6 +104,7 @@ defElmOptions = ElmOptions
       , toElmType (Proxy :: Proxy T.Text)
       ]
   , expectJsonMethod = "Http.expectJson"
+  , httpErrorType = "Http.Error"
   }
 
 
@@ -311,7 +313,7 @@ mkTypeSignature opts request =
     toMsgType :: Maybe Doc
     toMsgType = do
       result <- fmap elmTypeRef $ request ^. F.reqReturnType
-      Just ("(Result Http.Error " <+> parens result <+> " -> msg)")
+      Just ("(Result" <+> stext (httpErrorType opts) <+> parens result <+> " -> msg)")
 
     returnType :: Maybe Doc
     returnType = do
