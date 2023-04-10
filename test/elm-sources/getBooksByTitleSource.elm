@@ -23,7 +23,7 @@ getBooksByTitle capture_title toMsg =
             , url =
                 Url.Builder.crossOrigin ""
                     [ "books"
-                    , (capture_title)
+                    , Url.percentEncode (capture_title)
                     ]
                     params
             , body =

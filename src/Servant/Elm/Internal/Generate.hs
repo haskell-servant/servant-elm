@@ -119,6 +119,7 @@ The default required imports are:
 > import Set
 > import Http
 > import String
+> import Url
 > import Url.Builder
 -}
 defElmImports :: Text
@@ -132,6 +133,7 @@ defElmImports =
     , "import Set"
     , "import Http"
     , "import String"
+    , "import Url"
     , "import Url.Builder"
     ]
 
@@ -563,7 +565,7 @@ mkUrl opts segments =
             toStringSrc =
               toString opts (maybeOf (arg ^. F.argType))
           in
-            pipeRight [elmCaptureArg s, toStringSrc]
+            "Url.percentEncode " <> pipeRight [elmCaptureArg s, toStringSrc]
 
 
 mkQueryParams
