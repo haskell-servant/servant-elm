@@ -583,7 +583,7 @@ response body.
 -}
 isEmptyType :: ElmOptions -> EType -> Bool
 isEmptyType opts elmTypeExpr =
-  elmTypeExpr `elem` emptyResponseElmTypes opts
+  (elmTypeAlterations opts elmTypeExpr) `elem` emptyResponseElmTypes opts
 
 
 {- | Determines whether we call `toString` on URL captures and query params of
@@ -591,7 +591,7 @@ this type in Elm.
 -}
 isElmStringType :: ElmOptions -> EType -> Bool
 isElmStringType opts elmTypeExpr =
-  elmTypeExpr `elem` stringElmTypes opts
+  (elmTypeAlterations opts elmTypeExpr) `elem` stringElmTypes opts
 
 {- | Determines whether a type is 'Maybe a' where 'a' is something akin to a 'String'.
 -}
