@@ -247,7 +247,7 @@ generateElmForRequest opts request =
     fnName =
       request ^. F.reqFuncName . to (replace . F.camelCase) . to stext
 
-    replace = T.replace "-" "" . T.replace "." ""
+    replace = T.replace "-" "" . T.replace "." "" . T.replace " " ""
 
     typeSignature =
       mkTypeSignature opts request
@@ -327,7 +327,7 @@ elmCaptureArg segment =
   "capture_" <>
   F.captureArg segment ^. F.argName . to (stext . replace . F.unPathSegment)
   where
-    replace = T.replace "-" "_"
+    replace = T.replace "-" "_" . T.replace " " "_"
 
 
 elmQueryArg :: F.QueryArg EType -> Doc

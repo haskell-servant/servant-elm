@@ -7,8 +7,8 @@ import Json.Decode as J
 type alias Book = {}
 jsonDecBook = J.succeed {}
 
-getBooksByTitle : String -> (Result Http.Error  (Book)  -> msg) -> Cmd msg
-getBooksByTitle capture_title toMsg =
+getBooksByTitlespace : String -> (Result Http.Error  (Book)  -> msg) -> Cmd msg
+getBooksByTitlespace capture_title_space toMsg =
     let
         params =
             List.filterMap identity
@@ -23,7 +23,7 @@ getBooksByTitle capture_title toMsg =
             , url =
                 Url.Builder.crossOrigin ""
                     [ "books"
-                    , Url.percentEncode (capture_title)
+                    , Url.percentEncode (capture_title_space)
                     ]
                     params
             , body =

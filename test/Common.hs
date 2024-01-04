@@ -27,7 +27,7 @@ type TestApi =
          :> Capture "id" Int
          :> Get '[JSON] Book
   :<|> "books"
-         :> Capture "title" Text
+         :> Capture "title space" Text
          :> Get '[JSON] Book
   :<|> "books"
          :> QueryFlag "published"
