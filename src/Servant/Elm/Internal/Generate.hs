@@ -53,19 +53,22 @@ data ElmOptions = ElmOptions
     argument.
     -}
     urlPrefix             :: UrlPrefix
-  , elmTypeAlterations        :: (EType -> EType)
+  , elmTypeAlterations    :: (EType -> EType)
     -- ^ Alterations to perform on ETypes before code generation.
   , elmAlterations        :: (ETypeDef -> ETypeDef)
     -- ^ Alterations to perform on ETypeDefs before code generation.
-  , elmToString          :: (EType -> Text)
+  , elmToString           :: (EType -> Text)
     -- ^ Elm functions creating a string from a given type.
   , emptyResponseElmTypes :: [EType]
     -- ^ Types that represent an empty Http response.
   , stringElmTypes        :: [EType]
     -- ^ Types that represent a String.
   , expectJsonMethod      :: Text
+    -- ^ The function to use for JSON responses.
   , expectStringMethod    :: Text
+    -- ^ The function to use for string responses.
   , httpErrorType         :: Text
+    -- ^ The type to use for Http errors.
   }
 
 
@@ -89,6 +92,9 @@ The default options are:
 > , stringElmTypes =
 >     [ getType (Proxy :: Proxy String)
 >     , getType (Proxy :: Proxy T.Text) ]
+> , expectJsonMethod = "Http.expectJson"
+> , expectStringMethod = "Http.expectString"
+> , httpErrorType = "Http.Error"
 > }
 -}
 defElmOptions :: ElmOptions
