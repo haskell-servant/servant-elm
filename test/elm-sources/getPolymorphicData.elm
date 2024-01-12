@@ -14,7 +14,7 @@ jsonDecSomeRecord : Json.Decode.Decoder SomeRecord
 jsonDecSomeRecord = Debug.todo "finish"
 
 
-getPolymorphicData : (Result Http.Error  ((PolymorphicData (List String) SomeRecord))  -> msg) -> Cmd msg
+getPolymorphicData : (Result Http.Error ((PolymorphicData (List String) SomeRecord)) -> msg) -> Cmd msg
 getPolymorphicData toMsg =
     let
         params =

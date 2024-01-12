@@ -5,7 +5,7 @@ import Url.Builder
 import Json.Decode exposing (..)
 
 
-getWithaheader : (Maybe String) -> (Maybe Int) -> String -> Int -> (Result Http.Error  (String)  -> msg) -> Cmd msg
+getWithaheader : (Maybe String) -> (Maybe Int) -> String -> Int -> (Result Http.Error (String) -> msg) -> Cmd msg
 getWithaheader header_myStringHeader header_MyIntHeader header_MyRequiredStringHeader header_MyRequiredIntHeader toMsg =
     let
         params =

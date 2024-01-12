@@ -7,7 +7,7 @@ import Json.Encode as Enc
 type alias Book = {}
 jsonEncBook = \b -> Enc.object []
 
-postBooks : Book -> (Result Http.Error  (())  -> msg) -> Cmd msg
+postBooks : Book -> (Result Http.Error (()) -> msg) -> Cmd msg
 postBooks body toMsg =
     let
         params =
@@ -28,7 +28,7 @@ postBooks body toMsg =
             , body =
                 Http.jsonBody (jsonEncBook body)
             , expect =
-                Http.expectString 
+                Http.expectString
                      (\x -> case x of
                      Err e -> toMsg (Err e)
                      Ok _ -> toMsg (Ok ()))

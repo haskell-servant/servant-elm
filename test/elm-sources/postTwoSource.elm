@@ -6,7 +6,7 @@ import Json.Encode
 import Url.Builder
 
 
-postTwo : String -> (Result Http.Error  ((Maybe Int))  -> msg) -> Cmd msg
+postTwo : String -> (Result Http.Error ((Maybe Int)) -> msg) -> Cmd msg
 postTwo body toMsg =
     let
         params =

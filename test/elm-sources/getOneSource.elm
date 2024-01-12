@@ -5,7 +5,7 @@ import Json.Decode exposing (..)
 import Url.Builder
 
 
-getOne : (Result Http.Error  (Int)  -> msg) -> Cmd msg
+getOne : (Result Http.Error (Int) -> msg) -> Cmd msg
 getOne toMsg =
     let
         params =
