@@ -4,7 +4,7 @@ import Http
 import Url.Builder
 
 
-putNothing : (Result Http.Error  (())  -> msg) -> Cmd msg
+putNothing : (Result Http.Error (()) -> msg) -> Cmd msg
 putNothing toMsg =
     let
         params =
@@ -25,7 +25,7 @@ putNothing toMsg =
             , body =
                 Http.emptyBody
             , expect =
-                Http.expectString 
+                Http.expectString
                      (\x -> case x of
                      Err e -> toMsg (Err e)
                      Ok _ -> toMsg (Ok ()))

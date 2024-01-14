@@ -7,7 +7,7 @@ import Json.Decode as J
 type alias Book = {}
 jsonDecBook = J.succeed {}
 
-getBooksByTitlespace : String -> (Result Http.Error  (Book)  -> msg) -> Cmd msg
+getBooksByTitlespace : String -> (Result Http.Error (Book) -> msg) -> Cmd msg
 getBooksByTitlespace capture_title_space toMsg =
     let
         params =

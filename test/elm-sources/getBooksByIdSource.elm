@@ -8,7 +8,7 @@ type Book = Book
 jsonDecBook : Json.Decode.Decoder Book
 jsonDecBook = Debug.todo ""
 
-getBooksById : Int -> (Result Http.Error  (Book)  -> msg) -> Cmd msg
+getBooksById : Int -> (Result Http.Error (Book) -> msg) -> Cmd msg
 getBooksById capture_id toMsg =
     let
         params =

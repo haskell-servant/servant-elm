@@ -9,7 +9,7 @@ type alias Book = {}
 
 jsonDecBook = J.succeed {}
 
-getBooks : Bool -> (Maybe String) -> (Maybe Int) -> String -> (List (Maybe Bool)) -> (Result Http.Error  ((List Book))  -> msg) -> Cmd msg
+getBooks : Bool -> (Maybe String) -> (Maybe Int) -> String -> (List (Maybe Bool)) -> (Result Http.Error ((List Book)) -> msg) -> Cmd msg
 getBooks query_published query_sort query_year query_category query_filters toMsg =
     let
         params =
